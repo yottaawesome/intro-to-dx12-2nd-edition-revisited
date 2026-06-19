@@ -70,7 +70,6 @@ auto main() -> int
     auto angleRadians = XMVectorGetX(angleVec);
     auto angleDegrees = XMConvertToDegrees(angleRadians);
 
-    std::println("u{:<21}{}", u);
     cout << "u                   = " << u << endl;
     cout << "v                   = " << v << endl;
     cout << "w                   = " << w << endl;
