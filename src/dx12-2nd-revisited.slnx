@@ -6,4 +6,7 @@
   <Folder Name="/01/">
     <Project Path="XMVECTOR/XMVECTOR.vcxproj" Id="d03f2093-5723-460a-a897-66c22a787d7a" />
   </Folder>
+  <Folder Name="/02/">
+    <Project Path="XMMATRIX/XMMATRIX.vcxproj" Id="c826f0f3-2830-484c-81e5-b5696cb764fd" />
+  </Folder>
 </Solution>
