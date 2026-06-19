@@ -1,0 +1,9 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/01/">
+    <Project Path="XMVECTOR/XMVECTOR.vcxproj" Id="d03f2093-5723-460a-a897-66c22a787d7a" />
+  </Folder>
+</Solution>
