@@ -9,4 +9,10 @@
   <Folder Name="/02/">
     <Project Path="XMMATRIX/XMMATRIX.vcxproj" Id="c826f0f3-2830-484c-81e5-b5696cb764fd" />
   </Folder>
+  <Folder Name="/04/">
+    <Project Path="InitDirect3D/InitDirect3D.vcxproj" Id="0cc79b67-ae50-4016-8888-ed3d2cc901d0" />
+  </Folder>
+  <Folder Name="/Common/">
+    <Project Path="Shared/Shared.vcxproj" Id="71a3731d-95eb-49ec-b69f-e0b5e166115b" />
+  </Folder>
 </Solution>
