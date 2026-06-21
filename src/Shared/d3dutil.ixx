@@ -13,23 +13,17 @@ export
     inline void d3dSetDebugName(DXGI::IDXGIObject* obj, const char* name)
     {
         if (obj)
-        {
             obj->SetPrivateData(D3D::WKPDID_D3DDebugObjectName, Win32::lstrlenA(name), name);
-        }
     }
     inline void d3dSetDebugName(D3D12::ID3D12Device* obj, const char* name)
     {
         if (obj)
-        {
             obj->SetPrivateData(D3D::WKPDID_D3DDebugObjectName, Win32::lstrlenA(name), name);
-        }
     }
     inline void d3dSetDebugName(D3D12::ID3D12DeviceChild* obj, const char* name)
     {
         if (obj)
-        {
             obj->SetPrivateData(D3D::WKPDID_D3DDebugObjectName, Win32::lstrlenA(name), name);
-        }
     }
 
     inline auto AnsiToWString(const std::string& str) -> std::wstring
@@ -41,7 +35,20 @@ export
 
     //TODO: migrate
     class d3dUtil
-    {};
+    {
+    public:
+        void WriteBinaryToFile(DXC::IDxcBlob* blob, const std::wstring& filename)
+        {
+            auto fout = std::ofstream{ filename, std::ios::binary };
+            fout.write((char*)blob->GetBufferPointer(), blob->GetBufferSize());
+            fout.close();
+        }
+
+        auto IsKeyDown(int vkeyCode) -> bool
+        {
+            return (Win32::GetAsyncKeyState(vkeyCode) & 0x8000) != 0;
+        }
+    };
 
     struct ModelVertex
     {

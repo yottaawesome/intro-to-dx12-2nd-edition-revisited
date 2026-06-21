@@ -5,6 +5,7 @@ module;
 #include <dxgi1_6.h>
 #include <d3d12.h>
 #include <DirectXMath.h>
+#include <dxcapi.h>
 
 export module shared:win32;
 
@@ -16,6 +17,7 @@ export namespace Win32
 		::HRESULT,
 		::IUnknown,
 		::_com_error,
+		::GetAsyncKeyState,
 		::MultiByteToWideChar,
 		::WideCharToMultiByte,
 		::lstrlenA,
@@ -35,6 +37,13 @@ export namespace D3D
 {
 	using
 		::WKPDID_D3DDebugObjectName
+		;
+}
+
+export namespace DXC
+{
+	using 
+		::IDxcBlob
 		;
 }
 
