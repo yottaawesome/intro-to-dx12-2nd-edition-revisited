@@ -6,17 +6,24 @@ module;
 #include <d3d12.h>
 #include <DirectXMath.h>
 #include <dxcapi.h>
+#include <wrl/client.h>
 
 export module shared:win32;
 
 export namespace Win32
 {
 	using
+		::UINT,
 		::LARGE_INTEGER,
 		::WCHAR,
 		::HRESULT,
 		::IUnknown,
 		::_com_error,
+		::LPCWSTR,
+		::BYTE,
+		::OutputDebugStringW,
+		::MessageBoxA,
+		::MessageBoxW,
 		::GetAsyncKeyState,
 		::MultiByteToWideChar,
 		::WideCharToMultiByte,
@@ -26,11 +33,28 @@ export namespace Win32
 		;
 
 	constexpr auto CpAcp = CP_ACP;
+	constexpr auto CpUtf8 = CP_UTF8;
 
-	inline constexpr auto Failed(HRESULT hr) -> bool
+	inline constexpr auto Failed(HRESULT hr) noexcept -> bool
 	{
 		return FAILED(hr);
 	}
+	inline constexpr auto Succeeded(HRESULT hr) noexcept -> bool
+	{
+		return SUCCEEDED(hr);
+	}
+
+	enum Hresults
+	{
+		Fail = E_FAIL,
+	};
+}
+
+export namespace Microsoft::WRL
+{
+	using
+		::Microsoft::WRL::ComPtr
+		;
 }
 
 export namespace D3D
@@ -43,7 +67,19 @@ export namespace D3D
 export namespace DXC
 {
 	using 
-		::IDxcBlob
+		::CLSID_DxcUtils,
+		::CLSID_DxcCompiler,
+		::DxcCreateInstance,
+		::DXC_OUT_KIND,
+		::IDxcBlobUtf16,
+		::IDxcBlobUtf8,
+		::IDxcResult,
+		::DxcBuffer,
+		::IDxcBlobEncoding,
+		::IDxcBlob,
+		::IDxcCompiler3,
+		::IDxcUtils,
+		::IDxcIncludeHandler
 		;
 }
 
@@ -64,8 +100,11 @@ export namespace D3D12
 {
 	using
 		::ID3D12Device,
-		::ID3D12DeviceChild
+		::ID3D12DeviceChild,
+		::D3D12_SHADER_BYTECODE
 		;
+
+	constexpr auto D3d12ConstantBufferDataPlacementAlignment = D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT;
 }
 
 export namespace DirectX
