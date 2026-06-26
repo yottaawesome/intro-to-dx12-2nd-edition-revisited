@@ -13,7 +13,7 @@ export
     inline auto AnsiToWString(const std::string& str) -> std::wstring
     {
         auto buffer = std::array<Win32::WCHAR, 512>{};
-        Win32::MultiByteToWideChar(Win32::CpAcp, 0, str.c_str(), -1, buffer.data(), buffer.size());
+        Win32::MultiByteToWideChar(Win32::CpAcp, 0, str.c_str(), -1, buffer.data(), static_cast<int>(buffer.size()));
         return buffer.data();
     }
 
@@ -238,6 +238,36 @@ export
         static auto ByteCodeFromBlob(DXC::IDxcBlob* shader) -> D3D12::D3D12_SHADER_BYTECODE
         {
             return { reinterpret_cast<Win32::BYTE*>(shader->GetBufferPointer()), shader->GetBufferSize() };
+        }
+
+        static auto InitDefaultPso(
+            DXGI::DXGI_FORMAT rtvFormat,
+            DXGI::DXGI_FORMAT dsvFormat,
+            const std::vector<D3D12::D3D12_INPUT_ELEMENT_DESC>& inputLayout, 
+            D3D12::ID3D12RootSignature* rootSig,
+            DXC::IDxcBlob* vertexShader, 
+            DXC::IDxcBlob* pixelShader
+        ) -> D3D12::D3D12_GRAPHICS_PIPELINE_STATE_DESC
+        {
+            auto psoDesc = D3D12::D3D12_GRAPHICS_PIPELINE_STATE_DESC{};
+
+            psoDesc.InputLayout = { inputLayout.data(), static_cast<Win32::UINT>(inputLayout.size()) };
+            psoDesc.pRootSignature = rootSig;
+            psoDesc.VS = ByteCodeFromBlob(vertexShader);
+            psoDesc.PS = ByteCodeFromBlob(pixelShader);
+
+            psoDesc.RasterizerState = D3D12::CD3DX12_RASTERIZER_DESC(D3D12::D3D12_DEFAULT);
+            psoDesc.BlendState = D3D12::CD3DX12_BLEND_DESC(D3D12::D3D12_DEFAULT);
+            psoDesc.DepthStencilState = D3D12::CD3DX12_DEPTH_STENCIL_DESC(D3D12::D3D12_DEFAULT);
+            psoDesc.SampleMask = Win32::UIntMax;
+            psoDesc.PrimitiveTopologyType = D3D12::D3D12_PRIMITIVE_TOPOLOGY_TYPE::D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+            psoDesc.NumRenderTargets = 1;
+            psoDesc.RTVFormats[0] = rtvFormat;
+            psoDesc.SampleDesc.Count = 1;
+            psoDesc.SampleDesc.Quality = 0;
+            psoDesc.DSVFormat = dsvFormat;
+
+            return psoDesc;
         }
     };
 

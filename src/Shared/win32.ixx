@@ -5,6 +5,7 @@ module;
 #include <dxgi1_6.h>
 #include <d3d12.h>
 #include <DirectXMath.h>
+#include <d3dx12.h>
 #include <dxcapi.h>
 #include <wrl/client.h>
 
@@ -34,6 +35,7 @@ export namespace Win32
 
 	constexpr auto CpAcp = CP_ACP;
 	constexpr auto CpUtf8 = CP_UTF8;
+	constexpr auto UIntMax = UINT_MAX;
 
 	inline constexpr auto Failed(HRESULT hr) noexcept -> bool
 	{
@@ -99,9 +101,17 @@ export namespace DXGI
 export namespace D3D12
 {
 	using
+		::CD3DX12_RASTERIZER_DESC,
+		::CD3DX12_BLEND_DESC,
+		::CD3DX12_DEPTH_STENCIL_DESC,
+		::D3D12_SHADER_BYTECODE,
+		::D3D12_INPUT_ELEMENT_DESC,
+		::D3D12_GRAPHICS_PIPELINE_STATE_DESC,
+		::D3D12_DEFAULT,
 		::ID3D12Device,
 		::ID3D12DeviceChild,
-		::D3D12_SHADER_BYTECODE
+		::ID3D12RootSignature,
+		::D3D12_PRIMITIVE_TOPOLOGY_TYPE
 		;
 
 	constexpr auto D3d12ConstantBufferDataPlacementAlignment = D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT;
