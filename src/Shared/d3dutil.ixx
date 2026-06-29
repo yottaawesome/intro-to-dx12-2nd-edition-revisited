@@ -77,8 +77,6 @@ export
             obj->SetPrivateData(D3D::WKPDID_D3DDebugObjectName, Win32::lstrlenA(name), name);
     }
 
-    
-
     //TODO: migrate
     class d3dUtil
     {
@@ -129,10 +127,6 @@ export
             std::vector<Win32::LPCWSTR>& compileArgs
         ) -> Microsoft::WRL::ComPtr<DXC::IDxcBlob>
         {
-            static auto utils = Microsoft::WRL::ComPtr<DXC::IDxcUtils>{};
-            static auto compiler = Microsoft::WRL::ComPtr<DXC::IDxcCompiler3>{};
-            static auto defaultIncludeHandler = Microsoft::WRL::ComPtr<DXC::IDxcIncludeHandler>{};
-
             if (!std::filesystem::exists(filename))
             {
                 auto msg = std::format(L"{} not found.", filename);
@@ -140,17 +134,22 @@ export
                 Win32::MessageBoxW(0, msg.c_str(), 0, 0);
             }
 
-            if (compiler == nullptr)
-            {
-                auto result = DXC::DxcCreateInstance(
-                    DXC::CLSID_DxcUtils, __uuidof(DXC::IDxcUtils), &utils);
-                ThrowIfFailed(result);
-                result = DXC::DxcCreateInstance(
-                    DXC::CLSID_DxcCompiler, __uuidof(DXC::IDxcCompiler3), &compiler );
-                ThrowIfFailed(result);
-				result = utils->CreateDefaultIncludeHandler(&defaultIncludeHandler); 
-                ThrowIfFailed(result);
-            }
+			using Microsoft::WRL::ComPtr;
+            static auto [utils, compiler, defaultIncludeHandler] = 
+				[] static -> std::tuple<ComPtr<DXC::IDxcUtils>, ComPtr<DXC::IDxcCompiler3>, ComPtr<DXC::IDxcIncludeHandler>>
+                {
+                    auto result = HRESULT{};
+                    auto utils = ComPtr<DXC::IDxcUtils>{};
+                    result = DXC::DxcCreateInstance(DXC::CLSID_DxcUtils, __uuidof(DXC::IDxcUtils), &utils);
+                    ThrowIfFailed(result);
+                    auto compiler = ComPtr<DXC::IDxcCompiler3>{};
+                    result = DXC::DxcCreateInstance(DXC::CLSID_DxcCompiler, __uuidof(DXC::IDxcCompiler3), &compiler);
+                    ThrowIfFailed(result);
+                    auto defaultIncludeHandler = ComPtr<DXC::IDxcIncludeHandler>{};
+                    result = utils->CreateDefaultIncludeHandler(&defaultIncludeHandler);
+                    ThrowIfFailed(result);
+                    return std::make_tuple(utils, compiler, defaultIncludeHandler);
+                }();
 
             // Use IDxcUtils to load the text file.
             auto codePage = std::uint32_t{ Win32::CpUtf8 };
