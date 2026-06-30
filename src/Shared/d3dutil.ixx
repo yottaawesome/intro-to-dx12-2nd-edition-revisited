@@ -268,6 +268,45 @@ export
 
             return psoDesc;
         }
+
+        auto CreateRandomTexture(
+            D3D12::ID3D12Device* device, 
+            DirectX::ResourceUploadBatch& resourceUpload,
+            size_t width, 
+            size_t height
+        ) -> Microsoft::WRL::ComPtr<D3D12::ID3D12Resource>
+        {
+            std::vector<DirectX::PackedVector::XMCOLOR> initData(width * height);
+            for (int i = 0; i < height; ++i)
+            {
+                for (int j = 0; j < width; ++j)
+                {
+                    // Random vector in [0,1).
+                    DirectX::XMFLOAT4 v(
+                        MathHelper::RandF(),
+                        MathHelper::RandF(),
+                        MathHelper::RandF(),
+                        MathHelper::RandF());
+
+                    initData[i * width + j] = DirectX::PackedVector::XMCOLOR(v.x, v.y, v.z, v.w);
+                }
+            }
+
+            D3D12::D3D12_SUBRESOURCE_DATA subResourceData = {};
+            subResourceData.pData = initData.data();
+            subResourceData.RowPitch = width * sizeof(DirectX::PackedVector::XMCOLOR);
+            subResourceData.SlicePitch = subResourceData.RowPitch * width;
+
+            Microsoft::WRL::ComPtr<D3D12::ID3D12Resource> randomTex;
+            ThrowIfFailed(DirectX::CreateTextureFromMemory(device,
+                resourceUpload,
+                width, height,
+                DXGI_FORMAT_R8G8B8A8_UNORM,
+                subResourceData,
+                &randomTex));
+
+            return randomTex;
+        }
     };
 
     struct ModelVertex

@@ -8,6 +8,11 @@ module;
 #include <d3dx12.h>
 #include <dxcapi.h>
 #include <wrl/client.h>
+#include <DirectXPackedVector.h>
+#include <DirectXTK12/ResourceUploadBatch.h>
+#include <directxtk12/SimpleMath.h>
+#include <directxtk12/BufferHelpers.h>
+#include <DirectXCollision.h>
 
 export module shared:win32;
 
@@ -105,12 +110,14 @@ export namespace D3D12
 		::CD3DX12_BLEND_DESC,
 		::CD3DX12_DEPTH_STENCIL_DESC,
 		::D3D12_SHADER_BYTECODE,
+		::D3D12_SUBRESOURCE_DATA,
 		::D3D12_INPUT_ELEMENT_DESC,
 		::D3D12_GRAPHICS_PIPELINE_STATE_DESC,
 		::D3D12_DEFAULT,
 		::ID3D12Device,
 		::ID3D12DeviceChild,
 		::ID3D12RootSignature,
+		::ID3D12Resource,
 		::D3D12_PRIMITIVE_TOPOLOGY_TYPE
 		;
 
@@ -120,16 +127,48 @@ export namespace D3D12
 export namespace DirectX
 {
 	using
+		::DirectX::ResourceUploadBatch,
 		::DirectX::XMFLOAT4,
 		::DirectX::XMFLOAT3,
 		::DirectX::XMFLOAT4X4,
 		::DirectX::FXMVECTOR,
 		::DirectX::FXMMATRIX,
 		::DirectX::XMFLOAT2,
+		::DirectX::CXMMATRIX,
+		::DirectX::XMVECTOR,
+		::DirectX::BoundingSphere,
+		::DirectX::BoundingFrustum,
+		::DirectX::XMVector3Less,
+		::DirectX::XMVector3Dot,
+		::DirectX::XMVectorZero,
+		::DirectX::XMVector3Greater,
+		::DirectX::XMVector3Normalize,
+		::DirectX::XMVector3LengthSq,
+		::DirectX::CreateTextureFromMemory,
+		::DirectX::XMVectorSet,
 		::DirectX::XMStoreFloat4,
 		::DirectX::XMMatrixIdentity,
 		::DirectX::XMMatrixTranspose,
 		::DirectX::XMMatrixDeterminant,
 		::DirectX::XMMatrixInverse
 		;
+
+	namespace SimpleMath
+	{
+		using 
+			::DirectX::SimpleMath::Vector2,
+			::DirectX::SimpleMath::Vector3,
+			::DirectX::SimpleMath::Vector4,
+			::DirectX::SimpleMath::Plane,
+			::DirectX::SimpleMath::Matrix
+		;
+	}
+
+	namespace PackedVector
+	{
+		using
+			::DirectX::PackedVector::XMStoreColor,
+			::DirectX::PackedVector::XMCOLOR
+			;
+	}
 }

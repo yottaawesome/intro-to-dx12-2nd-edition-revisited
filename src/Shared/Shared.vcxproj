@@ -168,6 +168,7 @@
     <ClCompile Include="d3dutil.ixx" />
     <ClCompile Include="gametimer.ixx" />
     <ClCompile Include="mathhelper.ixx" />
+    <ClCompile Include="random.ixx" />
     <ClCompile Include="shared.ixx" />
     <ClCompile Include="win32.ixx" />
   </ItemGroup>
