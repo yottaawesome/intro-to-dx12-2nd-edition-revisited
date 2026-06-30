@@ -129,12 +129,22 @@ export namespace D3D12
 
 	constexpr auto D3d12ConstantBufferDataPlacementAlignment = D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT;
 }
+// vector math operators are not exported by default, so we need to export them explicitly
+export 
+{
+	using 
+		::DirectX::operator+,
+		::DirectX::operator-,
+		::DirectX::operator*
+		;
+}
 
 export namespace DirectX
 {
 	// using produces a warning
 	constexpr auto XM_Pi = DirectX::XM_PI;
 	constexpr auto XM_2Pi = DirectX::XM_2PI;
+
 
 	using
 		::DirectX::ResourceUploadBatch,
@@ -150,9 +160,14 @@ export namespace DirectX
 		::DirectX::BoundingFrustum,
 		::DirectX::CreateStaticBuffer,
 		::DirectX::XMStoreFloat3,
+		::DirectX::XMVectorMin,
+		::DirectX::XMVectorMax,
+		::DirectX::XMStoreFloat3,
 		::DirectX::XMLoadFloat3,
 		::DirectX::XMStoreFloat4x4,
 		::DirectX::XMVector3Less,
+		::DirectX::XMVector3Cross,
+		::DirectX::XMVectorGetX,
 		::DirectX::XMVector3Dot,
 		::DirectX::XMVectorZero,
 		::DirectX::XMVector3Greater,

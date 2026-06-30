@@ -402,6 +402,275 @@ export
 
             return geo;
         }
+
+        auto BuildSkullGeometry(
+            ID3D12Device* device, 
+            DirectX::ResourceUploadBatch& uploadBatch
+        ) -> std::unique_ptr<MeshGeometry>
+        {
+            std::ifstream fin("Models/skull.txt");
+
+            if (!fin)
+            {
+                Win32::MessageBoxW(0, L"Models/skull.txt not found.", 0, 0);
+                return nullptr;
+            }
+
+            UINT vcount = 0;
+            UINT tcount = 0;
+            std::string ignore;
+
+            fin >> ignore >> vcount;
+            fin >> ignore >> tcount;
+            fin >> ignore >> ignore >> ignore >> ignore;
+
+            DirectX::XMFLOAT3 vMinf3(+MathHelper::Infinity, +MathHelper::Infinity, +MathHelper::Infinity);
+            DirectX::XMFLOAT3 vMaxf3(-MathHelper::Infinity, -MathHelper::Infinity, -MathHelper::Infinity);
+
+            DirectX::XMVECTOR vMin = DirectX::XMLoadFloat3(&vMinf3);
+            DirectX::XMVECTOR vMax = DirectX::XMLoadFloat3(&vMaxf3);
+
+            std::vector<ModelVertex> vertices(vcount);
+            for (UINT i = 0; i < vcount; ++i)
+            {
+                fin >> vertices[i].Pos.x >> vertices[i].Pos.y >> vertices[i].Pos.z;
+                fin >> vertices[i].Normal.x >> vertices[i].Normal.y >> vertices[i].Normal.z;
+
+                DirectX::XMVECTOR P = DirectX::XMLoadFloat3(&vertices[i].Pos);
+
+                // Project point onto unit sphere and generate spherical texture coordinates.
+                DirectX::XMFLOAT3 spherePos;
+                DirectX::XMStoreFloat3(&spherePos, DirectX::XMVector3Normalize(P));
+
+                DirectX::XMVECTOR N = DirectX::XMLoadFloat3(&vertices[i].Normal);
+
+                // Generate a tangent vector so normal mapping works.  We aren't applying
+                // a texture map to the skull, so we just need any tangent vector so that
+                // the math works out to give us the original interpolated vertex normal.
+                DirectX::XMVECTOR up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+                if (std::fabsf(DirectX::XMVectorGetX(DirectX::XMVector3Dot(N, up))) < 1.0f - 0.001f)
+                {
+                    DirectX::XMVECTOR T = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(up, N));
+                    DirectX::XMStoreFloat3(&vertices[i].TangentU, T);
+                }
+                else
+                {
+                    up = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+                    DirectX::XMVECTOR T = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(N, up));
+                    DirectX::XMStoreFloat3(&vertices[i].TangentU, T);
+                }
+
+                // The skull mesh does not have defined texture coordinates, but 
+                // we can auto generate some. We generate sphereical projection
+                // texture coordinates by projecting the vertices onto the unit
+                // sphere. Because the skull is not a sphere, there will be some
+                // distortion from this transformation, but it gives reasonable 
+                // texture coordinates when we have none.
+
+                float theta = std::atan2(spherePos.z, spherePos.x);
+
+                // Put in [0, 2pi].
+                if (theta < 0.0f)
+                    theta += DirectX::XM_2Pi;
+
+                float phi = std::acos(spherePos.y);
+
+                float u = theta / (2.0f * DirectX::XM_Pi);
+                float v = phi / DirectX::XM_Pi;
+
+                vertices[i].TexC = { u, v };
+
+                vMin = DirectX::XMVectorMin(vMin, P);
+                vMax = DirectX::XMVectorMax(vMax, P);
+            }
+
+            DirectX::BoundingBox bounds;
+            DirectX::XMStoreFloat3(&bounds.Center, 0.5f * (vMin + vMax));
+            DirectX::XMStoreFloat3(&bounds.Extents, 0.5f * (vMax - vMin));
+
+            fin >> ignore;
+            fin >> ignore;
+            fin >> ignore;
+
+            std::vector<std::int32_t> indices(3 * tcount);
+            for (UINT i = 0; i < tcount; ++i)
+            {
+                fin >> indices[i * 3 + 0] >> indices[i * 3 + 1] >> indices[i * 3 + 2];
+            }
+
+            fin.close();
+
+
+            const UINT vbByteSize = (UINT)vertices.size() * sizeof(ModelVertex);
+
+            const UINT ibByteSize = (UINT)indices.size() * sizeof(std::int32_t);
+
+            auto geo = std::make_unique<MeshGeometry>();
+            geo->Name = "skullGeo";
+
+            geo->VertexBufferCPU.resize(vbByteSize);
+            std::memcpy(geo->VertexBufferCPU.data(), vertices.data(), vbByteSize);
+
+            geo->IndexBufferCPU.resize(ibByteSize);
+            std::memcpy(geo->IndexBufferCPU.data(), indices.data(), ibByteSize);
+
+            DirectX::CreateStaticBuffer(device, uploadBatch,
+                vertices.data(), vertices.size(), sizeof(ModelVertex),
+                D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, &geo->VertexBufferGPU);
+
+            DirectX::CreateStaticBuffer(device, uploadBatch,
+                indices.data(), indices.size(), sizeof(std::uint32_t),
+                D3D12_RESOURCE_STATE_INDEX_BUFFER, &geo->IndexBufferGPU);
+
+            geo->VertexByteStride = sizeof(ModelVertex);
+            geo->VertexBufferByteSize = vbByteSize;
+            geo->IndexFormat = DXGI_FORMAT_R32_UINT;
+            geo->IndexBufferByteSize = ibByteSize;
+
+            SubmeshGeometry submesh;
+            submesh.IndexCount = (UINT)indices.size();
+            submesh.StartIndexLocation = 0;
+            submesh.BaseVertexLocation = 0;
+            submesh.VertexCount = (UINT)vertices.size();
+            submesh.Bounds = bounds;
+
+            geo->DrawArgs["skull"] = submesh;
+
+            return geo;
+        }
+
+        //loadm3d.h <- SkinnedData.h
+        //std::unique_ptr<MeshGeometry> LoadSimpleModelGeometry(
+        //    ID3D12Device* device,
+        //    DirectX::ResourceUploadBatch& uploadBatch,
+        //    const std::string& filename,
+        //    const std::string& geoName,
+        //    bool useIndex32)
+        //{
+        //    std::vector<M3DLoader::Vertex> m3dVertices;
+        //    std::vector<UINT> indices32;
+        //    std::vector<M3DLoader::Subset> subsets;
+        //    std::vector<M3DLoader::M3dMaterial> mats;
+
+        //    M3DLoader loader;
+        //    loader.LoadM3d(filename, m3dVertices, indices32, subsets, mats);
+
+        //    // Assume simple model has one subset and one material.
+        //    //assert(subsets.size() == 1);
+        //    //assert(mats.size() == 1);
+
+        //    XMFLOAT3 vMinf3(+MathHelper::Infinity, +MathHelper::Infinity, +MathHelper::Infinity);
+        //    XMFLOAT3 vMaxf3(-MathHelper::Infinity, -MathHelper::Infinity, -MathHelper::Infinity);
+
+        //    XMVECTOR vMin = XMLoadFloat3(&vMinf3);
+        //    XMVECTOR vMax = XMLoadFloat3(&vMaxf3);
+
+        //    std::vector<ModelVertex> vertices(m3dVertices.size());
+        //    for (UINT i = 0; i < m3dVertices.size(); ++i)
+        //    {
+        //        XMVECTOR P = XMLoadFloat3(&m3dVertices[i].Pos);
+
+        //        vertices[i].Pos = m3dVertices[i].Pos;
+        //        vertices[i].Normal = m3dVertices[i].Normal;
+        //        vertices[i].TangentU = XMFLOAT3(m3dVertices[i].TangentU.x, m3dVertices[i].TangentU.y, m3dVertices[i].TangentU.z);
+        //        vertices[i].TexC = m3dVertices[i].TexC;
+
+        //        vMin = XMVectorMin(vMin, P);
+        //        vMax = XMVectorMax(vMax, P);
+        //    }
+
+        //    BoundingBox bounds;
+        //    XMStoreFloat3(&bounds.Center, 0.5f * (vMin + vMax));
+        //    XMStoreFloat3(&bounds.Extents, 0.5f * (vMax - vMin));
+
+        //    const UINT indexElementByteSize = useIndex32 ? sizeof(uint32_t) : sizeof(uint16_t);
+        //    const UINT vbByteSize = (UINT)vertices.size() * sizeof(ModelVertex);
+        //    const UINT ibByteSize = (UINT)indices32.size() * indexElementByteSize;
+
+        //    auto geo = std::make_unique<MeshGeometry>();
+        //    geo->Name = geoName;
+
+        //    geo->VertexBufferCPU.resize(vbByteSize);
+        //    CopyMemory(geo->VertexBufferCPU.data(), vertices.data(), vbByteSize);
+
+        //    CreateStaticBuffer(device, uploadBatch,
+        //        vertices.data(), vertices.size(), sizeof(ModelVertex),
+        //        D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, &geo->VertexBufferGPU);
+
+        //    if (useIndex32)
+        //    {
+        //        geo->IndexBufferCPU.resize(ibByteSize);
+        //        CopyMemory(geo->IndexBufferCPU.data(), indices32.data(), ibByteSize);
+
+        //        CreateStaticBuffer(
+        //            device, uploadBatch,
+        //            indices32.data(), indices32.size(), sizeof(uint32_t),
+        //            D3D12_RESOURCE_STATE_INDEX_BUFFER, &geo->IndexBufferGPU);
+        //    }
+        //    else
+        //    {
+        //        std::vector<USHORT> indices16(indices32.size());
+        //        std::transform(std::begin(indices32), std::end(indices32), std::begin(indices16), [](UINT x)
+        //            {
+        //                return static_cast<USHORT>(x);
+        //            });
+
+        //        geo->IndexBufferCPU.resize(ibByteSize);
+        //        CopyMemory(geo->IndexBufferCPU.data(), indices16.data(), ibByteSize);
+
+        //        CreateStaticBuffer(
+        //            device, uploadBatch,
+        //            indices16.data(), indices16.size(), sizeof(uint16_t),
+        //            D3D12_RESOURCE_STATE_INDEX_BUFFER, &geo->IndexBufferGPU);
+        //    }
+
+        //    geo->VertexByteStride = sizeof(ModelVertex);
+        //    geo->VertexBufferByteSize = vbByteSize;
+        //    geo->IndexFormat = useIndex32 ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT;
+        //    geo->IndexBufferByteSize = ibByteSize;
+
+        //    SubmeshGeometry submesh;
+        //    submesh.IndexCount = (UINT)indices32.size();
+        //    submesh.StartIndexLocation = 0;
+        //    submesh.BaseVertexLocation = 0;
+        //    submesh.VertexCount = (UINT)vertices.size();
+        //    submesh.Bounds = bounds;
+
+        //    geo->DrawArgs["subset0"] = submesh;
+
+        //    return geo;
+        //}
+
+        std::vector<float> CalcGaussWeights(float sigma)
+        {
+            float twoSigma2 = 2.0f * sigma * sigma;
+
+            // Estimate the blur radius based on sigma since sigma controls the "width" of the bell curve.
+            // For example, for sigma = 3, the width of the bell curve is 
+            int blurRadius = (int)ceil(2.0f * sigma);
+
+            std::vector<float> weights;
+            weights.resize(2 * blurRadius + 1);
+
+            float weightSum = 0.0f;
+
+            for (int i = -blurRadius; i <= blurRadius; ++i)
+            {
+                float x = (float)i;
+
+                weights[i + blurRadius] = std::expf(-x * x / twoSigma2);
+
+                weightSum += weights[i + blurRadius];
+            }
+
+            // Divide by the sum so all the weights add up to 1.0.
+            for (int i = 0; i < weights.size(); ++i)
+            {
+                weights[i] /= weightSum;
+            }
+
+            return weights;
+        }
     };
 
     
