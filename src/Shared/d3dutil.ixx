@@ -2,6 +2,8 @@ export module shared:d3dutil;
 import std;
 import :win32;
 import :mathhelper;
+import :meshutil;
+import :meshgen;
 
 export
 {
@@ -76,6 +78,24 @@ export
         if (obj)
             obj->SetPrivateData(D3D::WKPDID_D3DDebugObjectName, Win32::lstrlenA(name), name);
     }
+
+    struct ModelVertex
+    {
+        ModelVertex() = default;
+        ModelVertex(
+            float px, float py, float pz,
+            float nx, float ny, float nz,
+            float u, float v) :
+            Pos(px, py, pz),
+            Normal(nx, ny, nz),
+            TexC(u, v)
+        {}
+
+        DirectX::XMFLOAT3 Pos{};
+        DirectX::XMFLOAT3 Normal{};
+        DirectX::XMFLOAT2 TexC{};
+        DirectX::XMFLOAT3 TangentU{};
+    };
 
     //TODO: migrate
     class d3dUtil
@@ -307,25 +327,84 @@ export
 
             return randomTex;
         }
+
+        auto BuildShapeGeometry(
+            ID3D12Device* device, 
+            DirectX::ResourceUploadBatch& uploadBatch, 
+            bool useIndex32
+        ) -> std::unique_ptr<MeshGeometry>
+        {
+            MeshGen meshGen;
+            MeshGenData box = meshGen.CreateBox(1.0f, 1.0f, 1.0f, 3);
+            MeshGenData grid = meshGen.CreateGrid(20.0f, 30.0f, 30, 20);
+            MeshGenData sphere = meshGen.CreateSphere(0.5f, 20, 20);
+            MeshGenData cylinder = meshGen.CreateCylinder(0.5f, 0.3f, 3.0f, 20, 20);
+            MeshGenData quad = meshGen.CreateQuad(0.0f, 0.0f, 1.0f, 1.0f, 0.0f);
+
+            //
+            // We are concatenating all the geometry into one big vertex/index buffer.  So
+            // define the regions in the buffer each submesh covers.
+            //
+            MeshGenData compositeMesh;
+            SubmeshGeometry boxSubmesh = compositeMesh.AppendSubmesh(box);
+            SubmeshGeometry gridSubmesh = compositeMesh.AppendSubmesh(grid);
+            SubmeshGeometry sphereSubmesh = compositeMesh.AppendSubmesh(sphere);
+            SubmeshGeometry cylinderSubmesh = compositeMesh.AppendSubmesh(cylinder);
+            SubmeshGeometry quadSubmesh = compositeMesh.AppendSubmesh(quad);
+
+            // Extract the vertex elements we are interested into our vertex buffer. 
+            std::vector<ModelVertex> vertices(compositeMesh.Vertices.size());
+            for (size_t i = 0; i < compositeMesh.Vertices.size(); ++i)
+            {
+                vertices[i].Pos = compositeMesh.Vertices[i].Position;
+                vertices[i].Normal = compositeMesh.Vertices[i].Normal;
+                vertices[i].TexC = compositeMesh.Vertices[i].TexC;
+                vertices[i].TangentU = compositeMesh.Vertices[i].TangentU;
+            }
+
+            const uint32_t indexCount = (UINT)compositeMesh.Indices32.size();
+
+            const UINT indexElementByteSize = useIndex32 ? sizeof(uint32_t) : sizeof(uint16_t);
+            const UINT vbByteSize = (UINT)vertices.size() * sizeof(ModelVertex);
+            const UINT ibByteSize = indexCount * indexElementByteSize;
+
+            const byte* indexData = useIndex32 ?
+                reinterpret_cast<byte*>(compositeMesh.Indices32.data()) :
+                reinterpret_cast<byte*>(compositeMesh.GetIndices16().data());
+
+            auto geo = std::make_unique<MeshGeometry>();
+            geo->Name = "shapeGeo";
+
+            geo->VertexBufferCPU.resize(vbByteSize);
+            std::memcpy(geo->VertexBufferCPU.data(), vertices.data(), vbByteSize);
+
+            geo->IndexBufferCPU.resize(ibByteSize);
+            std::memcpy(geo->IndexBufferCPU.data(), indexData, ibByteSize);
+
+            DirectX::CreateStaticBuffer(device, uploadBatch,
+                vertices.data(), vertices.size(), sizeof(ModelVertex),
+                D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, &geo->VertexBufferGPU);
+
+            DirectX::CreateStaticBuffer(device, uploadBatch,
+                indexData, indexCount, indexElementByteSize,
+                D3D12_RESOURCE_STATE_INDEX_BUFFER, &geo->IndexBufferGPU);
+
+            geo->VertexByteStride = sizeof(ModelVertex);
+            geo->VertexBufferByteSize = vbByteSize;
+            geo->IndexFormat = useIndex32 ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT;
+            geo->IndexBufferByteSize = ibByteSize;
+
+            geo->DrawArgs["box"] = boxSubmesh;
+            geo->DrawArgs["grid"] = gridSubmesh;
+            geo->DrawArgs["sphere"] = sphereSubmesh;
+            geo->DrawArgs["cylinder"] = cylinderSubmesh;
+            geo->DrawArgs["quad"] = quadSubmesh;
+
+            return geo;
+        }
     };
 
-    struct ModelVertex
-    {
-        ModelVertex() = default;
-        ModelVertex(
-            float px, float py, float pz,
-            float nx, float ny, float nz,
-            float u, float v) :
-            Pos(px, py, pz),
-            Normal(nx, ny, nz),
-            TexC(u, v)
-        {}
-
-        DirectX::XMFLOAT3 Pos{};
-        DirectX::XMFLOAT3 Normal{};
-        DirectX::XMFLOAT2 TexC{};
-        DirectX::XMFLOAT3 TangentU{};
-    };
+    
     
     // Simple struct to represent a material for our demos. 
     struct Material

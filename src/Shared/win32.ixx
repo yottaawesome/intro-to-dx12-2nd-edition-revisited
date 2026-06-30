@@ -27,6 +27,9 @@ export namespace Win32
 		::_com_error,
 		::LPCWSTR,
 		::BYTE,
+		::INT,
+		::byte,
+		::BOOL,
 		::OutputDebugStringW,
 		::MessageBoxA,
 		::MessageBoxW,
@@ -106,6 +109,9 @@ export namespace DXGI
 export namespace D3D12
 {
 	using
+		::D3D12_VERTEX_BUFFER_VIEW,
+		::D3D12_INDEX_BUFFER_VIEW,
+		::D3D12_CONSTANT_BUFFER_VIEW_DESC,
 		::CD3DX12_RASTERIZER_DESC,
 		::CD3DX12_BLEND_DESC,
 		::CD3DX12_DEPTH_STENCIL_DESC,
@@ -126,6 +132,10 @@ export namespace D3D12
 
 export namespace DirectX
 {
+	// using produces a warning
+	constexpr auto XM_Pi = DirectX::XM_PI;
+	constexpr auto XM_2Pi = DirectX::XM_2PI;
+
 	using
 		::DirectX::ResourceUploadBatch,
 		::DirectX::XMFLOAT4,
@@ -138,6 +148,10 @@ export namespace DirectX
 		::DirectX::XMVECTOR,
 		::DirectX::BoundingSphere,
 		::DirectX::BoundingFrustum,
+		::DirectX::CreateStaticBuffer,
+		::DirectX::XMStoreFloat3,
+		::DirectX::XMLoadFloat3,
+		::DirectX::XMStoreFloat4x4,
 		::DirectX::XMVector3Less,
 		::DirectX::XMVector3Dot,
 		::DirectX::XMVectorZero,
