@@ -84,6 +84,24 @@ export namespace Win32
 		::QueryPerformanceFrequency
 		;
 
+	namespace HRCodes
+	{
+		constexpr auto OK = S_OK;
+		constexpr auto Fail = E_FAIL;
+		constexpr auto InvalidArg = E_INVALIDARG;
+		constexpr auto OutOfMemory = E_OUTOFMEMORY;
+		constexpr auto NotImpl = E_NOTIMPL;
+	}
+
+	constexpr auto Failed(HRESULT hr) noexcept -> bool
+	{
+		return FAILED(hr);
+	}
+	constexpr auto Succeeded(HRESULT hr) noexcept -> bool
+	{
+		return SUCCEEDED(hr);
+	}
+
 	constexpr auto GetXLParam(auto lParam) noexcept -> auto
 	{
 		return GET_X_LPARAM(lParam);
@@ -160,20 +178,6 @@ export namespace Win32
 	constexpr auto CpAcp = CP_ACP;
 	constexpr auto CpUtf8 = CP_UTF8;
 	constexpr auto UIntMax = UINT_MAX;
-
-	inline constexpr auto Failed(HRESULT hr) noexcept -> bool
-	{
-		return FAILED(hr);
-	}
-	inline constexpr auto Succeeded(HRESULT hr) noexcept -> bool
-	{
-		return SUCCEEDED(hr);
-	}
-
-	enum Hresults
-	{
-		Fail = E_FAIL,
-	};
 }
 
 export namespace Microsoft::WRL
@@ -212,6 +216,7 @@ export namespace DXC
 
 export namespace DXGI
 {
+	constexpr auto CreateFactoryDebug = DXGI_CREATE_FACTORY_DEBUG;
 	enum Error
 	{
 		NotFound = DXGI_ERROR_NOT_FOUND,
@@ -239,6 +244,7 @@ export namespace DXGI
 		::IDXGISwapChain4,
 		::IDXGIAdapter4,
 		::IDXGIAdapter,
+		::IDXGIFactory4,
 		::ID3D12Device5,
 		::ID3D12Fence,
 		::ID3D12CommandQueue,
@@ -248,7 +254,8 @@ export namespace DXGI
 		::DXGI_SAMPLE_DESC,
 		::DXGI_SWAP_CHAIN_DESC,
 		::DXGI_SWAP_CHAIN_DESC1,
-		::DXGI_SWAP_CHAIN_FULLSCREEN_DESC
+		::DXGI_SWAP_CHAIN_FULLSCREEN_DESC,
+		::CreateDXGIFactory2
 		;
 }	
 
@@ -267,6 +274,8 @@ export namespace D3D12
 		::CD3DX12_RESOURCE_BARRIER,
 		::D3D12_RESOURCE_STATES,
 		::D3D12_HEAP_TYPE,
+		::D3D_FEATURE_LEVEL,
+		::D3D12_FEATURE_DATA_D3D12_OPTIONS,
 		::D3D12_HEAP_FLAGS,
 		::D3D12_CLEAR_VALUE,
 		::D3D12_RESOURCE_DESC,
@@ -304,13 +313,17 @@ export namespace D3D12
 		::ID3D12Fence,
 		::ID3D12DeviceChild,
 		::ID3D12RootSignature,
+		::ID3D12Debug,
+		::ID3D12Debug1,
 		::ID3D12Resource,
 		::ID3D12CommandQueue,
 		::ID3D12DescriptorHeap,
 		::ID3D12CommandAllocator,
 		::ID3D12GraphicsCommandList,
 		::ID3D12GraphicsCommandList6,
-		::D3D12_PRIMITIVE_TOPOLOGY_TYPE
+		::D3D12_PRIMITIVE_TOPOLOGY_TYPE,
+		::D3D12GetDebugInterface,
+		::D3D12CreateDevice
 		;
 
 	constexpr auto D3d12ConstantBufferDataPlacementAlignment = D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT;

@@ -18,6 +18,8 @@ export namespace ImGui
 		IMGUI_CHECKVERSION();
 	}
 	using 
+		::ImGui_ImplDX12_NewFrame,
+		::ImGui_ImplWin32_NewFrame,
 		::ImGui_ImplDX12_Init,
 		::ImGui_ImplDX12_Shutdown,
 		::ImGui_ImplWin32_Init,
@@ -25,6 +27,7 @@ export namespace ImGui
 		::ImGui::DestroyContext,
 		::ImGui::CreateContext,
         ::ImGui::StyleColorsDark,
-		::ImGui::GetCurrentContext
+		::ImGui::GetCurrentContext,
+		::ImGui::NewFrame
 		;
 }

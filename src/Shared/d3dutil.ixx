@@ -214,7 +214,7 @@ export
                 errorText.replace(errorText.find(dummyFilename), dummyFilename.length(), filename);
 
                 OutputDebugStringW(errorText.c_str());
-                ThrowIfFailed(Win32::Hresults::Fail);
+                ThrowIfFailed(Win32::HRCodes::Fail);
             }
 
             // Get the DX intermediate language, which the GPU driver will translate

@@ -343,9 +343,14 @@ protected:
 //    virtual void Update(const GameTimer& gt) = 0;
 //    virtual void Draw(const GameTimer& gt) = 0;
 //
-//    // override to define GUI (call once per frame). Make sure to call base implementation first.
-//    virtual void UpdateImgui(const GameTimer& gt);
-//
+    // override to define GUI (call once per frame). Make sure to call base implementation first.
+    virtual void UpdateImgui(const GameTimer& gt)
+    {
+        ImGui_ImplDX12_NewFrame();
+        ImGui_ImplWin32_NewFrame();
+        ImGui::NewFrame();
+    }
+
     // Convenience overrides for handling mouse input.
     virtual void OnMouseDown(WPARAM btnState, int x, int y) {}
     virtual void OnMouseUp(WPARAM btnState, int x, int y) {}
@@ -404,7 +409,85 @@ protected:
 
         return true;
     }
-//    bool InitDirect3D();
+
+    auto InitDirect3D() -> bool
+    {
+        auto factoryFlags = 0u;
+
+#if defined(DEBUG) || defined(_DEBUG) 
+        factoryFlags = DXGI::CreateFactoryDebug;
+
+        // Enable the D3D12 debug layer.
+        Microsoft::WRL::ComPtr<D3D12::ID3D12Debug> debugController0;
+        Microsoft::WRL::ComPtr<D3D12::ID3D12Debug1> debugController1;
+        ThrowIfFailed(D3D12::D3D12GetDebugInterface(
+			__uuidof(D3D12::ID3D12Debug), &debugController0));
+        ThrowIfFailed(debugController0->QueryInterface(
+			__uuidof(D3D12::ID3D12Debug1), &debugController1
+        ));
+        debugController1->EnableDebugLayer();
+        //debugController1->SetEnableGPUBasedValidation(true);
+#endif
+
+        ThrowIfFailed(DXGI::CreateDXGIFactory2(
+            factoryFlags,
+			__uuidof(DXGI::IDXGIFactory4), &mdxgiFactory));
+
+        auto adapters = std::vector<Microsoft::WRL::ComPtr<DXGI::IDXGIAdapter>>{};
+        auto foundAdapter = Microsoft::WRL::ComPtr<DXGI::IDXGIAdapter>{};
+
+
+
+        // Find an adapter that supports D3D_FEATURE_LEVEL_12_2. This is mainly for laptops so 
+        // it picks the discrete GPU over the integrated GPU.
+        auto hardwareResult = Win32::HRCodes::Fail;
+        for (int i = 0; mdxgiFactory->EnumAdapters(i, &foundAdapter) != DXGI::Error::NotFound; ++i)
+        {
+#if 0 
+            // Force WARP adapter.
+            mdxgiFactory->EnumWarpAdapter(IID_PPV_ARGS(&foundAdapter));
+#endif
+
+            // Try to create hardware device.
+            auto device = Microsoft::WRL::ComPtr<D3D12::ID3D12Device>{};
+            hardwareResult = D3D12::D3D12CreateDevice(
+                foundAdapter.Get(),             // default adapter
+                D3D12::D3D_FEATURE_LEVEL::D3D_FEATURE_LEVEL_12_2,
+				__uuidof(D3D12::ID3D12Device), 
+                &device);
+
+            if (Win32::Succeeded(hardwareResult))
+            {
+                ThrowIfFailed(device->QueryInterface(__uuidof(D3D12::ID3D12Device), &md3dDevice));
+                break;
+            }
+        }
+
+        if (Win32::Failed(hardwareResult))
+        {
+            Win32::MessageBoxW(0, L"Could not find D3D_FEATURE_LEVEL_12_2 GPU", 0, 0);
+            return false;
+        }
+
+        // Get default adapter, so we can IDXGIAdapter3::QueryVideoMemoryInfo.
+        ThrowIfFailed(foundAdapter.As(&mDefaultAdapter));
+
+        ThrowIfFailed(md3dDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE,
+			__uuidof(D3D12::ID3D12Fence), &mFence));
+
+#ifdef _DEBUG
+        LogAdapters();
+#endif
+
+        CreateCommandObjects();
+        CreateSwapChain();
+        CreateRtvAndDsvDescriptorHeaps();
+
+        SamplerHeap::Get().Init(md3dDevice.Get());
+
+        return true;
+    }
+
     void CreateCommandObjects()
     {
         auto queueDesc = D3D12::D3D12_COMMAND_QUEUE_DESC{
@@ -587,24 +670,19 @@ protected:
 
     void LogOutputDisplayModes(DXGI::IDXGIOutput* output, DXGI_FORMAT format)
     {
-        UINT count = 0;
-        UINT flags = 0;
-
+        auto count = 0u;
+        auto flags = 0u;
         // Call with nullptr to get list count.
         output->GetDisplayModeList(format, flags, &count, nullptr);
 
-        std::vector<DXGI_MODE_DESC> modeList(count);
+        auto modeList = std::vector<DXGI_MODE_DESC>(count);
         output->GetDisplayModeList(format, flags, &count, &modeList[0]);
 
         for (auto& x : modeList)
         {
-            UINT n = x.RefreshRate.Numerator;
-            UINT d = x.RefreshRate.Denominator;
-            std::wstring text =
-                L"Width = " + std::to_wstring(x.Width) + L" " +
-                L"Height = " + std::to_wstring(x.Height) + L" " +
-                L"Refresh = " + std::to_wstring(n) + L"/" + std::to_wstring(d) +
-                L"\n";
+            auto n = x.RefreshRate.Numerator;
+            auto d = x.RefreshRate.Denominator;
+            auto text = std::format(L"Width = {} Height = {} Refresh = {}/{}\n", x.Width, x.Height, n, d);
 
             Win32::OutputDebugStringW(text.c_str());
         }
