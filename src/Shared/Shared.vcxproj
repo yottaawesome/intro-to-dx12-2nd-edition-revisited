@@ -167,6 +167,7 @@
   <ItemGroup>
     <ClCompile Include="d3dutil.ixx" />
     <ClCompile Include="gametimer.ixx" />
+    <ClCompile Include="loadm3d.ixx" />
     <ClCompile Include="mathhelper.ixx" />
     <ClCompile Include="meshgen.ixx" />
     <ClCompile Include="meshutil.ixx" />

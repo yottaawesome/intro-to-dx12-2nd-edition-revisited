@@ -6,3 +6,5 @@ export import :mathhelper;
 export import :random;
 export import :meshutil;
 export import :meshgen;
+export import :skinneddata;
+export import :loadm3d;
