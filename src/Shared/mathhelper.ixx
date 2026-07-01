@@ -319,6 +319,6 @@ public:
         return result;
     }
 
-    static const float Infinity;
-    static const float Pi;
+    static inline constexpr auto Infinity = std::numeric_limits<float>::max();
+    static inline constexpr auto Pi = 3.1415926535f;
 };

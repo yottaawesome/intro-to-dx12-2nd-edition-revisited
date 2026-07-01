@@ -19,7 +19,7 @@ namespace
 	) -> Win32::LRESULT
 	{
 		// Hook Imgui into the message pump.
-		if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wParam, lParam))
+		if (ImGui::ImGui_ImplWin32_WndProcHandler(hwnd, msg, wParam, lParam))
 			return 0;
 
 		// Forward hwnd on because we can get messages (e.g., WM_CREATE)
@@ -27,6 +27,12 @@ namespace
 		return TApp::GetApp()->MsgProc(hwnd, msg, wParam, lParam);
 	}
 }
+
+export struct ImGuiSrvAllocator
+{
+	CbvSrvUavHeap* Heap = nullptr;
+	std::unordered_map<SIZE_T, std::uint32_t> AllocatedIndices;
+};
 
 // TODO -- done?
 export class D3DApp
@@ -622,6 +628,37 @@ protected:
 		return mDsvHeap.CpuHandle(0);
 	}
 
+	static void AllocateImGuiSrv(
+		ImGui::ImGui_ImplDX12_InitInfo* info,
+		D3D12::D3D12_CPU_DESCRIPTOR_HANDLE* outCpu,
+		D3D12::D3D12_GPU_DESCRIPTOR_HANDLE* outGpu
+	)
+	{
+		auto* allocator = static_cast<ImGuiSrvAllocator*>(info->UserData);
+
+		const auto index = allocator->Heap->NextFreeIndex();
+		*outCpu = allocator->Heap->CpuHandle(index);
+		*outGpu = allocator->Heap->GpuHandle(index);
+
+		allocator->AllocatedIndices.emplace(outCpu->ptr, index);
+	}
+
+	static void FreeImGuiSrv(
+		ImGui::ImGui_ImplDX12_InitInfo* info,
+		D3D12::D3D12_CPU_DESCRIPTOR_HANDLE cpu,
+		D3D12::D3D12_GPU_DESCRIPTOR_HANDLE
+	)
+	{
+		auto* allocator = static_cast<ImGuiSrvAllocator*>(info->UserData);
+
+		auto it = allocator->AllocatedIndices.find(cpu.ptr);
+		if (it == allocator->AllocatedIndices.end())
+			return; // Prefer assert/log here if you have a project convention.
+
+		allocator->Heap->ReleaseIndex(it->second);
+		allocator->AllocatedIndices.erase(it);
+	}
+
 	// Need to call after cbvSrvUavHeap created in derived app.
 	void InitImgui(CbvSrvUavHeap& cbvSrvUavHeap)
 	{
@@ -637,13 +674,30 @@ protected:
 
 		// Setup Platform/Renderer backends
 		ImGui::ImGui_ImplWin32_Init(mhMainWnd);
-		ImGui::ImGui_ImplDX12_Init(
+		// ImGui_ImplDX12_Init() used by the book is obsolete. Use ImGui_ImplDX12_Init() instead.
+
+		mImguiSrvAllocator.Heap = &cbvSrvUavHeap;
+		ImGui::ImGui_ImplDX12_InitInfo initInfo{};
+		initInfo.Device = md3dDevice.Get();
+		initInfo.CommandQueue = mCommandQueue.Get();
+		initInfo.NumFramesInFlight = gNumFrameResources;
+		initInfo.RTVFormat = mBackBufferFormat;
+		initInfo.DSVFormat = DXGI_FORMAT_UNKNOWN;
+		initInfo.SrvDescriptorHeap = cbvSrvUavHeap.GetD3dHeap();
+		/* allocate from CbvSrvUavHeap */
+		initInfo.UserData = &mImguiSrvAllocator;
+		initInfo.SrvDescriptorAllocFn = AllocateImGuiSrv;
+		/* release back to CbvSrvUavHeap */
+		initInfo.SrvDescriptorFreeFn = FreeImGuiSrv;
+		ImGui::ImGui_ImplDX12_Init(&initInfo);
+
+		/*ImGui::ImGui_ImplDX12_Init(
 			md3dDevice.Get(), 
 			gNumFrameResources,
 			mBackBufferFormat,
 			cbvSrvUavHeap.GetD3dHeap(),
 			cbvSrvUavHeap.CpuHandle(imgGuiBindlessIndex),
-			cbvSrvUavHeap.GpuHandle(imgGuiBindlessIndex));
+			cbvSrvUavHeap.GpuHandle(imgGuiBindlessIndex));*/
 	}
 
 	void ShutdownImgui()
@@ -742,8 +796,8 @@ protected:
 	}
 
 protected:
-
-	static D3DApp* mApp;
+	ImGuiSrvAllocator mImguiSrvAllocator;
+	static inline D3DApp* mApp = nullptr;
 
 	Win32::HINSTANCE mhAppInst = nullptr; // application instance handle
 	Win32::HWND      mhMainWnd = nullptr; // main window handle
@@ -792,5 +846,6 @@ protected:
 	DXGI::DXGI_FORMAT mDepthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	int mClientWidth = 1280;
 	int mClientHeight = 720;
+
 };
 

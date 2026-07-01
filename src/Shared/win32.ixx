@@ -14,6 +14,7 @@ module;
 #include <directxtk12/SimpleMath.h>
 #include <directxtk12/BufferHelpers.h>
 #include <DirectXCollision.h>
+#include <DirectXColors.h>
 
 export module shared:win32;
 
@@ -32,7 +33,12 @@ struct ConstValue
 
 export namespace Win32
 {
+	constexpr auto FltMax = FLT_MAX;
+	constexpr auto FltMin = FLT_MIN;
+	constexpr auto CrtAllocMemDf = _CRTDBG_ALLOC_MEM_DF;
+	constexpr auto CrtLeakCheckDf = _CRTDBG_LEAK_CHECK_DF;
 	using
+		::_CrtSetDbgFlag,
 		::UINT,
 		::LARGE_INTEGER,
 		::WCHAR,
@@ -49,6 +55,7 @@ export namespace Win32
 		::HINSTANCE,
 		::LRESULT,
 		::HWND,
+		::LPWSTR,
 		::HANDLE,
 		::UINT_PTR,
 		::WPARAM,
@@ -60,6 +67,8 @@ export namespace Win32
 		::MINMAXINFO,
 		::POINT,
 		::MSG,
+		::SetCapture,
+		::ReleaseCapture,
 		::Sleep,
 		::DispatchMessageW,
 		::PeekMessageW,
@@ -89,6 +98,7 @@ export namespace Win32
 		::QueryPerformanceFrequency
 		;
 
+	constexpr auto MbOk = MB_OK;
 	constexpr auto PmRemove = PM_REMOVE;
 	namespace HRCodes
 	{
@@ -238,11 +248,13 @@ export namespace DXGI
 
 	using
 		::DXGI_SCALING,
+		::DXGI_PRESENT_PARAMETERS,
 		::IDXGISwapChain1,
 		::DXGI_OUTPUT_DESC,
 		::DXGI_SWAP_EFFECT,
 		::DXGI_MODE_SCANLINE_ORDER,
 		::DXGI_ALPHA_MODE,
+		::DXGI_MEMORY_SEGMENT_GROUP,
 		::DXGI_SWAP_CHAIN_FLAG,
 		::IDXGIObject,
 		::IDXGIOutput,
@@ -252,6 +264,7 @@ export namespace DXGI
 		::IDXGIAdapter4,
 		::IDXGIAdapter,
 		::IDXGIFactory4,
+		::DXGI_QUERY_VIDEO_MEMORY_INFO,
 		::ID3D12Device5,
 		::ID3D12Fence,
 		::ID3D12CommandQueue,
@@ -276,6 +289,7 @@ export namespace D3D12
 	}
 
 	using
+		::D3D12_CLEAR_FLAGS,
 		::ID3D12CommandList,
 		::CD3DX12_HEAP_PROPERTIES,
 		::CD3DX12_RESOURCE_BARRIER,
@@ -316,6 +330,9 @@ export namespace D3D12
 		::D3D12_INPUT_ELEMENT_DESC,
 		::D3D12_GRAPHICS_PIPELINE_STATE_DESC,
 		::CD3DX12_CPU_DESCRIPTOR_HANDLE,
+		::D3D12_CPU_DESCRIPTOR_HANDLE,
+		::D3D12_GPU_DESCRIPTOR_HANDLE,
+		::D3D12_DESCRIPTOR_RANGE_TYPE,
 		::D3D12_DEFAULT,
 		::ID3D12Device,
 		::ID3D12Fence,
@@ -352,7 +369,13 @@ export namespace DirectX
 	constexpr auto XM_Pi = DirectX::XM_PI;
 	constexpr auto XM_2Pi = DirectX::XM_2PI;
 
+	namespace Colors
+	{
+		using ::DirectX::Colors::LightSteelBlue;
+	}
+
 	using
+		::DirectX::GraphicsMemoryStatistics,
 		::DirectX::ResourceUploadBatch,
 		::DirectX::XMFLOAT4,
 		::DirectX::XMFLOAT3,
@@ -366,6 +389,8 @@ export namespace DirectX
 		::DirectX::BoundingFrustum,
 		::DirectX::GraphicsMemory,
 		::DirectX::BoundingBox,
+		::DirectX::XMStoreFloat2,
+		::DirectX::XMLoadFloat2,
 		::DirectX::XMLoadFloat4x4,
 		::DirectX::XMMatrixPerspectiveFovRH,
 		::DirectX::CreateStaticBuffer,

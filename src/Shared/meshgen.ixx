@@ -42,7 +42,41 @@ export
         std::vector<MeshGenVertex> Vertices;
         std::vector<std::uint32_t> Indices32;
 
-        SubmeshGeometry AppendSubmesh(const MeshGenData& meshData);
+        SubmeshGeometry AppendSubmesh(const MeshGenData& meshData)
+        {
+            UINT vertexOffset = static_cast<UINT>(Vertices.size());
+            UINT indexOffset = static_cast<UINT>(Indices32.size());
+
+            DirectX::XMFLOAT3 vMinf3(+Win32::FltMax, +Win32::FltMax, +Win32::FltMax);
+            DirectX::XMFLOAT3 vMaxf3(-Win32::FltMax, -Win32::FltMax, -Win32::FltMax);
+
+            DirectX::XMVECTOR vMin = DirectX::XMLoadFloat3(&vMinf3);
+            DirectX::XMVECTOR vMax = DirectX::XMLoadFloat3(&vMaxf3);
+
+            for (UINT i = 0; i < meshData.Vertices.size(); ++i)
+            {
+                DirectX::XMVECTOR P = DirectX::XMLoadFloat3(&meshData.Vertices[i].Position);
+
+                vMin = DirectX::XMVectorMin(vMin, P);
+                vMax = DirectX::XMVectorMax(vMax, P);
+            }
+
+            DirectX::BoundingBox bounds;
+            DirectX::XMStoreFloat3(&bounds.Center, 0.5f * (vMin + vMax));
+            DirectX::XMStoreFloat3(&bounds.Extents, 0.5f * (vMax - vMin));
+
+            SubmeshGeometry submesh;
+            submesh.IndexCount = static_cast<UINT>(meshData.Indices32.size());
+            submesh.StartIndexLocation = indexOffset;
+            submesh.BaseVertexLocation = vertexOffset;
+            submesh.VertexCount = static_cast<UINT>(meshData.Vertices.size());
+            submesh.Bounds = bounds;
+
+            Vertices.insert(std::end(Vertices), std::begin(meshData.Vertices), std::end(meshData.Vertices));
+            Indices32.insert(std::end(Indices32), std::begin(meshData.Indices32), std::end(meshData.Indices32));
+
+            return submesh;
+        }
 
         std::vector<std::uint16_t>& GetIndices16()
         {
@@ -280,31 +314,473 @@ export
         /// Creates a geosphere centered at the origin with the given radius.  The
         /// depth controls the level of tessellation.
         ///</summary>
-        MeshGenData CreateGeosphere(float radius, uint32_t numSubdivisions);
+        MeshGenData CreateGeosphere(float radius, uint32_t numSubdivisions)
+        {
+            MeshGenData meshData;
+
+            // Put a cap on the number of subdivisions.
+            numSubdivisions = std::min<uint32_t>(numSubdivisions, 6u);
+
+            // Approximate a sphere by tessellating an icosahedron.
+
+            const float X = 0.525731f;
+            const float Z = 0.850651f;
+
+            DirectX::XMFLOAT3 pos[12] =
+            {
+                DirectX::XMFLOAT3(-X, 0.0f, Z),  DirectX::XMFLOAT3(X, 0.0f, Z),
+                DirectX::XMFLOAT3(-X, 0.0f, -Z), DirectX::XMFLOAT3(X, 0.0f, -Z),
+                DirectX::XMFLOAT3(0.0f, Z, X),   DirectX::XMFLOAT3(0.0f, Z, -X),
+                DirectX::XMFLOAT3(0.0f, -Z, X),  DirectX::XMFLOAT3(0.0f, -Z, -X),
+                DirectX::XMFLOAT3(Z, X, 0.0f),   DirectX::XMFLOAT3(-Z, X, 0.0f),
+                DirectX::XMFLOAT3(Z, -X, 0.0f),  DirectX::XMFLOAT3(-Z, -X, 0.0f)
+            };
+
+            uint32_t k[60] =
+            {
+                1,4,0,  4,9,0,  4,5,9,  8,5,4,  1,8,4,
+                1,10,8, 10,3,8, 8,3,5,  3,2,5,  3,7,2,
+                3,10,7, 10,6,7, 6,11,7, 6,0,11, 6,1,0,
+                10,1,6, 11,0,9, 2,11,9, 5,2,9,  11,2,7
+            };
+
+            meshData.Vertices.resize(12);
+            meshData.Indices32.assign(&k[0], &k[60]);
+
+            for (uint32_t i = 0; i < 12; ++i)
+                meshData.Vertices[i].Position = pos[i];
+
+            for (uint32_t i = 0; i < numSubdivisions; ++i)
+                Subdivide(meshData);
+
+            // Project vertices onto sphere and scale.
+            for (uint32_t i = 0; i < meshData.Vertices.size(); ++i)
+            {
+                // Project onto unit sphere.
+                DirectX::XMVECTOR n = DirectX::XMVector3Normalize(DirectX::XMLoadFloat3(&meshData.Vertices[i].Position));
+
+                // Project onto sphere.
+                DirectX::XMVECTOR p = radius * n;
+
+                DirectX::XMStoreFloat3(&meshData.Vertices[i].Position, p);
+                DirectX::XMStoreFloat3(&meshData.Vertices[i].Normal, n);
+
+                // Derive texture coordinates from spherical coordinates.
+                float theta = std::atan2f(meshData.Vertices[i].Position.z, meshData.Vertices[i].Position.x);
+
+                // Put in [0, 2pi].
+                if (theta < 0.0f)
+                    theta += DirectX::XM_2Pi;
+
+                float phi = std::acosf(meshData.Vertices[i].Position.y / radius);
+
+                meshData.Vertices[i].TexC.x = theta / DirectX::XM_2Pi;
+                meshData.Vertices[i].TexC.y = phi / DirectX::XM_Pi;
+
+                // Partial derivative of P with respect to theta
+                meshData.Vertices[i].TangentU.x = -radius * sinf(phi) * sinf(theta);
+                meshData.Vertices[i].TangentU.y = 0.0f;
+                meshData.Vertices[i].TangentU.z = +radius * sinf(phi) * cosf(theta);
+
+                DirectX::XMVECTOR T = DirectX::XMLoadFloat3(&meshData.Vertices[i].TangentU);
+                DirectX::XMStoreFloat3(&meshData.Vertices[i].TangentU, DirectX::XMVector3Normalize(T));
+            }
+
+            return meshData;
+        }
 
         ///<summary>
         /// Creates a cylinder parallel to the y-axis, and centered about the origin.  
         /// The bottom and top radius can vary to form various cone shapes rather than true
         // cylinders.  The slices and stacks parameters control the degree of tessellation.
         ///</summary>
-        MeshGenData CreateCylinder(float bottomRadius, float topRadius, float height, uint32_t sliceCount, uint32_t stackCount);
+        MeshGenData CreateCylinder(float bottomRadius, float topRadius, float height, uint32_t sliceCount, uint32_t stackCount)
+        {
+            MeshGenData meshData;
+
+            //
+            // Build Stacks.
+            // 
+
+            float stackHeight = height / stackCount;
+
+            // Amount to increment radius as we move up each stack level from bottom to top.
+            float radiusStep = (topRadius - bottomRadius) / stackCount;
+
+            uint32_t ringCount = stackCount + 1;
+
+            // Compute vertices for each stack ring starting at the bottom and moving up.
+            for (uint32_t i = 0; i < ringCount; ++i)
+            {
+                float y = -0.5f * height + i * stackHeight;
+                float r = bottomRadius + i * radiusStep;
+
+                // vertices of ring
+                float dTheta = 2.0f * DirectX::XM_Pi / sliceCount;
+                for (uint32_t j = 0; j <= sliceCount; ++j)
+                {
+                    MeshGenVertex vertex;
+
+                    float c = cosf(j * dTheta);
+                    float s = sinf(j * dTheta);
+
+                    vertex.Position = DirectX::XMFLOAT3(r * c, y, r * s);
+
+                    vertex.TexC.x = (float)j / sliceCount;
+                    vertex.TexC.y = 1.0f - (float)i / stackCount;
+
+                    // Cylinder can be parameterized as follows, where we introduce v
+                    // parameter that goes in the same direction as the v tex-coord
+                    // so that the bitangent goes in the same direction as the v tex-coord.
+                    //   Let r0 be the bottom radius and let r1 be the top radius.
+                    //   y(v) = h - hv for v in [0,1].
+                    //   r(v) = r1 + (r0-r1)v
+                    //
+                    //   x(t, v) = r(v)*cos(t)
+                    //   y(t, v) = h - hv
+                    //   z(t, v) = r(v)*sin(t)
+                    // 
+                    //  dx/dt = -r(v)*sin(t)
+                    //  dy/dt = 0
+                    //  dz/dt = +r(v)*cos(t)
+                    //
+                    //  dx/dv = (r0-r1)*cos(t)
+                    //  dy/dv = -h
+                    //  dz/dv = (r0-r1)*sin(t)
+
+                    // This is unit length.
+                    vertex.TangentU = DirectX::XMFLOAT3(-s, 0.0f, c);
+
+                    float dr = bottomRadius - topRadius;
+                    DirectX::XMFLOAT3 bitangent(dr * c, -height, dr * s);
+
+                    DirectX::XMVECTOR T = DirectX::XMLoadFloat3(&vertex.TangentU);
+                    DirectX::XMVECTOR B = DirectX::XMLoadFloat3(&bitangent);
+                    DirectX::XMVECTOR N = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(T, B));
+                    DirectX::XMStoreFloat3(&vertex.Normal, N);
+
+                    meshData.Vertices.push_back(vertex);
+                }
+            }
+            // Add one because we duplicate the first and last vertex per ring
+            // since the texture coordinates are different.
+            uint32_t ringVertexCount = sliceCount + 1;
+
+            // Compute indices for each stack.
+            for (uint32_t i = 0; i < stackCount; ++i)
+            {
+                for (uint32_t j = 0; j < sliceCount; ++j)
+                {
+                    meshData.Indices32.push_back(i * ringVertexCount + j);
+                    meshData.Indices32.push_back((i + 1) * ringVertexCount + j);
+                    meshData.Indices32.push_back((i + 1) * ringVertexCount + j + 1);
+
+                    meshData.Indices32.push_back(i * ringVertexCount + j);
+                    meshData.Indices32.push_back((i + 1) * ringVertexCount + j + 1);
+                    meshData.Indices32.push_back(i * ringVertexCount + j + 1);
+                }
+            }
+
+            BuildCylinderTopCap(bottomRadius, topRadius, height, sliceCount, stackCount, meshData);
+            BuildCylinderBottomCap(bottomRadius, topRadius, height, sliceCount, stackCount, meshData);
+
+            return meshData;
+        }
 
         ///<summary>
         /// Creates an mxn grid in the xz-plane with m rows and n columns, centered
         /// at the origin with the specified width and depth.
         ///</summary>
-        MeshGenData CreateGrid(float width, float depth, uint32_t m, uint32_t n);
+        MeshGenData CreateGrid(float width, float depth, uint32_t m, uint32_t n)
+        {
+            MeshGenData meshData;
+
+            uint32_t vertexCount = m * n;
+            uint32_t faceCount = (m - 1) * (n - 1) * 2;
+
+            //
+            // Create the vertices.
+            //
+
+            float halfWidth = 0.5f * width;
+            float halfDepth = 0.5f * depth;
+
+            float dx = width / (n - 1);
+            float dz = depth / (m - 1);
+
+            float du = 1.0f / (n - 1);
+            float dv = 1.0f / (m - 1);
+
+            meshData.Vertices.resize(vertexCount);
+            for (uint32_t i = 0; i < m; ++i)
+            {
+                float z = halfDepth - i * dz;
+                for (uint32_t j = 0; j < n; ++j)
+                {
+                    float x = -halfWidth + j * dx;
+
+                    meshData.Vertices[i * n + j].Position = DirectX::XMFLOAT3(x, 0.0f, z);
+                    meshData.Vertices[i * n + j].Normal = DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f);
+                    meshData.Vertices[i * n + j].TangentU = DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f);
+
+                    // Stretch texture over grid.
+                    meshData.Vertices[i * n + j].TexC.x = j * du;
+                    meshData.Vertices[i * n + j].TexC.y = i * dv;
+                }
+            }
+
+            //
+            // Create the indices.
+            //
+
+            meshData.Indices32.resize(faceCount * 3); // 3 indices per face
+
+            // Iterate over each quad and compute indices.
+            uint32_t k = 0;
+            for (uint32_t i = 0; i < m - 1; ++i)
+            {
+                for (uint32_t j = 0; j < n - 1; ++j)
+                {
+                    meshData.Indices32[k] = i * n + j;
+                    meshData.Indices32[k + 1] = i * n + j + 1;
+                    meshData.Indices32[k + 2] = (i + 1) * n + j;
+
+                    meshData.Indices32[k + 3] = (i + 1) * n + j;
+                    meshData.Indices32[k + 4] = i * n + j + 1;
+                    meshData.Indices32[k + 5] = (i + 1) * n + j + 1;
+
+                    k += 6; // next quad
+                }
+            }
+
+            return meshData;
+        }
 
         ///<summary>
         /// Creates a quad aligned with the screen.  This is useful for postprocessing and screen effects.
         ///</summary>
-        MeshGenData CreateQuad(float x, float y, float w, float h, float depth);
+        MeshGenData CreateQuad(float x, float y, float w, float h, float depth)
+        {
+            MeshGenData meshData;
+
+            meshData.Vertices.resize(4);
+            meshData.Indices32.resize(6);
+
+            // Position coordinates specified in NDC space.
+            meshData.Vertices[0] = MeshGenVertex(
+                x, y - h, depth,
+                0.0f, 0.0f, -1.0f,
+                1.0f, 0.0f, 0.0f,
+                0.0f, 1.0f);
+
+            meshData.Vertices[1] = MeshGenVertex(
+                x, y, depth,
+                0.0f, 0.0f, -1.0f,
+                1.0f, 0.0f, 0.0f,
+                0.0f, 0.0f);
+
+            meshData.Vertices[2] = MeshGenVertex(
+                x + w, y, depth,
+                0.0f, 0.0f, -1.0f,
+                1.0f, 0.0f, 0.0f,
+                1.0f, 0.0f);
+
+            meshData.Vertices[3] = MeshGenVertex(
+                x + w, y - h, depth,
+                0.0f, 0.0f, -1.0f,
+                1.0f, 0.0f, 0.0f,
+                1.0f, 1.0f);
+
+            meshData.Indices32[0] = 0;
+            meshData.Indices32[1] = 1;
+            meshData.Indices32[2] = 2;
+
+            meshData.Indices32[3] = 0;
+            meshData.Indices32[4] = 2;
+            meshData.Indices32[5] = 3;
+
+            return meshData;
+        }
 
     private:
 
-        void Subdivide(MeshGenData& meshData);
-        MeshGenVertex MidPoint(const MeshGenVertex& v0, const MeshGenVertex& v1);
-        void BuildCylinderTopCap(float bottomRadius, float topRadius, float height, uint32_t sliceCount, uint32_t stackCount, MeshGenData& meshData);
-        void BuildCylinderBottomCap(float bottomRadius, float topRadius, float height, uint32_t sliceCount, uint32_t stackCount, MeshGenData& meshData);
+        void Subdivide(MeshGenData& meshData)
+        {
+            // Save a copy of the input geometry.
+            MeshGenData inputCopy = meshData;
+
+
+            meshData.Vertices.resize(0);
+            meshData.Indices32.resize(0);
+
+            //       v1
+            //       *
+            //      / \
+        	//     /   \
+        	//  m0*-----*m1
+            //   / \   / \
+        	//  /   \ /   \
+        	// *-----*-----*
+            // v0    m2     v2
+
+            uint32_t numTris = (uint32_t)inputCopy.Indices32.size() / 3;
+            for (uint32_t i = 0; i < numTris; ++i)
+            {
+                MeshGenVertex v0 = inputCopy.Vertices[inputCopy.Indices32[i * 3 + 0]];
+                MeshGenVertex v1 = inputCopy.Vertices[inputCopy.Indices32[i * 3 + 1]];
+                MeshGenVertex v2 = inputCopy.Vertices[inputCopy.Indices32[i * 3 + 2]];
+
+                //
+                // Generate the midpoints.
+                //
+
+                MeshGenVertex m0 = MidPoint(v0, v1);
+                MeshGenVertex m1 = MidPoint(v1, v2);
+                MeshGenVertex m2 = MidPoint(v0, v2);
+
+                //
+                // Add new geometry.
+                //
+
+                meshData.Vertices.push_back(v0); // 0
+                meshData.Vertices.push_back(v1); // 1
+                meshData.Vertices.push_back(v2); // 2
+                meshData.Vertices.push_back(m0); // 3
+                meshData.Vertices.push_back(m1); // 4
+                meshData.Vertices.push_back(m2); // 5
+
+                meshData.Indices32.push_back(i * 6 + 0);
+                meshData.Indices32.push_back(i * 6 + 3);
+                meshData.Indices32.push_back(i * 6 + 5);
+
+                meshData.Indices32.push_back(i * 6 + 3);
+                meshData.Indices32.push_back(i * 6 + 4);
+                meshData.Indices32.push_back(i * 6 + 5);
+
+                meshData.Indices32.push_back(i * 6 + 5);
+                meshData.Indices32.push_back(i * 6 + 4);
+                meshData.Indices32.push_back(i * 6 + 2);
+
+                meshData.Indices32.push_back(i * 6 + 3);
+                meshData.Indices32.push_back(i * 6 + 1);
+                meshData.Indices32.push_back(i * 6 + 4);
+            }
+        }
+        MeshGenVertex MidPoint(const MeshGenVertex& v0, const MeshGenVertex& v1)
+        {
+            DirectX::XMVECTOR p0 = DirectX::XMLoadFloat3(&v0.Position);
+            DirectX::XMVECTOR p1 = DirectX::XMLoadFloat3(&v1.Position);
+
+            DirectX::XMVECTOR n0 = XMLoadFloat3(&v0.Normal);
+            DirectX::XMVECTOR n1 = DirectX::XMLoadFloat3(&v1.Normal);
+
+            DirectX::XMVECTOR tan0 = DirectX::XMLoadFloat3(&v0.TangentU);
+            DirectX::XMVECTOR tan1 = DirectX::XMLoadFloat3(&v1.TangentU);
+
+            DirectX::XMVECTOR tex0 = DirectX::XMLoadFloat2(&v0.TexC);
+            DirectX::XMVECTOR tex1 = DirectX::XMLoadFloat2(&v1.TexC);
+
+            // Compute the midpoints of all the attributes.  Vectors need to be normalized
+            // since linear interpolating can make them not unit length.  
+            DirectX::XMVECTOR pos = 0.5f * (p0 + p1);
+            DirectX::XMVECTOR normal = DirectX::XMVector3Normalize(0.5f * (n0 + n1));
+            DirectX::XMVECTOR tangent = DirectX::XMVector3Normalize(0.5f * (tan0 + tan1));
+            DirectX::XMVECTOR tex = 0.5f * (tex0 + tex1);
+
+            MeshGenVertex v;
+            DirectX::XMStoreFloat3(&v.Position, pos);
+            DirectX::XMStoreFloat3(&v.Normal, normal);
+            DirectX::XMStoreFloat3(&v.TangentU, tangent);
+            DirectX::XMStoreFloat2(&v.TexC, tex);
+
+            return v;
+        }
+        void BuildCylinderTopCap(float bottomRadius, float topRadius, float height, uint32_t sliceCount, uint32_t stackCount, MeshGenData& meshData)
+        {
+            uint32_t baseIndex = (uint32_t)meshData.Vertices.size();
+
+            float y = 0.5f * height;
+            float dTheta = 2.0f * DirectX::XM_Pi / sliceCount;
+
+            // Duplicate cap ring vertices because the texture coordinates and normals differ.
+            for (uint32_t i = 0; i <= sliceCount; ++i)
+            {
+                float x = topRadius * cosf(i * dTheta);
+                float z = topRadius * sinf(i * dTheta);
+
+                // Scale down by the height to try and make top cap texture coord area
+                // proportional to base.
+                float u = x / height + 0.5f;
+                float v = z / height + 0.5f;
+
+                meshData.Vertices.push_back(MeshGenVertex(
+                    x, y, z,
+                    0.0f, 1.0f, 0.0f,
+                    1.0f, 0.0f, 0.0f,
+                    u, v));
+            }
+
+            // Cap center vertex.
+            meshData.Vertices.push_back(MeshGenVertex(
+                0.0f, y, 0.0f,
+                0.0f, 1.0f, 0.0f,
+                1.0f, 0.0f, 0.0f,
+                0.5f, 0.5f));
+
+            // Index of center vertex.
+            uint32_t centerIndex = (uint32_t)meshData.Vertices.size() - 1;
+
+            for (uint32_t i = 0; i < sliceCount; ++i)
+            {
+                meshData.Indices32.push_back(centerIndex);
+                meshData.Indices32.push_back(baseIndex + i + 1);
+                meshData.Indices32.push_back(baseIndex + i);
+            }
+        }
+        void BuildCylinderBottomCap(float bottomRadius, float topRadius, float height, uint32_t sliceCount, uint32_t stackCount, MeshGenData& meshData)
+        {
+            // 
+            // Build bottom cap.
+            //
+
+            uint32_t baseIndex = (uint32_t)meshData.Vertices.size();
+            float y = -0.5f * height;
+
+            // vertices of ring
+            float dTheta = 2.0f * DirectX::XM_Pi / sliceCount;
+            for (uint32_t i = 0; i <= sliceCount; ++i)
+            {
+                float x = bottomRadius * cosf(i * dTheta);
+                float z = bottomRadius * sinf(i * dTheta);
+
+                // Scale down by the height to try and make top cap texture coord area
+                // proportional to base.
+                float u = x / height + 0.5f;
+                float v = z / height + 0.5f;
+
+                meshData.Vertices.push_back(MeshGenVertex(
+                    x, y, z,
+                    0.0f, -1.0f, 0.0f,
+                    1.0f, 0.0f, 0.0f,
+                    u, v));
+            }
+
+            // Cap center vertex.
+            meshData.Vertices.push_back(MeshGenVertex(
+                0.0f, y, 0.0f,
+                0.0f, -1.0f, 0.0f,
+                1.0f, 0.0f, 0.0f,
+                0.5f, 0.5f));
+
+            // Cache the index of center vertex.
+            uint32_t centerIndex = (uint32_t)meshData.Vertices.size() - 1;
+
+            for (uint32_t i = 0; i < sliceCount; ++i)
+            {
+                meshData.Indices32.push_back(centerIndex);
+                meshData.Indices32.push_back(baseIndex + i);
+                meshData.Indices32.push_back(baseIndex + i + 1);
+            }
+        }
     };
 }

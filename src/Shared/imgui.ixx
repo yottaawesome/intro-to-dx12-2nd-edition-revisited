@@ -9,7 +9,7 @@ module;
 export module shared:imgui;
 
 // Forward declare message handler from imgui_impl_win32.cpp
-export extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+extern "C++" IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 export namespace ImGui
 {
@@ -24,10 +24,22 @@ export namespace ImGui
 		::ImGui_ImplDX12_Shutdown,
 		::ImGui_ImplWin32_Init,
 		::ImGui_ImplWin32_Shutdown,
+		::ImGui_ImplWin32_WndProcHandler,
+		::ImGui_ImplDX12_RenderDrawData,
+		::ImGui_ImplDX12_InitInfo,
+		::ImGuiIO,
+		::ImGuiStyle,
+		::ImGui::GetDrawData,
+		::ImGui::CollapsingHeader,
+		::ImGui::Text,
+		::ImGui::GetIO,
 		::ImGui::DestroyContext,
 		::ImGui::CreateContext,
         ::ImGui::StyleColorsDark,
 		::ImGui::GetCurrentContext,
-		::ImGui::NewFrame
+		::ImGui::NewFrame,
+		::ImGui::Begin,
+		::ImGui::End,
+		::ImGui::Render
 		;
 }

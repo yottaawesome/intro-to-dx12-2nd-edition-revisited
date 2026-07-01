@@ -34,7 +34,7 @@ public:
 	}
 
 private:
-	static bool _initialized;
-	static std::random_device _randDevice;
-	static std::mt19937 _mt;
+	static inline bool _initialized = false;
+	static inline std::random_device _randDevice{};
+	static inline std::mt19937 _mt{};
 };
