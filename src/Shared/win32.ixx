@@ -1,6 +1,7 @@
 module;
 
 #include <Windows.h>
+#include <WindowsX.h>
 #include <comdef.h>
 #include <dxgi1_6.h>
 #include <d3d12.h>
@@ -15,6 +16,19 @@ module;
 #include <DirectXCollision.h>
 
 export module shared:win32;
+
+template<auto X>
+struct ConstValue
+{
+	constexpr operator decltype(X)() noexcept
+	{ 
+		return X; 
+	}
+	static constexpr auto operator()() noexcept -> decltype(X)
+	{
+		return X;
+	}
+};
 
 export namespace Win32
 {
@@ -35,9 +49,30 @@ export namespace Win32
 		::HINSTANCE,
 		::LRESULT,
 		::HWND,
+		::HANDLE,
+		::UINT_PTR,
 		::WPARAM,
 		::LPARAM,
 		::FLOAT,
+		::WNDCLASS,
+		::HBRUSH,
+		::RECT,
+		::MINMAXINFO,
+		::POINT,
+		::PostQuitMessage,
+		::DefWindowProc,
+		::CreateWindowExW,
+		::AdjustWindowRect,
+		::ShowWindow,
+		::UpdateWindow,
+		::RegisterClassW,
+		::GetStockObject,
+		::LoadIconW,
+		::LoadCursorW,
+		::SetWindowTextW,
+		::CloseHandle,
+		::WaitForSingleObject,
+		::CreateEventEx,
 		::OutputDebugStringW,
 		::MessageBoxA,
 		::MessageBoxW,
@@ -49,6 +84,79 @@ export namespace Win32
 		::QueryPerformanceFrequency
 		;
 
+	constexpr auto GetXLParam(auto lParam) noexcept -> auto
+	{
+		return GET_X_LPARAM(lParam);
+	}
+	constexpr auto GetYLParam(auto lParam) noexcept -> auto
+	{
+		return GET_Y_LPARAM(lParam);
+	}
+	constexpr auto MakeLResult(auto a, auto b) noexcept -> auto
+	{
+		return MAKELRESULT(a, b);
+	}
+	constexpr auto LoWord(auto dw) noexcept -> auto
+	{
+		return LOWORD(dw);
+	}
+	constexpr auto HiWord(auto dw) noexcept -> auto
+	{
+		return HIWORD(dw);
+	}
+	enum MNC//MenuChar
+	{
+		Close = MNC_CLOSE,
+	};
+	enum WindowMessages
+	{
+		Activate = WM_ACTIVATE,
+		Size = WM_SIZE,
+		EnterSizeMove = WM_ENTERSIZEMOVE,
+		ExitSizeMove = WM_EXITSIZEMOVE,
+		Destroy = WM_DESTROY,
+		MenuChar = WM_MENUCHAR,
+		GetMinMaxInfo = WM_GETMINMAXINFO,
+		LButtonDown = WM_LBUTTONDOWN,
+		MButtonDown = WM_MBUTTONDOWN,
+		RButtonDown = WM_RBUTTONDOWN,
+		LButtonUp = WM_LBUTTONUP,
+		MButtonUp = WM_MBUTTONUP,
+		RButtonUp = WM_RBUTTONUP,
+		MouseMove = WM_MOUSEMOVE,
+		KeyUp = WM_KEYUP
+	};
+	enum VK
+	{
+		Escape = VK_ESCAPE
+	};
+
+	enum Size
+	{
+		Minimized = SIZE_MINIMIZED,
+		Maximized = SIZE_MAXIMIZED,
+		Restored = SIZE_RESTORED
+	};
+
+	enum WA
+	{
+		Inactive = WA_INACTIVE,
+		Active = WA_ACTIVE,
+		ClickActive = WA_CLICKACTIVE
+	};
+
+	constexpr auto CsHRedraw = CS_HREDRAW;
+	constexpr auto CsVRedraw = CS_VREDRAW;
+	constexpr auto WsOverlappedWindow = WS_OVERLAPPEDWINDOW;
+	constexpr auto CwUseDefault = CW_USEDEFAULT;
+	constexpr auto SwShow = SW_SHOW;
+
+	constexpr auto NullBrush = NULL_BRUSH;
+	constexpr auto IdiApplication = ConstValue<IDI_APPLICATION>{};
+	constexpr auto IdcArrow = ConstValue<IDC_ARROW>{};
+
+	constexpr auto Infinite = INFINITE;
+	constexpr auto EventAllAccess = EVENT_ALL_ACCESS;
 	constexpr auto CpAcp = CP_ACP;
 	constexpr auto CpUtf8 = CP_UTF8;
 	constexpr auto UIntMax = UINT_MAX;
@@ -104,7 +212,26 @@ export namespace DXC
 
 export namespace DXGI
 {
+	enum Error
+	{
+		NotFound = DXGI_ERROR_NOT_FOUND,
+		DeviceRemoved = DXGI_ERROR_DEVICE_REMOVED,
+		DeviceHung = DXGI_ERROR_DEVICE_HUNG,
+		DeviceReset = DXGI_ERROR_DEVICE_RESET,
+		DriverInternalError = DXGI_ERROR_DRIVER_INTERNAL_ERROR,
+		AccessDenied = DXGI_ERROR_ACCESS_DENIED
+	};
+
+	constexpr auto DxgiUsageRenderTargetOutput = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+
 	using
+		::DXGI_SCALING,
+		::IDXGISwapChain1,
+		::DXGI_OUTPUT_DESC,
+		::DXGI_SWAP_EFFECT,
+		::DXGI_MODE_SCANLINE_ORDER,
+		::DXGI_ALPHA_MODE,
+		::DXGI_SWAP_CHAIN_FLAG,
 		::IDXGIObject,
 		::IDXGIOutput,
 		::IDXGIFactory,
@@ -135,6 +262,9 @@ export namespace D3D12
 	}
 
 	using
+		::D3D12_COMMAND_QUEUE_DESC,
+		::D3D12_COMMAND_QUEUE_FLAGS,
+		::D3D12_COMMAND_LIST_TYPE,
 		::D3D12_VERTEX_BUFFER_VIEW,
 		::D3D12_COMPARISON_FUNC,
 		::D3D12_RECT,
@@ -160,12 +290,14 @@ export namespace D3D12
 		::CD3DX12_CPU_DESCRIPTOR_HANDLE,
 		::D3D12_DEFAULT,
 		::ID3D12Device,
+		::ID3D12Fence,
 		::ID3D12DeviceChild,
 		::ID3D12RootSignature,
 		::ID3D12Resource,
 		::ID3D12CommandQueue,
 		::ID3D12DescriptorHeap,
 		::ID3D12CommandAllocator,
+		::ID3D12GraphicsCommandList,
 		::ID3D12GraphicsCommandList6,
 		::D3D12_PRIMITIVE_TOPOLOGY_TYPE
 		;
