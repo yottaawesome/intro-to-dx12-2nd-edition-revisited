@@ -32,6 +32,12 @@ export namespace Win32
 		::BOOL,
 		::USHORT,
 		::DWORD,
+		::HINSTANCE,
+		::LRESULT,
+		::HWND,
+		::WPARAM,
+		::LPARAM,
+		::FLOAT,
 		::OutputDebugStringW,
 		::MessageBoxA,
 		::MessageBoxW,
@@ -72,7 +78,8 @@ export namespace Microsoft::WRL
 export namespace D3D
 {
 	using
-		::WKPDID_D3DDebugObjectName
+		::WKPDID_D3DDebugObjectName,
+		::D3D_DRIVER_TYPE
 		;
 }
 
@@ -99,7 +106,17 @@ export namespace DXGI
 {
 	using
 		::IDXGIObject,
+		::IDXGIOutput,
+		::IDXGIFactory,
+		::IDXGIFactory6,
+		::IDXGISwapChain4,
+		::IDXGIAdapter4,
 		::IDXGIAdapter,
+		::ID3D12Device5,
+		::ID3D12Fence,
+		::ID3D12CommandQueue,
+		::ID3D12CommandAllocator,
+		::ID3D12GraphicsCommandList6,
 		::DXGI_FORMAT,
 		::DXGI_SAMPLE_DESC,
 		::DXGI_SWAP_CHAIN_DESC,
@@ -110,22 +127,46 @@ export namespace DXGI
 
 export namespace D3D12
 {
+	constexpr auto D3d12Float32Max = D3D12_FLOAT32_MAX;
+
+	inline constexpr auto DefaultShader4ComponentMapping() noexcept -> std::uint32_t
+	{
+		return D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	}
+
 	using
 		::D3D12_VERTEX_BUFFER_VIEW,
+		::D3D12_COMPARISON_FUNC,
+		::D3D12_RECT,
+		::D3D12_VIEWPORT,
+		::D3D12_SAMPLER_DESC,
+		::D3D12_FILTER,
+		::D3D12_DSV_DIMENSION,
+		::D3D12_DSV_FLAGS,
+		::D3D12_TEXTURE_COPY_LOCATION,
+		::D3D12_TEXTURE_ADDRESS_MODE,
 		::D3D12_INDEX_BUFFER_VIEW,
 		::D3D12_CONSTANT_BUFFER_VIEW_DESC,
 		::CD3DX12_RASTERIZER_DESC,
+		::D3D12_DEPTH_STENCIL_VIEW_DESC,
 		::CD3DX12_BLEND_DESC,
 		::CD3DX12_DEPTH_STENCIL_DESC,
 		::D3D12_SHADER_BYTECODE,
+		::D3D12_DESCRIPTOR_HEAP_TYPE,
 		::D3D12_SUBRESOURCE_DATA,
+		::CD3DX12_GPU_DESCRIPTOR_HANDLE,
 		::D3D12_INPUT_ELEMENT_DESC,
 		::D3D12_GRAPHICS_PIPELINE_STATE_DESC,
+		::CD3DX12_CPU_DESCRIPTOR_HANDLE,
 		::D3D12_DEFAULT,
 		::ID3D12Device,
 		::ID3D12DeviceChild,
 		::ID3D12RootSignature,
 		::ID3D12Resource,
+		::ID3D12CommandQueue,
+		::ID3D12DescriptorHeap,
+		::ID3D12CommandAllocator,
+		::ID3D12GraphicsCommandList6,
 		::D3D12_PRIMITIVE_TOPOLOGY_TYPE
 		;
 
@@ -147,7 +188,6 @@ export namespace DirectX
 	constexpr auto XM_Pi = DirectX::XM_PI;
 	constexpr auto XM_2Pi = DirectX::XM_2PI;
 
-
 	using
 		::DirectX::ResourceUploadBatch,
 		::DirectX::XMFLOAT4,
@@ -160,6 +200,8 @@ export namespace DirectX
 		::DirectX::XMVECTOR,
 		::DirectX::BoundingSphere,
 		::DirectX::BoundingFrustum,
+		::DirectX::GraphicsMemory,
+		::DirectX::BoundingBox,
 		::DirectX::XMLoadFloat4x4,
 		::DirectX::XMMatrixPerspectiveFovRH,
 		::DirectX::CreateStaticBuffer,

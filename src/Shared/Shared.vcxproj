@@ -165,7 +165,9 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="d3dapp.ixx" />
     <ClCompile Include="d3dutil.ixx" />
+    <ClCompile Include="descriptorutil.ixx" />
     <ClCompile Include="gametimer.ixx" />
     <ClCompile Include="loadm3d.ixx" />
     <ClCompile Include="mathhelper.ixx" />

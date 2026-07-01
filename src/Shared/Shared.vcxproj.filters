@@ -45,6 +45,12 @@
     <ClCompile Include="loadm3d.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="d3dapp.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="descriptorutil.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="vcpkg.json" />

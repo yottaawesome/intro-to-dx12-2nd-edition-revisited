@@ -8,3 +8,5 @@ export import :meshutil;
 export import :meshgen;
 export import :skinneddata;
 export import :loadm3d;
+export import :d3dapp;
+export import :descriptorutil;
