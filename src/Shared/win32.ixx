@@ -30,6 +30,8 @@ export namespace Win32
 		::INT,
 		::byte,
 		::BOOL,
+		::USHORT,
+		::DWORD,
 		::OutputDebugStringW,
 		::MessageBoxA,
 		::MessageBoxW,

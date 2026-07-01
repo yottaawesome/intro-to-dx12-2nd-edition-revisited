@@ -4,6 +4,7 @@ import :win32;
 import :mathhelper;
 import :meshutil;
 import :meshgen;
+import :loadm3d;
 
 export
 {
@@ -97,7 +98,6 @@ export
         DirectX::XMFLOAT3 TangentU{};
     };
 
-    //TODO: migrate
     class d3dUtil
     {
     public:
@@ -540,108 +540,109 @@ export
         }
 
         //loadm3d.h <- SkinnedData.h
-        //std::unique_ptr<MeshGeometry> LoadSimpleModelGeometry(
-        //    ID3D12Device* device,
-        //    DirectX::ResourceUploadBatch& uploadBatch,
-        //    const std::string& filename,
-        //    const std::string& geoName,
-        //    bool useIndex32)
-        //{
-        //    std::vector<M3DLoader::Vertex> m3dVertices;
-        //    std::vector<UINT> indices32;
-        //    std::vector<M3DLoader::Subset> subsets;
-        //    std::vector<M3DLoader::M3dMaterial> mats;
+        auto LoadSimpleModelGeometry(
+            ID3D12Device* device,
+            DirectX::ResourceUploadBatch& uploadBatch,
+            const std::string& filename,
+            const std::string& geoName,
+            bool useIndex32
+        ) -> std::unique_ptr<MeshGeometry>
+        {
+            std::vector<M3DLoader::Vertex> m3dVertices;
+            std::vector<UINT> indices32;
+            std::vector<M3DLoader::Subset> subsets;
+            std::vector<M3DLoader::M3dMaterial> mats;
 
-        //    M3DLoader loader;
-        //    loader.LoadM3d(filename, m3dVertices, indices32, subsets, mats);
+            M3DLoader loader;
+            loader.LoadM3d(filename, m3dVertices, indices32, subsets, mats);
 
-        //    // Assume simple model has one subset and one material.
-        //    //assert(subsets.size() == 1);
-        //    //assert(mats.size() == 1);
+            // Assume simple model has one subset and one material.
+            //assert(subsets.size() == 1);
+            //assert(mats.size() == 1);
 
-        //    XMFLOAT3 vMinf3(+MathHelper::Infinity, +MathHelper::Infinity, +MathHelper::Infinity);
-        //    XMFLOAT3 vMaxf3(-MathHelper::Infinity, -MathHelper::Infinity, -MathHelper::Infinity);
+            DirectX::XMFLOAT3 vMinf3(+MathHelper::Infinity, +MathHelper::Infinity, +MathHelper::Infinity);
+            DirectX::XMFLOAT3 vMaxf3(-MathHelper::Infinity, -MathHelper::Infinity, -MathHelper::Infinity);
 
-        //    XMVECTOR vMin = XMLoadFloat3(&vMinf3);
-        //    XMVECTOR vMax = XMLoadFloat3(&vMaxf3);
+            DirectX::XMVECTOR vMin = DirectX::XMLoadFloat3(&vMinf3);
+            DirectX::XMVECTOR vMax = DirectX::XMLoadFloat3(&vMaxf3);
 
-        //    std::vector<ModelVertex> vertices(m3dVertices.size());
-        //    for (UINT i = 0; i < m3dVertices.size(); ++i)
-        //    {
-        //        XMVECTOR P = XMLoadFloat3(&m3dVertices[i].Pos);
+            std::vector<ModelVertex> vertices(m3dVertices.size());
+            for (UINT i = 0; i < m3dVertices.size(); ++i)
+            {
+                DirectX::XMVECTOR P = DirectX::XMLoadFloat3(&m3dVertices[i].Pos);
 
-        //        vertices[i].Pos = m3dVertices[i].Pos;
-        //        vertices[i].Normal = m3dVertices[i].Normal;
-        //        vertices[i].TangentU = XMFLOAT3(m3dVertices[i].TangentU.x, m3dVertices[i].TangentU.y, m3dVertices[i].TangentU.z);
-        //        vertices[i].TexC = m3dVertices[i].TexC;
+                vertices[i].Pos = m3dVertices[i].Pos;
+                vertices[i].Normal = m3dVertices[i].Normal;
+                vertices[i].TangentU = DirectX::XMFLOAT3(m3dVertices[i].TangentU.x, m3dVertices[i].TangentU.y, m3dVertices[i].TangentU.z);
+                vertices[i].TexC = m3dVertices[i].TexC;
 
-        //        vMin = XMVectorMin(vMin, P);
-        //        vMax = XMVectorMax(vMax, P);
-        //    }
+                vMin = DirectX::XMVectorMin(vMin, P);
+                vMax = DirectX::XMVectorMax(vMax, P);
+            }
 
-        //    BoundingBox bounds;
-        //    XMStoreFloat3(&bounds.Center, 0.5f * (vMin + vMax));
-        //    XMStoreFloat3(&bounds.Extents, 0.5f * (vMax - vMin));
+            DirectX::BoundingBox bounds;
+            DirectX::XMStoreFloat3(&bounds.Center, 0.5f * (vMin + vMax));
+            DirectX::XMStoreFloat3(&bounds.Extents, 0.5f * (vMax - vMin));
 
-        //    const UINT indexElementByteSize = useIndex32 ? sizeof(uint32_t) : sizeof(uint16_t);
-        //    const UINT vbByteSize = (UINT)vertices.size() * sizeof(ModelVertex);
-        //    const UINT ibByteSize = (UINT)indices32.size() * indexElementByteSize;
+            const UINT indexElementByteSize = useIndex32 ? sizeof(uint32_t) : sizeof(uint16_t);
+            const UINT vbByteSize = (UINT)vertices.size() * sizeof(ModelVertex);
+            const UINT ibByteSize = (UINT)indices32.size() * indexElementByteSize;
 
-        //    auto geo = std::make_unique<MeshGeometry>();
-        //    geo->Name = geoName;
+            auto geo = std::make_unique<MeshGeometry>();
+            geo->Name = geoName;
 
-        //    geo->VertexBufferCPU.resize(vbByteSize);
-        //    CopyMemory(geo->VertexBufferCPU.data(), vertices.data(), vbByteSize);
+            geo->VertexBufferCPU.resize(vbByteSize);
+            std::memcpy(geo->VertexBufferCPU.data(), vertices.data(), vbByteSize);
 
-        //    CreateStaticBuffer(device, uploadBatch,
-        //        vertices.data(), vertices.size(), sizeof(ModelVertex),
-        //        D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, &geo->VertexBufferGPU);
+            DirectX::CreateStaticBuffer(device, uploadBatch,
+                vertices.data(), vertices.size(), sizeof(ModelVertex),
+                D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, &geo->VertexBufferGPU);
 
-        //    if (useIndex32)
-        //    {
-        //        geo->IndexBufferCPU.resize(ibByteSize);
-        //        CopyMemory(geo->IndexBufferCPU.data(), indices32.data(), ibByteSize);
+            if (useIndex32)
+            {
+                geo->IndexBufferCPU.resize(ibByteSize);
+                std::memcpy(geo->IndexBufferCPU.data(), indices32.data(), ibByteSize);
 
-        //        CreateStaticBuffer(
-        //            device, uploadBatch,
-        //            indices32.data(), indices32.size(), sizeof(uint32_t),
-        //            D3D12_RESOURCE_STATE_INDEX_BUFFER, &geo->IndexBufferGPU);
-        //    }
-        //    else
-        //    {
-        //        std::vector<USHORT> indices16(indices32.size());
-        //        std::transform(std::begin(indices32), std::end(indices32), std::begin(indices16), [](UINT x)
-        //            {
-        //                return static_cast<USHORT>(x);
-        //            });
+                DirectX::CreateStaticBuffer(
+                    device, uploadBatch,
+                    indices32.data(), indices32.size(), sizeof(uint32_t),
+                    D3D12_RESOURCE_STATE_INDEX_BUFFER, &geo->IndexBufferGPU);
+            }
+            else
+            {
+                std::vector<Win32::USHORT> indices16(indices32.size());
+                std::transform(std::begin(indices32), std::end(indices32), std::begin(indices16), [](UINT x)
+                    {
+                        return static_cast<Win32::USHORT>(x);
+                    });
 
-        //        geo->IndexBufferCPU.resize(ibByteSize);
-        //        CopyMemory(geo->IndexBufferCPU.data(), indices16.data(), ibByteSize);
+                geo->IndexBufferCPU.resize(ibByteSize);
+                std::memcpy(geo->IndexBufferCPU.data(), indices16.data(), ibByteSize);
 
-        //        CreateStaticBuffer(
-        //            device, uploadBatch,
-        //            indices16.data(), indices16.size(), sizeof(uint16_t),
-        //            D3D12_RESOURCE_STATE_INDEX_BUFFER, &geo->IndexBufferGPU);
-        //    }
+                DirectX::CreateStaticBuffer(
+                    device, uploadBatch,
+                    indices16.data(), indices16.size(), sizeof(uint16_t),
+                    D3D12_RESOURCE_STATE_INDEX_BUFFER, &geo->IndexBufferGPU);
+            }
 
-        //    geo->VertexByteStride = sizeof(ModelVertex);
-        //    geo->VertexBufferByteSize = vbByteSize;
-        //    geo->IndexFormat = useIndex32 ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT;
-        //    geo->IndexBufferByteSize = ibByteSize;
+            geo->VertexByteStride = sizeof(ModelVertex);
+            geo->VertexBufferByteSize = vbByteSize;
+            geo->IndexFormat = useIndex32 ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT;
+            geo->IndexBufferByteSize = ibByteSize;
 
-        //    SubmeshGeometry submesh;
-        //    submesh.IndexCount = (UINT)indices32.size();
-        //    submesh.StartIndexLocation = 0;
-        //    submesh.BaseVertexLocation = 0;
-        //    submesh.VertexCount = (UINT)vertices.size();
-        //    submesh.Bounds = bounds;
+            SubmeshGeometry submesh;
+            submesh.IndexCount = (UINT)indices32.size();
+            submesh.StartIndexLocation = 0;
+            submesh.BaseVertexLocation = 0;
+            submesh.VertexCount = (UINT)vertices.size();
+            submesh.Bounds = bounds;
 
-        //    geo->DrawArgs["subset0"] = submesh;
+            geo->DrawArgs["subset0"] = submesh;
 
-        //    return geo;
-        //}
+            return geo;
+        }
 
-        std::vector<float> CalcGaussWeights(float sigma)
+        auto CalcGaussWeights(float sigma) -> std::vector<float>
         {
             float twoSigma2 = 2.0f * sigma * sigma;
 
@@ -672,8 +673,6 @@ export
             return weights;
         }
     };
-
-    
     
     // Simple struct to represent a material for our demos. 
     struct Material
@@ -706,6 +705,4 @@ export
         float TransparencyWeight = 0.0f;
         float IndexOfRefraction = 0.0f;
     };
-
-    
 }
