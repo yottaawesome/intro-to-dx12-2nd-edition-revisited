@@ -247,7 +247,97 @@ protected:
     //TODO
     virtual void OnResize()
     {
+        //assert(md3dDevice);
+        //assert(mSwapChain);
+        //assert(mDirectCmdListAlloc);
 
+        // Flush before changing any resources.
+        FlushCommandQueue();
+
+        ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
+
+        // Release the previous resources we will be recreating.
+        for (int i = 0; i < SwapChainBufferCount; ++i)
+            mSwapChainBuffer[i].Reset();
+        mDepthStencilBuffer.Reset();
+
+        // Resize the swap chain.
+        ThrowIfFailed(mSwapChain->ResizeBuffers(
+            SwapChainBufferCount,
+            mClientWidth, mClientHeight,
+            mBackBufferFormat,
+            DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH));
+
+        mCurrBackBuffer = 0;
+
+        for (UINT i = 0; i < SwapChainBufferCount; i++)
+        {
+            ThrowIfFailed(mSwapChain->GetBuffer(
+                i, __uuidof(D3D12::ID3D12Resource), &mSwapChainBuffer[i]));
+            md3dDevice->CreateRenderTargetView(
+                mSwapChainBuffer[i].Get(),
+                nullptr,
+                mRtvHeap.CpuHandle(i));
+        }
+
+        // Create the depth/stencil buffer and view.
+        auto depthStencilDesc = D3D12::D3D12_RESOURCE_DESC{};
+        depthStencilDesc.Dimension = D3D12::D3D12_RESOURCE_DIMENSION::D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+        depthStencilDesc.Alignment = 0;
+        depthStencilDesc.Width = mClientWidth;
+        depthStencilDesc.Height = mClientHeight;
+        depthStencilDesc.DepthOrArraySize = 1;
+        depthStencilDesc.MipLevels = 1;
+        depthStencilDesc.Format = mDepthStencilFormat;
+        depthStencilDesc.SampleDesc.Count = 1;
+        depthStencilDesc.SampleDesc.Quality = 0;
+        depthStencilDesc.Layout = D3D12::D3D12_TEXTURE_LAYOUT::D3D12_TEXTURE_LAYOUT_UNKNOWN;
+        depthStencilDesc.Flags = D3D12::D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+        auto heapProperties = D3D12::CD3DX12_HEAP_PROPERTIES(D3D12::D3D12_HEAP_TYPE::D3D12_HEAP_TYPE_DEFAULT);
+
+        D3D12::D3D12_CLEAR_VALUE optClear;
+        optClear.Format = mDepthStencilFormat;
+        optClear.DepthStencil.Depth = 1.0f;
+        optClear.DepthStencil.Stencil = 0;
+        ThrowIfFailed(md3dDevice->CreateCommittedResource(
+            &heapProperties,
+            D3D12::D3D12_HEAP_FLAGS::D3D12_HEAP_FLAG_NONE,
+            &depthStencilDesc,
+            D3D12::D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON,
+            &optClear,
+			__uuidof(D3D12::ID3D12Resource), &mDepthStencilBuffer));
+
+        // Create descriptor to mip level 0 of entire resource using the format of the resource.
+        md3dDevice->CreateDepthStencilView(mDepthStencilBuffer.Get(), nullptr, DepthStencilView());
+
+        // Transition the resource from its initial state to be used as a depth buffer.
+        D3D12::CD3DX12_RESOURCE_BARRIER depthBarrier[1];
+        depthBarrier[0] = D3D12::CD3DX12_RESOURCE_BARRIER::Transition(
+            mDepthStencilBuffer.Get(),
+            D3D12::D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON,
+            D3D12::D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_DEPTH_WRITE);
+
+        mCommandList->ResourceBarrier(1, depthBarrier);
+
+        // Execute the resize commands.
+        ThrowIfFailed(mCommandList->Close());
+		auto cmdLists = std::array<D3D12::ID3D12CommandList*, 1>{ mCommandList.Get() };
+
+        mCommandQueue->ExecuteCommandLists(static_cast<UINT>(cmdLists.size()), cmdLists.data());
+
+        // Wait until resize is complete.
+        FlushCommandQueue();
+
+        // Update the viewport transform to cover the client area.
+        mScreenViewport.TopLeftX = 0;
+        mScreenViewport.TopLeftY = 0;
+        mScreenViewport.Width = static_cast<float>(mClientWidth);
+        mScreenViewport.Height = static_cast<float>(mClientHeight);
+        mScreenViewport.MinDepth = 0.0f;
+        mScreenViewport.MaxDepth = 1.0f;
+
+        mScissorRect = { 0, 0, mClientWidth, mClientHeight };
     }
 
 //    virtual void Update(const GameTimer& gt) = 0;
