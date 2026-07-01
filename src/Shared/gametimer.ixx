@@ -49,6 +49,17 @@ public:
 		return (float)mDeltaTime;
 	}
 
+	void Reset()
+	{
+		auto currTime = std::int64_t{};
+		Win32::QueryPerformanceCounter((Win32::LARGE_INTEGER*)&currTime);
+
+		mBaseTime = currTime;
+		mPrevTime = currTime;
+		mStopTime = 0;
+		mStopped = false;
+	}
+
 	void Start()
 	{
 		auto startTime = std::int64_t{};

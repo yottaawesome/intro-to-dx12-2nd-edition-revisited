@@ -59,6 +59,11 @@ export namespace Win32
 		::RECT,
 		::MINMAXINFO,
 		::POINT,
+		::MSG,
+		::Sleep,
+		::DispatchMessageW,
+		::PeekMessageW,
+		::TranslateMessage,
 		::PostQuitMessage,
 		::DefWindowProc,
 		::CreateWindowExW,
@@ -84,6 +89,7 @@ export namespace Win32
 		::QueryPerformanceFrequency
 		;
 
+	constexpr auto PmRemove = PM_REMOVE;
 	namespace HRCodes
 	{
 		constexpr auto OK = S_OK;
@@ -142,7 +148,8 @@ export namespace Win32
 		MButtonUp = WM_MBUTTONUP,
 		RButtonUp = WM_RBUTTONUP,
 		MouseMove = WM_MOUSEMOVE,
-		KeyUp = WM_KEYUP
+		KeyUp = WM_KEYUP,
+		Quit = WM_QUIT
 	};
 	enum VK
 	{
@@ -288,6 +295,7 @@ export namespace D3D12
 		::D3D12_VERTEX_BUFFER_VIEW,
 		::D3D12_COMPARISON_FUNC,
 		::D3D12_RECT,
+		::D3D12_FENCE_FLAGS,
 		::D3D12_VIEWPORT,
 		::D3D12_SAMPLER_DESC,
 		::D3D12_FILTER,
