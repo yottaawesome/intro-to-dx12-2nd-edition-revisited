@@ -172,6 +172,7 @@
     <ClCompile Include="meshutil.ixx" />
     <ClCompile Include="random.ixx" />
     <ClCompile Include="shared.ixx" />
+    <ClCompile Include="skinneddata.ixx" />
     <ClCompile Include="win32.ixx" />
   </ItemGroup>
   <ItemGroup>
