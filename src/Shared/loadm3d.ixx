@@ -47,14 +47,17 @@ public:
         std::string NormalMapName;
     };
 
-    bool LoadM3d(const std::string& filename,
+    auto LoadM3d(
+        const std::string& filename,
         std::vector<Vertex>& vertices,
         std::vector<Win32::UINT>& indices,
         std::vector<Subset>& subsets,
         std::vector<M3dMaterial>& mats
-    )
+	) -> bool
     {
         std::ifstream fin(filename);
+        if (!fin)
+            return false;
 
         UINT numMaterials = 0;
         UINT numVertices = 0;
@@ -64,31 +67,28 @@ public:
 
         std::string ignore;
 
-        if (fin)
-        {
-            fin >> ignore; // file header text
-            fin >> ignore >> numMaterials;
-            fin >> ignore >> numVertices;
-            fin >> ignore >> numTriangles;
-            fin >> ignore >> numBones;
-            fin >> ignore >> numAnimationClips;
+        fin >> ignore; // file header text
+        fin >> ignore >> numMaterials;
+        fin >> ignore >> numVertices;
+        fin >> ignore >> numTriangles;
+        fin >> ignore >> numBones;
+        fin >> ignore >> numAnimationClips;
 
-            ReadMaterials(fin, numMaterials, mats);
-            ReadSubsetTable(fin, numMaterials, subsets);
-            ReadVertices(fin, numVertices, vertices);
-            ReadTriangles(fin, numTriangles, indices);
+        ReadMaterials(fin, numMaterials, mats);
+        ReadSubsetTable(fin, numMaterials, subsets);
+        ReadVertices(fin, numVertices, vertices);
+        ReadTriangles(fin, numTriangles, indices);
 
-            return true;
-        }
-        return false;
+        return true;
     }
-    bool LoadM3d(const std::string& filename,
+    auto LoadM3d(
+        const std::string& filename,
         std::vector<SkinnedVertex>& vertices,
         std::vector<Win32::UINT>& indices,
         std::vector<Subset>& subsets,
         std::vector<M3dMaterial>& mats,
         SkinnedData& skinInfo
-    )
+    ) -> bool
     {
         std::ifstream fin(filename.c_str());
 
@@ -106,32 +106,28 @@ public:
 
         std::string ignore;
 
-        if (fin)
-        {
-            fin >> ignore; // file header text
-            fin >> ignore >> numMaterials;
-            fin >> ignore >> numVertices;
-            fin >> ignore >> numTriangles;
-            fin >> ignore >> numBones;
-            fin >> ignore >> numAnimationClips;
+        fin >> ignore; // file header text
+        fin >> ignore >> numMaterials;
+        fin >> ignore >> numVertices;
+        fin >> ignore >> numTriangles;
+        fin >> ignore >> numBones;
+        fin >> ignore >> numAnimationClips;
 
-            std::vector<DirectX::XMFLOAT4X4> boneOffsets;
-            std::vector<int> boneIndexToParentIndex;
-            std::unordered_map<std::string, AnimationClip> animations;
+        std::vector<DirectX::XMFLOAT4X4> boneOffsets;
+        std::vector<int> boneIndexToParentIndex;
+        std::unordered_map<std::string, AnimationClip> animations;
 
-            ReadMaterials(fin, numMaterials, mats);
-            ReadSubsetTable(fin, numMaterials, subsets);
-            ReadSkinnedVertices(fin, numVertices, vertices);
-            ReadTriangles(fin, numTriangles, indices);
-            ReadBoneOffsets(fin, numBones, boneOffsets);
-            ReadBoneHierarchy(fin, numBones, boneIndexToParentIndex);
-            ReadAnimationClips(fin, numBones, numAnimationClips, animations);
+        ReadMaterials(fin, numMaterials, mats);
+        ReadSubsetTable(fin, numMaterials, subsets);
+        ReadSkinnedVertices(fin, numVertices, vertices);
+        ReadTriangles(fin, numTriangles, indices);
+        ReadBoneOffsets(fin, numBones, boneOffsets);
+        ReadBoneHierarchy(fin, numBones, boneIndexToParentIndex);
+        ReadAnimationClips(fin, numBones, numAnimationClips, animations);
 
-            skinInfo.Set(boneIndexToParentIndex, boneOffsets, animations);
+        skinInfo.Set(boneIndexToParentIndex, boneOffsets, animations);
 
-            return true;
-        }
-        return false;
+        return true;
     }
 
 private:
