@@ -4,7 +4,7 @@ import shared;
 
 constexpr Win32::UINT CBV_SRV_UAV_HEAP_CAPACITY = 16384;
 
-export namespace BoxApp
+export namespace Box
 {
     struct ColorVertex
     {
@@ -71,15 +71,239 @@ export namespace BoxApp
         }
 
     private:
-        //virtual void CreateRtvAndDsvDescriptorHeaps()override;
-        //virtual void OnResize()override;
-        //virtual void Update(const GameTimer& gt)override;
-        //virtual void Draw(const GameTimer& gt)override;
+        virtual void CreateRtvAndDsvDescriptorHeaps()override
+        {
+            mRtvHeap.Init(md3dDevice.Get(), D3D12::D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_RTV, SwapChainBufferCount);
+            mDsvHeap.Init(md3dDevice.Get(), D3D12::D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_DSV, SwapChainBufferCount);
+        }
+        virtual void OnResize()override
+        {
+            D3DApp::OnResize();
 
-        //virtual void UpdateImgui(const GameTimer& gt)override;
-        //virtual void OnMouseDown(WPARAM btnState, int x, int y)override;
-        //virtual void OnMouseUp(WPARAM btnState, int x, int y)override;
-        //virtual void OnMouseMove(WPARAM btnState, int x, int y)override;
+            // The window resized, so update the aspect ratio and recompute the projection matrix.
+            DirectX::XMMATRIX P = DirectX::XMMatrixPerspectiveFovLH(0.25f * MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
+            DirectX::XMStoreFloat4x4(&mProj, P);
+        }
+        virtual void Update(const GameTimer& gt)override
+        {
+            // Convert Spherical to Cartesian coordinates.
+            float x = mRadius * std::sinf(mPhi) * std::cosf(mTheta);
+            float z = mRadius * std::sinf(mPhi) * std::sinf(mTheta);
+            float y = mRadius * std::cosf(mPhi);
+
+            // Build the view matrix.
+            DirectX::XMVECTOR pos = DirectX::XMVectorSet(x, y, z, 1.0f);
+            DirectX::XMVECTOR target = DirectX::XMVectorZero();
+            DirectX::XMVECTOR up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+            DirectX::XMMATRIX view = DirectX::XMMatrixLookAtLH(pos, target, up);
+            DirectX::XMStoreFloat4x4(&mView, view);
+
+            DirectX::XMMATRIX world = DirectX::XMLoadFloat4x4(&mWorld);
+            DirectX::XMMATRIX proj = DirectX::XMLoadFloat4x4(&mProj);
+            DirectX::XMMATRIX viewProj = view * proj;
+
+            // Update the per-object buffer with the latest world matrix.
+            ObjectConstants objConstants;
+            DirectX::XMStoreFloat4x4(&objConstants.World, DirectX::XMMatrixTranspose(world));
+            mObjectCB->CopyData(0, objConstants);
+
+            // Update the per-pass buffer with the latest viewProj matrix.
+            PassConstants passConstants;
+            DirectX::XMStoreFloat4x4(&passConstants.ViewProj, DirectX::XMMatrixTranspose(viewProj));
+            mPassCB->CopyData(0, passConstants);
+        }
+        
+        virtual void Draw(const GameTimer& gt)override
+        {
+            CbvSrvUavHeap& cbvSrvUavHeap = CbvSrvUavHeap::Get();
+
+            UpdateImgui(gt);
+
+            // Reuse the memory associated with command recording.
+            // We can only reset when the associated command lists have finished execution on the GPU.
+            ThrowIfFailed(mDirectCmdListAlloc->Reset());
+
+            // A command list can be reset after it has been added to the command queue via ExecuteCommandList.
+            // Reusing the command list reuses memory.
+            ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), mSolidPSO.Get()));
+
+            ID3D12DescriptorHeap* descriptorHeaps[] = { cbvSrvUavHeap.GetD3dHeap() };
+            mCommandList->SetDescriptorHeaps(1, descriptorHeaps);
+
+            mCommandList->RSSetViewports(1, &mScreenViewport);
+            mCommandList->RSSetScissorRects(1, &mScissorRect);
+
+            // Indicate a state transition on the resource usage.
+            auto transition = D3D12::CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
+                D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+            mCommandList->ResourceBarrier(1, &transition);
+
+            // Clear the back buffer and depth buffer.
+            mCommandList->ClearRenderTargetView(CurrentBackBufferView(), DirectX::Colors::LightSteelBlue, 0, nullptr);
+            mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAGS{ D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL }, 1.0f, 0, 0, nullptr);
+
+            // Specify the buffers we are going to render to.
+            auto cbbv = CurrentBackBufferView();
+			auto dsv = DepthStencilView();
+            mCommandList->OMSetRenderTargets(1, &cbbv, true, &dsv);
+
+            mCommandList->SetPipelineState(mDrawWireframe ? mWireframePSO.Get() : mSolidPSO.Get());
+            mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
+
+            mCommandList->SetGraphicsRootDescriptorTable(
+                ROOT_ARG_OBJECT_CBV,
+                cbvSrvUavHeap.GpuHandle(mBoxCBHeapIndex));
+            mCommandList->SetGraphicsRootDescriptorTable(
+                ROOT_ARG_PASS_CBV,
+                cbvSrvUavHeap.GpuHandle(mPassCBHeapIndex));
+
+
+			auto vbv = mBoxGeo->VertexBufferView();
+			auto ibv = mBoxGeo->IndexBufferView();
+            mCommandList->IASetVertexBuffers(0, 1, &vbv);
+            mCommandList->IASetIndexBuffer(&ibv);
+            mCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+            mCommandList->DrawIndexedInstanced(
+                mBoxGeo->DrawArgs["box"].IndexCount,
+                1, // instanceCount
+                mBoxGeo->DrawArgs["box"].StartIndexLocation,
+                mBoxGeo->DrawArgs["box"].BaseVertexLocation,
+                0); // startInstanceLocation
+
+            // Draw imgui UI.
+            ImGui::ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), mCommandList.Get());
+
+            // Indicate a state transition on the resource usage.
+            transition = D3D12::CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
+                D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+            mCommandList->ResourceBarrier(1, &transition);
+
+            // Done recording commands.
+            ThrowIfFailed(mCommandList->Close());
+
+            // Add the command list to the queue for execution.
+            ID3D12CommandList* cmdsLists[] = { mCommandList.Get() };
+            mCommandQueue->ExecuteCommandLists(1, cmdsLists);
+
+            // Swap the back and front buffers
+            DXGI::DXGI_PRESENT_PARAMETERS presentParams = { 0 };
+            ThrowIfFailed(mSwapChain->Present1(0, 0, &presentParams));
+            mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
+
+            // Wait until frame commands are complete.  This waiting is inefficient and is
+            // done for simplicity.  Later we will show how to organize our rendering code
+            // so we do not have to wait per frame.
+            FlushCommandQueue();
+        }
+
+        virtual void UpdateImgui(const GameTimer& gt)override
+        {
+            D3DApp::UpdateImgui(gt);
+
+            //
+            // Define a panel to render GUI elements.
+            // 
+            ImGui::Begin("Options");
+
+            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
+            ImGui::Checkbox("Wireframe", &mDrawWireframe);
+
+            DirectX::GraphicsMemoryStatistics gfxMemStats = DirectX::GraphicsMemory::Get(md3dDevice.Get()).GetStatistics();
+
+            if (ImGui::CollapsingHeader("VideoMemoryInfo"))
+            {
+                static float vidMemPollTime = 0.0f;
+                vidMemPollTime += gt.DeltaTime();
+
+                static DXGI::DXGI_QUERY_VIDEO_MEMORY_INFO videoMemInfo;
+                if (vidMemPollTime >= 1.0f) // poll every second
+                {
+                    mDefaultAdapter->QueryVideoMemoryInfo(
+                        0, // assume single GPU
+                        DXGI::DXGI_MEMORY_SEGMENT_GROUP::DXGI_MEMORY_SEGMENT_GROUP_LOCAL, // interested in local GPU memory, not shared
+                        &videoMemInfo);
+
+                    vidMemPollTime -= 1.0f;
+                }
+
+                ImGui::Text("Budget (bytes): %u", videoMemInfo.Budget);
+                ImGui::Text("CurrentUsage (bytes): %u", videoMemInfo.CurrentUsage);
+                ImGui::Text("AvailableForReservation (bytes): %u", videoMemInfo.AvailableForReservation);
+                ImGui::Text("CurrentReservation (bytes): %u", videoMemInfo.CurrentReservation);
+
+            }
+            if (ImGui::CollapsingHeader("GraphicsMemoryStatistics"))
+            {
+                ImGui::Text("Bytes of memory in-flight: %u", gfxMemStats.committedMemory);
+                ImGui::Text("Total bytes used: %u", gfxMemStats.totalMemory);
+                ImGui::Text("Total page count: %u", gfxMemStats.totalPages);
+            }
+
+            ImGui::End();
+
+            ImGui::Render();
+        }
+
+        virtual void OnMouseDown(Win32::WPARAM btnState, int x, int y)override
+        {
+            ImGui::ImGuiIO& io = ImGui::GetIO();
+
+            if (!io.WantCaptureMouse)
+            {
+                mLastMousePos.x = x;
+                mLastMousePos.y = y;
+
+                Win32::SetCapture(mhMainWnd);
+            }
+        }
+        virtual void OnMouseUp(WPARAM btnState, int x, int y)override
+        {
+            ImGui::ImGuiIO& io = ImGui::GetIO();
+
+            if (!io.WantCaptureMouse)
+            {
+                Win32::ReleaseCapture();
+            }
+        }
+        virtual void OnMouseMove(Win32::WPARAM btnState, int x, int y)override
+        {
+            ImGui::ImGuiIO& io = ImGui::GetIO();
+
+            if (!io.WantCaptureMouse)
+            {
+                if ((btnState & Win32::MK::LButton) != 0)
+                {
+                    // Make each pixel correspond to a quarter of a degree.
+                    float dx = DirectX::XMConvertToRadians(0.25f * static_cast<float>(x - mLastMousePos.x));
+                    float dy = DirectX::XMConvertToRadians(0.25f * static_cast<float>(y - mLastMousePos.y));
+
+                    // Update angles based on input to orbit camera around box.
+                    mTheta += dx;
+                    mPhi += dy;
+
+                    // Restrict the angle mPhi.
+                    mPhi = MathHelper::Clamp(mPhi, 0.1f, MathHelper::Pi - 0.1f);
+                }
+                else if ((btnState & Win32::MK::RButton) != 0)
+                {
+                    // Make each pixel correspond to 0.005 unit in the scene.
+                    float dx = 0.005f * static_cast<float>(x - mLastMousePos.x);
+                    float dy = 0.005f * static_cast<float>(y - mLastMousePos.y);
+
+                    // Update the camera radius based on input.
+                    mRadius += dx - dy;
+
+                    // Restrict the radius.
+                    mRadius = MathHelper::Clamp(mRadius, 3.0f, 15.0f);
+                }
+
+                mLastMousePos.x = x;
+                mLastMousePos.y = y;
+            }
+        }
 
         void BuildCbvSrvUavDescriptorHeap()
         {
@@ -214,8 +438,8 @@ export namespace BoxApp
 
             mInputLayout =
             {
-                { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-                { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+                { "POSITION", 0, DXGI::DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12::D3D12_INPUT_CLASSIFICATION::D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+                { "COLOR", 0, DXGI::DXGI_FORMAT::DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12::D3D12_INPUT_CLASSIFICATION::D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
             };
         }
         void BuildBoxGeometry(D3D12::ID3D12Device* device, DirectX::ResourceUploadBatch& uploadBatch)

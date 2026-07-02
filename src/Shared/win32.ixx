@@ -166,7 +166,12 @@ export namespace Win32
 	{
 		Escape = VK_ESCAPE
 	};
-
+	enum MK
+	{
+		LButton = MK_LBUTTON,
+		RButton = MK_RBUTTON,
+		MButton = MK_MBUTTON
+	};
 	enum Size
 	{
 		Minimized = SIZE_MINIMIZED,
@@ -301,6 +306,7 @@ export namespace D3D12
 	}
 
 	using
+		::D3D12_INPUT_CLASSIFICATION,
 		::D3D12_ROOT_SIGNATURE_FLAGS,
 		::D3D12_DESCRIPTOR_RANGE_TYPE,
 		::CD3DX12_ROOT_PARAMETER,
@@ -420,6 +426,8 @@ export namespace DirectX
 		::DirectX::BoundingFrustum,
 		::DirectX::GraphicsMemory,
 		::DirectX::BoundingBox,
+		::DirectX::XMMatrixPerspectiveFovLH,
+		::DirectX::XMMatrixLookAtLH,
 		::DirectX::XMStoreFloat2,
 		::DirectX::XMLoadFloat2,
 		::DirectX::XMLoadFloat4x4,
@@ -450,6 +458,8 @@ export namespace DirectX
 		::DirectX::XMStoreFloat4,
 		::DirectX::XMMatrixIdentity,
 		::DirectX::XMMatrixTranspose,
+		::DirectX::XMConvertToRadians,
+		::DirectX::XMConvertToDegrees,
 		::DirectX::XMMatrixDeterminant,
 		::DirectX::XMMatrixInverse
 		;

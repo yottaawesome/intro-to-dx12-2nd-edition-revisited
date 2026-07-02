@@ -1,4 +1,5 @@
 import shared;
+import boxapp;
 
 // Required exports for DX12-Agility SDK
 // https://devblogs.microsoft.com/directx/gettingstarted-dx12agility/
@@ -24,11 +25,11 @@ auto wWinMain(
 
     try
     {
-        //BoxApp theApp(hInstance);
-        //if (!theApp.Initialize())
-         //   return 0;
+        Box::BoxApp theApp(hInstance);
+        if (!theApp.Initialize())
+           return 0;
 
-        //return theApp.Run();
+        return theApp.Run();
     }
     catch (DxException& e)
     {

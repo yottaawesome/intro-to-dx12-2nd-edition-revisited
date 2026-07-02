@@ -58,14 +58,14 @@ export
 
         void CopyData(int elementIndex, const T& data)
         {
-            memcpy(&mMappedData[elementIndex * mElementByteSize], &data, sizeof(T));
+            std::memcpy(&mMappedData[elementIndex * mElementByteSize], &data, sizeof(T));
         }
 
         void CopyData(const T* data, std::uint32_t count)
         {
             assert(mElementByteSize == sizeof(T));
 
-            memcpy(mMappedData, data, count * sizeof(T));
+            std::memcpy(mMappedData, data, count * sizeof(T));
         }
 
     private:
