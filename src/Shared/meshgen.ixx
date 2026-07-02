@@ -16,17 +16,17 @@ export
             const DirectX::XMFLOAT3& p,
             const DirectX::XMFLOAT3& n,
             const DirectX::XMFLOAT3& t,
-            const DirectX::XMFLOAT2& uv) :
-            Position(p),
-            Normal(n),
-            TangentU(t),
+            const DirectX::XMFLOAT2& uv
+        ) : Position(p), 
+            Normal(n), 
+            TangentU(t), 
             TexC(uv) {}
         MeshGenVertex(
             float px, float py, float pz,
             float nx, float ny, float nz,
             float tx, float ty, float tz,
-            float u, float v) :
-            Position(px, py, pz),
+            float u, float v
+        ) : Position(px, py, pz),
             Normal(nx, ny, nz),
             TangentU(tx, ty, tz),
             TexC(u, v) {}
@@ -42,35 +42,36 @@ export
         std::vector<MeshGenVertex> Vertices;
         std::vector<std::uint32_t> Indices32;
 
-        SubmeshGeometry AppendSubmesh(const MeshGenData& meshData)
+        auto AppendSubmesh(const MeshGenData& meshData) -> SubmeshGeometry
         {
-            UINT vertexOffset = static_cast<UINT>(Vertices.size());
-            UINT indexOffset = static_cast<UINT>(Indices32.size());
+            auto vertexOffset = static_cast<UINT>(Vertices.size());
+            auto indexOffset = static_cast<UINT>(Indices32.size());
 
-            DirectX::XMFLOAT3 vMinf3(+Win32::FltMax, +Win32::FltMax, +Win32::FltMax);
-            DirectX::XMFLOAT3 vMaxf3(-Win32::FltMax, -Win32::FltMax, -Win32::FltMax);
+            auto vMinf3 = DirectX::XMFLOAT3(+Win32::FltMax, +Win32::FltMax, +Win32::FltMax);
+            auto vMaxf3 = DirectX::XMFLOAT3(-Win32::FltMax, -Win32::FltMax, -Win32::FltMax);
 
-            DirectX::XMVECTOR vMin = DirectX::XMLoadFloat3(&vMinf3);
-            DirectX::XMVECTOR vMax = DirectX::XMLoadFloat3(&vMaxf3);
+            auto vMin = DirectX::XMVECTOR{DirectX::XMLoadFloat3(&vMinf3)};
+            auto vMax = DirectX::XMVECTOR{DirectX::XMLoadFloat3(&vMaxf3)};
 
-            for (UINT i = 0; i < meshData.Vertices.size(); ++i)
+            for (auto i = 0u; i < meshData.Vertices.size(); ++i)
             {
-                DirectX::XMVECTOR P = DirectX::XMLoadFloat3(&meshData.Vertices[i].Position);
+                auto P = DirectX::XMVECTOR{DirectX::XMLoadFloat3(&meshData.Vertices[i].Position)};
 
                 vMin = DirectX::XMVectorMin(vMin, P);
                 vMax = DirectX::XMVectorMax(vMax, P);
             }
 
-            DirectX::BoundingBox bounds;
+            auto bounds = DirectX::BoundingBox{};
             DirectX::XMStoreFloat3(&bounds.Center, 0.5f * (vMin + vMax));
             DirectX::XMStoreFloat3(&bounds.Extents, 0.5f * (vMax - vMin));
 
-            SubmeshGeometry submesh;
-            submesh.IndexCount = static_cast<UINT>(meshData.Indices32.size());
-            submesh.StartIndexLocation = indexOffset;
-            submesh.BaseVertexLocation = vertexOffset;
-            submesh.VertexCount = static_cast<UINT>(meshData.Vertices.size());
-            submesh.Bounds = bounds;
+            auto submesh = SubmeshGeometry{
+				.IndexCount = static_cast<UINT>(meshData.Indices32.size()),
+                .StartIndexLocation = indexOffset,
+                .BaseVertexLocation = static_cast<int>(vertexOffset),
+                .VertexCount = static_cast<UINT>(meshData.Vertices.size()),
+                .Bounds = bounds,
+            };
 
             Vertices.insert(std::end(Vertices), std::begin(meshData.Vertices), std::end(meshData.Vertices));
             Indices32.insert(std::end(Indices32), std::begin(meshData.Indices32), std::end(meshData.Indices32));
@@ -78,12 +79,12 @@ export
             return submesh;
         }
 
-        std::vector<std::uint16_t>& GetIndices16()
+        auto GetIndices16() -> std::vector<std::uint16_t>&
         {
             if (mIndices16.empty())
             {
                 mIndices16.resize(Indices32.size());
-                for (size_t i = 0; i < Indices32.size(); ++i)
+                for (auto i = size_t{}; i < Indices32.size(); ++i)
                     mIndices16[i] = static_cast<std::uint16_t>(Indices32[i]);
             }
 
@@ -102,19 +103,18 @@ export
         /// Creates a box centered at the origin with the given dimensions, where each
         /// face has m rows and n columns of vertices.
         ///</summary>
-        MeshGenData CreateBox(float width, float height, float depth, uint32_t numSubdivisions)
+        auto CreateBox(float width, float height, float depth, uint32_t numSubdivisions) -> MeshGenData
         {
-            MeshGenData meshData;
+            auto meshData = MeshGenData{};
 
             //
             // Create the vertices.
             //
+			auto v = std::array<MeshGenVertex, 24>{};
 
-            MeshGenVertex v[24];
-
-            float w2 = 0.5f * width;
-            float h2 = 0.5f * height;
-            float d2 = 0.5f * depth;
+            auto w2 = 0.5f * width;
+            auto h2 = 0.5f * height;
+            auto d2 = 0.5f * depth;
 
             // Fill in the front face vertex data.
             v[0] = MeshGenVertex(-w2, -h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
@@ -157,8 +157,7 @@ export
             //
             // Create the indices.
             //
-
-            uint32_t i[36];
+            auto i = std::array<uint32_t, 36>{};
 
             // Fill in the front face index data
             i[0] = 0; i[1] = 1; i[2] = 2;
@@ -189,7 +188,7 @@ export
             // Put a cap on the number of subdivisions.
             numSubdivisions = std::min<uint32_t>(numSubdivisions, 6u);
 
-            for (uint32_t i = 0; i < numSubdivisions; ++i)
+            for (auto i = 0u; i < numSubdivisions; ++i)
                 Subdivide(meshData);
 
             return meshData;
@@ -199,9 +198,9 @@ export
         /// Creates a sphere centered at the origin with the given radius.  The
         /// slices and stacks parameters control the degree of tessellation.
         ///</summary>
-        MeshGenData CreateSphere(float radius, uint32_t sliceCount, uint32_t stackCount)
+        auto CreateSphere(float radius, uint32_t sliceCount, uint32_t stackCount) -> MeshGenData
         {
-            MeshGenData meshData;
+            auto meshData = MeshGenData{};
 
             //
             // Compute the vertices stating at the top pole and moving down the stacks.
@@ -210,25 +209,25 @@ export
             // Poles: note that there will be texture coordinate distortion as there is
             // not a unique point on the texture map to assign to the pole when mapping
             // a rectangular texture onto a sphere.
-            MeshGenVertex topVertex(0.0f, +radius, 0.0f, 0.0f, +1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-            MeshGenVertex bottomVertex(0.0f, -radius, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+            auto topVertex = MeshGenVertex{0.0f, +radius, 0.0f, 0.0f, +1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+            auto bottomVertex = MeshGenVertex{0.0f, -radius, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f};
 
             meshData.Vertices.push_back(topVertex);
 
-            float phiStep = DirectX::XM_Pi / stackCount;
-            float thetaStep = 2.0f * DirectX::XM_2Pi / sliceCount;
+            auto phiStep = DirectX::XM_Pi / stackCount;
+            auto thetaStep = 2.0f * DirectX::XM_2Pi / sliceCount;
 
             // Compute vertices for each stack ring (do not count the poles as rings).
-            for (uint32_t i = 1; i <= stackCount - 1; ++i)
+            for (auto i = 1u; i <= stackCount - 1; ++i)
             {
-                float phi = i * phiStep;
+                auto phi = i * phiStep;
 
                 // Vertices of ring.
-                for (uint32_t j = 0; j <= sliceCount; ++j)
+                for (auto j = 0u; j <= sliceCount; ++j)
                 {
-                    float theta = j * thetaStep;
+                    auto theta = j * thetaStep;
 
-                    MeshGenVertex v;
+                    auto v = MeshGenVertex{};
 
                     // spherical to cartesian
                     v.Position.x = radius * std::sinf(phi) * std::cosf(theta);
@@ -240,10 +239,10 @@ export
                     v.TangentU.y = 0.0f;
                     v.TangentU.z = +radius * std::sinf(phi) * std::cosf(theta);
 
-                    DirectX::XMVECTOR T = DirectX::XMLoadFloat3(&v.TangentU);
+                    auto T = DirectX::XMVECTOR{DirectX::XMLoadFloat3(&v.TangentU)};
                     DirectX::XMStoreFloat3(&v.TangentU, DirectX::XMVector3Normalize(T));
 
-                    DirectX::XMVECTOR p = DirectX::XMLoadFloat3(&v.Position);
+                    auto p = DirectX::XMVECTOR{DirectX::XMLoadFloat3(&v.Position)};
                     DirectX::XMStoreFloat3(&v.Normal, DirectX::XMVector3Normalize(p));
 
                     v.TexC.x = theta / DirectX::XM_2Pi;
@@ -260,7 +259,7 @@ export
             // and connects the top pole to the first ring.
             //
 
-            for (uint32_t i = 1; i <= sliceCount; ++i)
+            for (auto i = 1u; i <= sliceCount; ++i)
             {
                 meshData.Indices32.push_back(0);
                 meshData.Indices32.push_back(i + 1);
@@ -273,11 +272,11 @@ export
 
             // Offset the indices to the index of the first vertex in the first ring.
             // This is just skipping the top pole vertex.
-            uint32_t baseIndex = 1;
-            uint32_t ringVertexCount = sliceCount + 1;
-            for (uint32_t i = 0; i < stackCount - 2; ++i)
+            auto baseIndex = 1u;
+            auto ringVertexCount = sliceCount + 1;
+            for (auto i = 0u; i < stackCount - 2; ++i)
             {
-                for (uint32_t j = 0; j < sliceCount; ++j)
+                for (auto j = 0u; j < sliceCount; ++j)
                 {
                     meshData.Indices32.push_back(baseIndex + i * ringVertexCount + j);
                     meshData.Indices32.push_back(baseIndex + i * ringVertexCount + j + 1);
@@ -295,12 +294,12 @@ export
             //
 
             // South pole vertex was added last.
-            uint32_t southPoleIndex = (uint32_t)meshData.Vertices.size() - 1;
+            auto southPoleIndex = static_cast<uint32_t>(meshData.Vertices.size() - 1);
 
             // Offset the indices to the index of the first vertex in the last ring.
             baseIndex = southPoleIndex - ringVertexCount;
 
-            for (uint32_t i = 0; i < sliceCount; ++i)
+            for (auto i = 0u; i < sliceCount; ++i)
             {
                 meshData.Indices32.push_back(southPoleIndex);
                 meshData.Indices32.push_back(baseIndex + i);
@@ -314,29 +313,29 @@ export
         /// Creates a geosphere centered at the origin with the given radius.  The
         /// depth controls the level of tessellation.
         ///</summary>
-        MeshGenData CreateGeosphere(float radius, uint32_t numSubdivisions)
+        auto CreateGeosphere(float radius, uint32_t numSubdivisions) -> MeshGenData
         {
-            MeshGenData meshData;
+            auto meshData = MeshGenData{};
 
             // Put a cap on the number of subdivisions.
             numSubdivisions = std::min<uint32_t>(numSubdivisions, 6u);
 
             // Approximate a sphere by tessellating an icosahedron.
 
-            const float X = 0.525731f;
-            const float Z = 0.850651f;
+            constexpr auto X = 0.525731f;
+            constexpr auto Z = 0.850651f;
 
-            DirectX::XMFLOAT3 pos[12] =
+            auto pos = std::array<DirectX::XMFLOAT3, 12>
             {
-                DirectX::XMFLOAT3(-X, 0.0f, Z),  DirectX::XMFLOAT3(X, 0.0f, Z),
-                DirectX::XMFLOAT3(-X, 0.0f, -Z), DirectX::XMFLOAT3(X, 0.0f, -Z),
-                DirectX::XMFLOAT3(0.0f, Z, X),   DirectX::XMFLOAT3(0.0f, Z, -X),
-                DirectX::XMFLOAT3(0.0f, -Z, X),  DirectX::XMFLOAT3(0.0f, -Z, -X),
-                DirectX::XMFLOAT3(Z, X, 0.0f),   DirectX::XMFLOAT3(-Z, X, 0.0f),
-                DirectX::XMFLOAT3(Z, -X, 0.0f),  DirectX::XMFLOAT3(-Z, -X, 0.0f)
+                DirectX::XMFLOAT3{-X, 0.0f, Z},  DirectX::XMFLOAT3{X, 0.0f, Z},
+                DirectX::XMFLOAT3{-X, 0.0f, -Z}, DirectX::XMFLOAT3{X, 0.0f, -Z},
+                DirectX::XMFLOAT3{0.0f, Z, X},   DirectX::XMFLOAT3{0.0f, Z, -X},
+                DirectX::XMFLOAT3{0.0f, -Z, X},  DirectX::XMFLOAT3{0.0f, -Z, -X},
+                DirectX::XMFLOAT3{Z, X, 0.0f},   DirectX::XMFLOAT3{-Z, X, 0.0f},
+                DirectX::XMFLOAT3{Z, -X, 0.0f},  DirectX::XMFLOAT3{-Z, -X, 0.0f}
             };
 
-            uint32_t k[60] =
+            auto k = std::array<uint32_t, 60>
             {
                 1,4,0,  4,9,0,  4,5,9,  8,5,4,  1,8,4,
                 1,10,8, 10,3,8, 8,3,5,  3,2,5,  3,7,2,
@@ -347,32 +346,32 @@ export
             meshData.Vertices.resize(12);
             meshData.Indices32.assign(&k[0], &k[60]);
 
-            for (uint32_t i = 0; i < 12; ++i)
+            for (auto i = 0u; i < 12; ++i)
                 meshData.Vertices[i].Position = pos[i];
 
-            for (uint32_t i = 0; i < numSubdivisions; ++i)
+            for (auto i = 0u; i < numSubdivisions; ++i)
                 Subdivide(meshData);
 
             // Project vertices onto sphere and scale.
-            for (uint32_t i = 0; i < meshData.Vertices.size(); ++i)
+            for (auto i = 0u; i < meshData.Vertices.size(); ++i)
             {
                 // Project onto unit sphere.
-                DirectX::XMVECTOR n = DirectX::XMVector3Normalize(DirectX::XMLoadFloat3(&meshData.Vertices[i].Position));
+                auto n = DirectX::XMVECTOR{DirectX::XMVector3Normalize(DirectX::XMLoadFloat3(&meshData.Vertices[i].Position))};
 
                 // Project onto sphere.
-                DirectX::XMVECTOR p = radius * n;
+                auto p = DirectX::XMVECTOR{radius * n};
 
                 DirectX::XMStoreFloat3(&meshData.Vertices[i].Position, p);
                 DirectX::XMStoreFloat3(&meshData.Vertices[i].Normal, n);
 
                 // Derive texture coordinates from spherical coordinates.
-                float theta = std::atan2f(meshData.Vertices[i].Position.z, meshData.Vertices[i].Position.x);
+                auto theta = std::atan2f(meshData.Vertices[i].Position.z, meshData.Vertices[i].Position.x);
 
                 // Put in [0, 2pi].
                 if (theta < 0.0f)
                     theta += DirectX::XM_2Pi;
 
-                float phi = std::acosf(meshData.Vertices[i].Position.y / radius);
+                auto phi = std::acosf(meshData.Vertices[i].Position.y / radius);
 
                 meshData.Vertices[i].TexC.x = theta / DirectX::XM_2Pi;
                 meshData.Vertices[i].TexC.y = phi / DirectX::XM_Pi;
@@ -382,7 +381,7 @@ export
                 meshData.Vertices[i].TangentU.y = 0.0f;
                 meshData.Vertices[i].TangentU.z = +radius * sinf(phi) * cosf(theta);
 
-                DirectX::XMVECTOR T = DirectX::XMLoadFloat3(&meshData.Vertices[i].TangentU);
+                auto T = DirectX::XMVECTOR{DirectX::XMLoadFloat3(&meshData.Vertices[i].TangentU)};
                 DirectX::XMStoreFloat3(&meshData.Vertices[i].TangentU, DirectX::XMVector3Normalize(T));
             }
 
@@ -394,40 +393,39 @@ export
         /// The bottom and top radius can vary to form various cone shapes rather than true
         // cylinders.  The slices and stacks parameters control the degree of tessellation.
         ///</summary>
-        MeshGenData CreateCylinder(float bottomRadius, float topRadius, float height, uint32_t sliceCount, uint32_t stackCount)
+        auto CreateCylinder(float bottomRadius, float topRadius, float height, uint32_t sliceCount, uint32_t stackCount) -> MeshGenData
         {
-            MeshGenData meshData;
+            auto meshData = MeshGenData{};
 
             //
             // Build Stacks.
             // 
-
-            float stackHeight = height / stackCount;
+            auto stackHeight = height / stackCount;
 
             // Amount to increment radius as we move up each stack level from bottom to top.
-            float radiusStep = (topRadius - bottomRadius) / stackCount;
+            auto radiusStep = (topRadius - bottomRadius) / stackCount;
 
-            uint32_t ringCount = stackCount + 1;
+            auto ringCount = uint32_t{ stackCount + 1 };
 
             // Compute vertices for each stack ring starting at the bottom and moving up.
-            for (uint32_t i = 0; i < ringCount; ++i)
+            for (auto i = 0u; i < ringCount; ++i)
             {
-                float y = -0.5f * height + i * stackHeight;
-                float r = bottomRadius + i * radiusStep;
+                auto y = -0.5f * height + i * stackHeight;
+                auto r = bottomRadius + i * radiusStep;
 
                 // vertices of ring
-                float dTheta = 2.0f * DirectX::XM_Pi / sliceCount;
-                for (uint32_t j = 0; j <= sliceCount; ++j)
+                auto dTheta = 2.0f * DirectX::XM_Pi / sliceCount;
+                for (auto j = 0u; j <= sliceCount; ++j)
                 {
-                    MeshGenVertex vertex;
+                    auto vertex = MeshGenVertex{};
 
-                    float c = cosf(j * dTheta);
-                    float s = sinf(j * dTheta);
+                    auto c = cosf(j * dTheta);
+                    auto s = sinf(j * dTheta);
 
-                    vertex.Position = DirectX::XMFLOAT3(r * c, y, r * s);
+                    vertex.Position = DirectX::XMFLOAT3{r * c, y, r * s};
 
-                    vertex.TexC.x = (float)j / sliceCount;
-                    vertex.TexC.y = 1.0f - (float)i / stackCount;
+                    vertex.TexC.x = static_cast<float>(j) / sliceCount;
+                    vertex.TexC.y = 1.0f - static_cast<float>(i) / stackCount;
 
                     // Cylinder can be parameterized as follows, where we introduce v
                     // parameter that goes in the same direction as the v tex-coord
@@ -449,14 +447,14 @@ export
                     //  dz/dv = (r0-r1)*sin(t)
 
                     // This is unit length.
-                    vertex.TangentU = DirectX::XMFLOAT3(-s, 0.0f, c);
+                    vertex.TangentU = DirectX::XMFLOAT3{ -s, 0.0f, c };
 
-                    float dr = bottomRadius - topRadius;
-                    DirectX::XMFLOAT3 bitangent(dr * c, -height, dr * s);
+                    auto dr = bottomRadius - topRadius;
+                    auto bitangent = DirectX::XMFLOAT3{ dr * c, -height, dr * s };
 
-                    DirectX::XMVECTOR T = DirectX::XMLoadFloat3(&vertex.TangentU);
-                    DirectX::XMVECTOR B = DirectX::XMLoadFloat3(&bitangent);
-                    DirectX::XMVECTOR N = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(T, B));
+                    auto T = DirectX::XMVECTOR{ DirectX::XMLoadFloat3(&vertex.TangentU) };
+                    auto B = DirectX::XMVECTOR{ DirectX::XMLoadFloat3(&bitangent) };
+                    auto N = DirectX::XMVECTOR{ DirectX::XMVector3Normalize(DirectX::XMVector3Cross(T, B)) };
                     DirectX::XMStoreFloat3(&vertex.Normal, N);
 
                     meshData.Vertices.push_back(vertex);
@@ -464,12 +462,12 @@ export
             }
             // Add one because we duplicate the first and last vertex per ring
             // since the texture coordinates are different.
-            uint32_t ringVertexCount = sliceCount + 1;
+            auto ringVertexCount = uint32_t{ sliceCount + 1 };
 
             // Compute indices for each stack.
-            for (uint32_t i = 0; i < stackCount; ++i)
+            for (auto i = 0u; i < stackCount; ++i)
             {
-                for (uint32_t j = 0; j < sliceCount; ++j)
+                for (auto j = 0u; j < sliceCount; ++j)
                 {
                     meshData.Indices32.push_back(i * ringVertexCount + j);
                     meshData.Indices32.push_back((i + 1) * ringVertexCount + j);
@@ -491,37 +489,37 @@ export
         /// Creates an mxn grid in the xz-plane with m rows and n columns, centered
         /// at the origin with the specified width and depth.
         ///</summary>
-        MeshGenData CreateGrid(float width, float depth, uint32_t m, uint32_t n)
+        auto CreateGrid(float width, float depth, uint32_t m, uint32_t n) -> MeshGenData
         {
-            MeshGenData meshData;
+            auto meshData = MeshGenData{};
 
-            uint32_t vertexCount = m * n;
-            uint32_t faceCount = (m - 1) * (n - 1) * 2;
+            auto vertexCount = uint32_t{ m * n };
+            auto faceCount = uint32_t{ (m - 1) * (n - 1) * 2 };
 
             //
             // Create the vertices.
             //
 
-            float halfWidth = 0.5f * width;
-            float halfDepth = 0.5f * depth;
+            auto halfWidth = 0.5f * width;
+            auto halfDepth = 0.5f * depth;
 
-            float dx = width / (n - 1);
-            float dz = depth / (m - 1);
+            auto dx = width / (n - 1);
+            auto dz = depth / (m - 1);
 
-            float du = 1.0f / (n - 1);
-            float dv = 1.0f / (m - 1);
+            auto du = 1.0f / (n - 1);
+            auto dv = 1.0f / (m - 1);
 
             meshData.Vertices.resize(vertexCount);
-            for (uint32_t i = 0; i < m; ++i)
+            for (auto i = 0u; i < m; ++i)
             {
-                float z = halfDepth - i * dz;
-                for (uint32_t j = 0; j < n; ++j)
+                auto z = halfDepth - i * dz;
+                for (auto j = 0u; j < n; ++j)
                 {
-                    float x = -halfWidth + j * dx;
+                    auto x = -halfWidth + j * dx;
 
-                    meshData.Vertices[i * n + j].Position = DirectX::XMFLOAT3(x, 0.0f, z);
-                    meshData.Vertices[i * n + j].Normal = DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f);
-                    meshData.Vertices[i * n + j].TangentU = DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f);
+                    meshData.Vertices[i * n + j].Position = DirectX::XMFLOAT3{x, 0.0f, z};
+                    meshData.Vertices[i * n + j].Normal = DirectX::XMFLOAT3{0.0f, 1.0f, 0.0f};
+                    meshData.Vertices[i * n + j].TangentU = DirectX::XMFLOAT3{1.0f, 0.0f, 0.0f};
 
                     // Stretch texture over grid.
                     meshData.Vertices[i * n + j].TexC.x = j * du;
@@ -536,10 +534,10 @@ export
             meshData.Indices32.resize(faceCount * 3); // 3 indices per face
 
             // Iterate over each quad and compute indices.
-            uint32_t k = 0;
-            for (uint32_t i = 0; i < m - 1; ++i)
+            auto k = 0u;
+            for (auto i = 0u; i < m - 1; ++i)
             {
-                for (uint32_t j = 0; j < n - 1; ++j)
+                for (auto j = 0u; j < n - 1; ++j)
                 {
                     meshData.Indices32[k] = i * n + j;
                     meshData.Indices32[k + 1] = i * n + j + 1;
@@ -559,37 +557,36 @@ export
         ///<summary>
         /// Creates a quad aligned with the screen.  This is useful for postprocessing and screen effects.
         ///</summary>
-        MeshGenData CreateQuad(float x, float y, float w, float h, float depth)
+        auto CreateQuad(float x, float y, float w, float h, float depth) -> MeshGenData
         {
-            MeshGenData meshData;
-
+            auto meshData = MeshGenData{};
             meshData.Vertices.resize(4);
             meshData.Indices32.resize(6);
 
             // Position coordinates specified in NDC space.
-            meshData.Vertices[0] = MeshGenVertex(
+            meshData.Vertices[0] = MeshGenVertex{
                 x, y - h, depth,
                 0.0f, 0.0f, -1.0f,
                 1.0f, 0.0f, 0.0f,
-                0.0f, 1.0f);
+                0.0f, 1.0f };
 
-            meshData.Vertices[1] = MeshGenVertex(
+            meshData.Vertices[1] = MeshGenVertex{
                 x, y, depth,
                 0.0f, 0.0f, -1.0f,
                 1.0f, 0.0f, 0.0f,
-                0.0f, 0.0f);
+                0.0f, 0.0f };
 
-            meshData.Vertices[2] = MeshGenVertex(
+            meshData.Vertices[2] = MeshGenVertex{
                 x + w, y, depth,
                 0.0f, 0.0f, -1.0f,
                 1.0f, 0.0f, 0.0f,
-                1.0f, 0.0f);
+                1.0f, 0.0f };
 
-            meshData.Vertices[3] = MeshGenVertex(
+            meshData.Vertices[3] = MeshGenVertex{
                 x + w, y - h, depth,
                 0.0f, 0.0f, -1.0f,
                 1.0f, 0.0f, 0.0f,
-                1.0f, 1.0f);
+                1.0f, 1.0f };
 
             meshData.Indices32[0] = 0;
             meshData.Indices32[1] = 1;
@@ -607,8 +604,7 @@ export
         void Subdivide(MeshGenData& meshData)
         {
             // Save a copy of the input geometry.
-            MeshGenData inputCopy = meshData;
-
+            auto inputCopy = MeshGenData{meshData};
 
             meshData.Vertices.resize(0);
             meshData.Indices32.resize(0);
@@ -623,20 +619,20 @@ export
         	// *-----*-----*
             // v0    m2     v2
 
-            uint32_t numTris = (uint32_t)inputCopy.Indices32.size() / 3;
-            for (uint32_t i = 0; i < numTris; ++i)
+            auto numTris = (uint32_t)inputCopy.Indices32.size() / 3;
+            for (auto i = 0u; i < numTris; ++i)
             {
-                MeshGenVertex v0 = inputCopy.Vertices[inputCopy.Indices32[i * 3 + 0]];
-                MeshGenVertex v1 = inputCopy.Vertices[inputCopy.Indices32[i * 3 + 1]];
-                MeshGenVertex v2 = inputCopy.Vertices[inputCopy.Indices32[i * 3 + 2]];
+                auto v0 = MeshGenVertex{inputCopy.Vertices[inputCopy.Indices32[i * 3 + 0]]};
+                auto v1 = MeshGenVertex{inputCopy.Vertices[inputCopy.Indices32[i * 3 + 1]]};
+                auto v2 = MeshGenVertex{inputCopy.Vertices[inputCopy.Indices32[i * 3 + 2]]};
 
                 //
                 // Generate the midpoints.
                 //
 
-                MeshGenVertex m0 = MidPoint(v0, v1);
-                MeshGenVertex m1 = MidPoint(v1, v2);
-                MeshGenVertex m2 = MidPoint(v0, v2);
+                auto m0 = MeshGenVertex{MidPoint(v0, v1)};
+                auto m1 = MeshGenVertex{MidPoint(v1, v2)};
+                auto m2 = MeshGenVertex{MidPoint(v0, v2)};
 
                 //
                 // Add new geometry.
@@ -666,28 +662,28 @@ export
                 meshData.Indices32.push_back(i * 6 + 4);
             }
         }
-        MeshGenVertex MidPoint(const MeshGenVertex& v0, const MeshGenVertex& v1)
+        auto MidPoint(const MeshGenVertex& v0, const MeshGenVertex& v1) -> MeshGenVertex
         {
-            DirectX::XMVECTOR p0 = DirectX::XMLoadFloat3(&v0.Position);
-            DirectX::XMVECTOR p1 = DirectX::XMLoadFloat3(&v1.Position);
+            auto p0 = DirectX::XMVECTOR{ DirectX::XMLoadFloat3(&v0.Position) };
+            auto p1 = DirectX::XMVECTOR{ DirectX::XMLoadFloat3(&v1.Position) };
 
-            DirectX::XMVECTOR n0 = XMLoadFloat3(&v0.Normal);
-            DirectX::XMVECTOR n1 = DirectX::XMLoadFloat3(&v1.Normal);
+            auto n0 = DirectX::XMVECTOR{ DirectX::XMLoadFloat3(&v0.Normal) };
+            auto n1 = DirectX::XMVECTOR{ DirectX::XMLoadFloat3(&v1.Normal) };
 
-            DirectX::XMVECTOR tan0 = DirectX::XMLoadFloat3(&v0.TangentU);
-            DirectX::XMVECTOR tan1 = DirectX::XMLoadFloat3(&v1.TangentU);
+            auto tan0 = DirectX::XMVECTOR{ DirectX::XMLoadFloat3(&v0.TangentU) };
+            auto tan1 = DirectX::XMVECTOR{ DirectX::XMLoadFloat3(&v1.TangentU) };
 
-            DirectX::XMVECTOR tex0 = DirectX::XMLoadFloat2(&v0.TexC);
-            DirectX::XMVECTOR tex1 = DirectX::XMLoadFloat2(&v1.TexC);
+            auto tex0 = DirectX::XMVECTOR{ DirectX::XMLoadFloat2(&v0.TexC) };
+            auto tex1 = DirectX::XMVECTOR{ DirectX::XMLoadFloat2(&v1.TexC) };
 
             // Compute the midpoints of all the attributes.  Vectors need to be normalized
             // since linear interpolating can make them not unit length.  
-            DirectX::XMVECTOR pos = 0.5f * (p0 + p1);
-            DirectX::XMVECTOR normal = DirectX::XMVector3Normalize(0.5f * (n0 + n1));
-            DirectX::XMVECTOR tangent = DirectX::XMVector3Normalize(0.5f * (tan0 + tan1));
-            DirectX::XMVECTOR tex = 0.5f * (tex0 + tex1);
+            auto pos = DirectX::XMVECTOR{ 0.5f * (p0 + p1) };
+            auto normal = DirectX::XMVECTOR{ DirectX::XMVector3Normalize(0.5f * (n0 + n1)) };
+            auto tangent = DirectX::XMVECTOR{ DirectX::XMVector3Normalize(0.5f * (tan0 + tan1)) };
+            auto tex = DirectX::XMVECTOR{ 0.5f * (tex0 + tex1) };
 
-            MeshGenVertex v;
+            auto v = MeshGenVertex{};
             DirectX::XMStoreFloat3(&v.Position, pos);
             DirectX::XMStoreFloat3(&v.Normal, normal);
             DirectX::XMStoreFloat3(&v.TangentU, tangent);
@@ -697,21 +693,21 @@ export
         }
         void BuildCylinderTopCap(float bottomRadius, float topRadius, float height, uint32_t sliceCount, uint32_t stackCount, MeshGenData& meshData)
         {
-            uint32_t baseIndex = (uint32_t)meshData.Vertices.size();
+            auto baseIndex = uint32_t{ static_cast<uint32_t>(meshData.Vertices.size()) };
 
             float y = 0.5f * height;
             float dTheta = 2.0f * DirectX::XM_Pi / sliceCount;
 
             // Duplicate cap ring vertices because the texture coordinates and normals differ.
-            for (uint32_t i = 0; i <= sliceCount; ++i)
+            for (auto i = 0u; i <= sliceCount; ++i)
             {
-                float x = topRadius * cosf(i * dTheta);
-                float z = topRadius * sinf(i * dTheta);
+                auto x = topRadius * cosf(i * dTheta);
+                auto z = topRadius * sinf(i * dTheta);
 
                 // Scale down by the height to try and make top cap texture coord area
                 // proportional to base.
-                float u = x / height + 0.5f;
-                float v = z / height + 0.5f;
+                auto u = x / height + 0.5f;
+                auto v = z / height + 0.5f;
 
                 meshData.Vertices.push_back(MeshGenVertex(
                     x, y, z,
@@ -728,9 +724,9 @@ export
                 0.5f, 0.5f));
 
             // Index of center vertex.
-            uint32_t centerIndex = (uint32_t)meshData.Vertices.size() - 1;
+            auto centerIndex = uint32_t{ static_cast<uint32_t>(meshData.Vertices.size() - 1) };
 
-            for (uint32_t i = 0; i < sliceCount; ++i)
+            for (auto i = 0u; i < sliceCount; ++i)
             {
                 meshData.Indices32.push_back(centerIndex);
                 meshData.Indices32.push_back(baseIndex + i + 1);
@@ -743,39 +739,43 @@ export
             // Build bottom cap.
             //
 
-            uint32_t baseIndex = (uint32_t)meshData.Vertices.size();
-            float y = -0.5f * height;
+            auto baseIndex = uint32_t{ static_cast<uint32_t>(meshData.Vertices.size()) };
+            auto y = float{ -0.5f * height };
 
             // vertices of ring
-            float dTheta = 2.0f * DirectX::XM_Pi / sliceCount;
-            for (uint32_t i = 0; i <= sliceCount; ++i)
+            auto dTheta = float{ 2.0f * DirectX::XM_Pi / sliceCount };
+            for (auto i = 0u; i <= sliceCount; ++i)
             {
-                float x = bottomRadius * cosf(i * dTheta);
-                float z = bottomRadius * sinf(i * dTheta);
+                auto x = float{ bottomRadius * cosf(i * dTheta) };
+                auto z = float{ bottomRadius * sinf(i * dTheta) };
 
                 // Scale down by the height to try and make top cap texture coord area
                 // proportional to base.
-                float u = x / height + 0.5f;
-                float v = z / height + 0.5f;
+                auto u = float{ x / height + 0.5f };
+                auto v = float{ z / height + 0.5f };
 
-                meshData.Vertices.push_back(MeshGenVertex(
-                    x, y, z,
-                    0.0f, -1.0f, 0.0f,
-                    1.0f, 0.0f, 0.0f,
-                    u, v));
+                meshData.Vertices.push_back(
+                    MeshGenVertex{
+                        x, y, z,
+                        0.0f, -1.0f, 0.0f,
+                        1.0f, 0.0f, 0.0f,
+                        u, v 
+                    });
             }
 
             // Cap center vertex.
-            meshData.Vertices.push_back(MeshGenVertex(
-                0.0f, y, 0.0f,
-                0.0f, -1.0f, 0.0f,
-                1.0f, 0.0f, 0.0f,
-                0.5f, 0.5f));
+            meshData.Vertices.push_back(
+                MeshGenVertex{
+                    0.0f, y, 0.0f,
+                    0.0f, -1.0f, 0.0f,
+                    1.0f, 0.0f, 0.0f,
+                    0.5f, 0.5f 
+                });
 
             // Cache the index of center vertex.
-            uint32_t centerIndex = (uint32_t)meshData.Vertices.size() - 1;
+            auto centerIndex = uint32_t{ static_cast<uint32_t>(meshData.Vertices.size() - 1) };
 
-            for (uint32_t i = 0; i < sliceCount; ++i)
+            for (auto i = 0u; i < sliceCount; ++i)
             {
                 meshData.Indices32.push_back(centerIndex);
                 meshData.Indices32.push_back(baseIndex + i);
