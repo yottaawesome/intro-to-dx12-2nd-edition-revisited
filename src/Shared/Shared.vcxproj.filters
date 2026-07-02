@@ -54,6 +54,9 @@
     <ClCompile Include="imgui.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="uploadbuffer.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="vcpkg.json" />

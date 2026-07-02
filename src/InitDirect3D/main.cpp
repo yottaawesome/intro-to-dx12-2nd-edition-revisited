@@ -236,7 +236,7 @@ auto wWinMain(
 
     try
     {
-        InitDirect3DApp theApp(hInstance);
+        auto theApp = InitDirect3DApp{ hInstance };
         if (!theApp.Initialize())
             return 0;
 

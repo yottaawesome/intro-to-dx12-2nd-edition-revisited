@@ -39,6 +39,7 @@ export namespace Win32
 	constexpr auto CrtLeakCheckDf = _CRTDBG_LEAK_CHECK_DF;
 	using
 		::_CrtSetDbgFlag,
+		::OutputDebugStringA,
 		::UINT,
 		::LARGE_INTEGER,
 		::WCHAR,
@@ -229,6 +230,9 @@ export namespace DXC
 		::IDxcUtils,
 		::IDxcIncludeHandler
 		;
+
+	constexpr auto ArgSkipOptimizations = DXC_ARG_SKIP_OPTIMIZATIONS;
+	constexpr auto ArgDebug = DXC_ARG_DEBUG;
 }
 
 export namespace DXGI
@@ -277,7 +281,15 @@ export namespace DXGI
 		::DXGI_SWAP_CHAIN_FULLSCREEN_DESC,
 		::CreateDXGIFactory2
 		;
-}	
+}
+
+export namespace D3D
+{
+	using 
+		::ID3DBlob,
+		::D3D_ROOT_SIGNATURE_VERSION
+		;
+}
 
 export namespace D3D12
 {
@@ -289,10 +301,18 @@ export namespace D3D12
 	}
 
 	using
+		::D3D12_ROOT_SIGNATURE_FLAGS,
+		::D3D12_DESCRIPTOR_RANGE_TYPE,
+		::CD3DX12_ROOT_PARAMETER,
+		::CD3DX12_DESCRIPTOR_RANGE,
+		::CD3DX12_ROOT_SIGNATURE_DESC,
+		::ID3D12PipelineState,
+		::D3D12_GPU_VIRTUAL_ADDRESS,
 		::D3D12_CLEAR_FLAGS,
 		::ID3D12CommandList,
 		::CD3DX12_HEAP_PROPERTIES,
 		::CD3DX12_RESOURCE_BARRIER,
+		::CD3DX12_RESOURCE_DESC,
 		::D3D12_RESOURCE_STATES,
 		::D3D12_HEAP_TYPE,
 		::D3D_FEATURE_LEVEL,
@@ -347,6 +367,7 @@ export namespace D3D12
 		::ID3D12GraphicsCommandList,
 		::ID3D12GraphicsCommandList6,
 		::D3D12_PRIMITIVE_TOPOLOGY_TYPE,
+		::D3D12SerializeRootSignature,
 		::D3D12GetDebugInterface,
 		::D3D12CreateDevice
 		;
@@ -371,7 +392,17 @@ export namespace DirectX
 
 	namespace Colors
 	{
-		using ::DirectX::Colors::LightSteelBlue;
+		using
+			::DirectX::Colors::LightSteelBlue,
+			::DirectX::Colors::White,
+			::DirectX::Colors::Black,
+			::DirectX::Colors::Red,
+			::DirectX::Colors::Green,
+			::DirectX::Colors::Blue,
+			::DirectX::Colors::Magenta,
+			::DirectX::Colors::Yellow,
+			::DirectX::Colors::Cyan
+			;
 	}
 
 	using
