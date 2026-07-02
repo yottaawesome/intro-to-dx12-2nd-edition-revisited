@@ -32,53 +32,51 @@ export struct BoneAnimation
 	auto GetEndTime() const -> float
 	{
 		// Keyframes are sorted by time, so last keyframe gives end time.
-		float f = Keyframes.back().TimePos;
-
-		return f;
+		return Keyframes.back().TimePos;
 	}
 
 	void Interpolate(float t, DirectX::XMFLOAT4X4& M) const
 	{
 		if (t <= Keyframes.front().TimePos)
 		{
-			DirectX::XMVECTOR S = DirectX::XMLoadFloat3(&Keyframes.front().Scale);
-			DirectX::XMVECTOR P = DirectX::XMLoadFloat3(&Keyframes.front().Translation);
-			DirectX::XMVECTOR Q = DirectX::XMLoadFloat4(&Keyframes.front().RotationQuat);
+			auto S = DirectX::XMVECTOR{DirectX::XMLoadFloat3(&Keyframes.front().Scale)};
+			auto P = DirectX::XMVECTOR{DirectX::XMLoadFloat3(&Keyframes.front().Translation)};
+			auto Q = DirectX::XMVECTOR{DirectX::XMLoadFloat4(&Keyframes.front().RotationQuat)};
 
-			DirectX::XMVECTOR zero = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+			auto zero = DirectX::XMVECTOR{DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f)};
 			DirectX::XMStoreFloat4x4(&M, DirectX::XMMatrixAffineTransformation(S, zero, Q, P));
 		}
 		else if (t >= Keyframes.back().TimePos)
 		{
-			DirectX::XMVECTOR S = DirectX::XMLoadFloat3(&Keyframes.back().Scale);
-			DirectX::XMVECTOR P = DirectX::XMLoadFloat3(&Keyframes.back().Translation);
-			DirectX::XMVECTOR Q = DirectX::XMLoadFloat4(&Keyframes.back().RotationQuat);
+			auto S = DirectX::XMVECTOR{DirectX::XMLoadFloat3(&Keyframes.back().Scale)};
+			auto P = DirectX::XMVECTOR{DirectX::XMLoadFloat3(&Keyframes.back().Translation)};
+			auto Q = DirectX::XMVECTOR{DirectX::XMLoadFloat4(&Keyframes.back().RotationQuat)};
 
-			DirectX::XMVECTOR zero = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+			auto zero = DirectX::XMVECTOR{DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f)};
 			DirectX::XMStoreFloat4x4(&M, DirectX::XMMatrixAffineTransformation(S, zero, Q, P));
 		}
 		else
 		{
-			for (Win32::UINT i = 0; i < Keyframes.size() - 1; ++i)
+			for (auto i = 0u; i < Keyframes.size() - 1; ++i)
 			{
 				if (t >= Keyframes[i].TimePos && t <= Keyframes[i + 1].TimePos)
 				{
 					float lerpPercent = (t - Keyframes[i].TimePos) / (Keyframes[i + 1].TimePos - Keyframes[i].TimePos);
 
-					DirectX::XMVECTOR s0 = DirectX::XMLoadFloat3(&Keyframes[i].Scale);
-					DirectX::XMVECTOR s1 = DirectX::XMLoadFloat3(&Keyframes[i + 1].Scale);
+					auto s0 = DirectX::XMVECTOR{DirectX::XMLoadFloat3(&Keyframes[i].Scale)};
+					auto s1 = DirectX::XMVECTOR{DirectX::XMLoadFloat3(&Keyframes[i + 1].Scale)};
 
-					DirectX::XMVECTOR p0 = DirectX::XMLoadFloat3(&Keyframes[i].Translation);
-					DirectX::XMVECTOR p1 = DirectX::XMLoadFloat3(&Keyframes[i + 1].Translation);
+					auto p0 = DirectX::XMVECTOR{DirectX::XMLoadFloat3(&Keyframes[i].Translation)};
+					auto p1 = DirectX::XMVECTOR{DirectX::XMLoadFloat3(&Keyframes[i + 1].Translation)};
 
-					DirectX::XMVECTOR q0 = DirectX::XMLoadFloat4(&Keyframes[i].RotationQuat);
-					DirectX::XMVECTOR q1 = DirectX::XMLoadFloat4(&Keyframes[i + 1].RotationQuat);
+					auto q0 = DirectX::XMVECTOR{DirectX::XMLoadFloat4(&Keyframes[i].RotationQuat)};
+					auto q1 = DirectX::XMVECTOR{DirectX::XMLoadFloat4(&Keyframes[i + 1].RotationQuat)};
 
-					DirectX::XMVECTOR S = DirectX::XMVectorLerp(s0, s1, lerpPercent);
-					DirectX::XMVECTOR P = DirectX::XMVectorLerp(p0, p1, lerpPercent);
-					DirectX::XMVECTOR Q = DirectX::XMQuaternionSlerp(q0, q1, lerpPercent);
+					auto S = DirectX::XMVECTOR{DirectX::XMVectorLerp(s0, s1, lerpPercent)};
+					auto P = DirectX::XMVECTOR{DirectX::XMVectorLerp(p0, p1, lerpPercent)};
+					auto Q = DirectX::XMVECTOR{DirectX::XMQuaternionSlerp(q0, q1, lerpPercent)};
 
-					DirectX::XMVECTOR zero = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+					auto zero = DirectX::XMVECTOR{DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f)};
 					DirectX::XMStoreFloat4x4(&M, DirectX::XMMatrixAffineTransformation(S, zero, Q, P));
 
 					break;
@@ -100,8 +98,8 @@ export struct AnimationClip
 	auto GetClipStartTime() const -> float
 	{
 		// Find smallest start time over all bones in this clip.
-		float t = MathHelper::Infinity;
-		for (Win32::UINT i = 0; i < BoneAnimations.size(); ++i)
+		auto t = MathHelper::Infinity;
+		for (auto i = 0u; i < BoneAnimations.size(); ++i)
 		{
 			t = MathHelper::Min(t, BoneAnimations[i].GetStartTime());
 		}
@@ -111,8 +109,8 @@ export struct AnimationClip
 	auto GetClipEndTime() const -> float
 	{
 		// Find largest end time over all bones in this clip.
-		float t = 0.0f;
-		for (Win32::UINT i = 0; i < BoneAnimations.size(); ++i)
+		auto t = 0.0f;
+		for (auto i = 0u; i < BoneAnimations.size(); ++i)
 		{
 			t = MathHelper::Max(t, BoneAnimations[i].GetEndTime());
 		}
@@ -121,7 +119,7 @@ export struct AnimationClip
 
 	void Interpolate(float t, std::vector<DirectX::XMFLOAT4X4>& boneTransforms) const
 	{
-		for (Win32::UINT i = 0; i < BoneAnimations.size(); ++i)
+		for (auto i = 0u; i < BoneAnimations.size(); ++i)
 		{
 			BoneAnimations[i].Interpolate(t, boneTransforms[i]);
 		}
@@ -171,9 +169,8 @@ public:
 		std::vector<DirectX::XMFLOAT4X4>& finalTransforms
 	) const
 	{
-		Win32::UINT numBones = (Win32::UINT)mBoneOffsets.size();
-
-		std::vector<DirectX::XMFLOAT4X4> toParentTransforms(numBones);
+		auto numBones = static_cast<Win32::UINT>(mBoneOffsets.size());
+		auto toParentTransforms = std::vector<DirectX::XMFLOAT4X4>(numBones);
 
 		// Interpolate all the bones of this clip at the given time instance.
 		auto clip = mAnimations.find(clipName);
@@ -182,32 +179,31 @@ public:
 		//
 		// Traverse the hierarchy and transform all the bones to the root space.
 		//
-
-		std::vector<DirectX::XMFLOAT4X4> toRootTransforms(numBones);
+		auto toRootTransforms = std::vector<DirectX::XMFLOAT4X4>(numBones);
 
 		// The root bone has index 0.  The root bone has no parent, so its toRootTransform
 		// is just its local bone transform.
 		toRootTransforms[0] = toParentTransforms[0];
 
 		// Now find the toRootTransform of the children.
-		for (Win32::UINT i = 1; i < numBones; ++i)
+		for (auto i = 1u; i < numBones; ++i)
 		{
-			DirectX::XMMATRIX toParent = DirectX::XMLoadFloat4x4(&toParentTransforms[i]);
+			auto toParent = DirectX::XMMATRIX{DirectX::XMLoadFloat4x4(&toParentTransforms[i])};
 
-			int parentIndex = mBoneHierarchy[i];
-			DirectX::XMMATRIX parentToRoot = DirectX::XMLoadFloat4x4(&toRootTransforms[parentIndex]);
+			auto parentIndex = int{ mBoneHierarchy[i] };
+			auto parentToRoot = DirectX::XMMATRIX{DirectX::XMLoadFloat4x4(&toRootTransforms[parentIndex])};
 
-			DirectX::XMMATRIX toRoot = DirectX::XMMatrixMultiply(toParent, parentToRoot);
+			auto toRoot = DirectX::XMMATRIX{DirectX::XMMatrixMultiply(toParent, parentToRoot)};
 
 			DirectX::XMStoreFloat4x4(&toRootTransforms[i], toRoot);
 		}
 
 		// Premultiply by the bone offset transform to get the final transform.
-		for (Win32::UINT i = 0; i < numBones; ++i)
+		for (auto i = 0u; i < numBones; ++i)
 		{
-			DirectX::XMMATRIX offset = DirectX::XMLoadFloat4x4(&mBoneOffsets[i]);
-			DirectX::XMMATRIX toRoot = DirectX::XMLoadFloat4x4(&toRootTransforms[i]);
-			DirectX::XMMATRIX finalTransform = DirectX::XMMatrixMultiply(offset, toRoot);
+			auto offset = DirectX::XMMATRIX{DirectX::XMLoadFloat4x4(&mBoneOffsets[i])};
+			auto toRoot = DirectX::XMMATRIX{DirectX::XMLoadFloat4x4(&toRootTransforms[i])};
+			auto finalTransform = DirectX::XMMATRIX{DirectX::XMMatrixMultiply(offset, toRoot)};
 			DirectX::XMStoreFloat4x4(&finalTransforms[i], DirectX::XMMatrixTranspose(finalTransform));
 		}
 	}

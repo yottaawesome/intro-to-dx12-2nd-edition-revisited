@@ -14,6 +14,7 @@ constexpr auto CBV_SRV_UAV_HEAP_CAPACITY = 16384u;
 
 // CBV = Constant Buffer View
 // SRV = Shader Resource View
+// UAV = Unordered Access View
 
 class InitDirect3DApp : public D3DApp
 {
@@ -43,8 +44,8 @@ public:
 private:
     virtual void CreateRtvAndDsvDescriptorHeaps()override
     {
-        mRtvHeap.Init(md3dDevice.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, SwapChainBufferCount);
-        mDsvHeap.Init(md3dDevice.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV, SwapChainBufferCount);
+        mRtvHeap.Init(md3dDevice.Get(), D3D12::D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_RTV, SwapChainBufferCount);
+        mDsvHeap.Init(md3dDevice.Get(), D3D12::D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_DSV, SwapChainBufferCount);
     }
     virtual void OnResize()override
     {
@@ -68,15 +69,18 @@ private:
         // Reusing the command list reuses memory.
         ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
 
-        ID3D12DescriptorHeap* descriptorHeaps[] = { cbvSrvUavHeap.GetD3dHeap() };
+        D3D12::ID3D12DescriptorHeap* descriptorHeaps[] = { cbvSrvUavHeap.GetD3dHeap() };
         mCommandList->SetDescriptorHeaps(1, descriptorHeaps);
 
         mCommandList->RSSetViewports(1, &mScreenViewport);
         mCommandList->RSSetScissorRects(1, &mScissorRect);
 
         // Indicate a state transition on the resource usage.
-        auto transition = D3D12::CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
-            D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+        auto transition = D3D12::CD3DX12_RESOURCE_BARRIER::Transition(
+            CurrentBackBuffer(),
+            D3D12::D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_PRESENT,
+            D3D12::D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_RENDER_TARGET
+        );
         mCommandList->ResourceBarrier(1, &transition);
 
         // Clear the back buffer and depth buffer.
@@ -99,15 +103,18 @@ private:
 
         // Indicate a state transition on the resource usage.
 
-        transition = D3D12::CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
-            D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+        transition = D3D12::CD3DX12_RESOURCE_BARRIER::Transition(
+            CurrentBackBuffer(),
+            D3D12::D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_RENDER_TARGET, 
+            D3D12::D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_PRESENT
+        );
         mCommandList->ResourceBarrier(1, &transition);
 
         // Done recording commands.
         ThrowIfFailed(mCommandList->Close());
 
         // Add the command list to the queue for execution.
-        ID3D12CommandList* cmdsLists[] = { mCommandList.Get() };
+        D3D12::ID3D12CommandList* cmdsLists[] = { mCommandList.Get() };
         mCommandQueue->ExecuteCommandLists(1, cmdsLists);
 
         // Swap the back and front buffers
