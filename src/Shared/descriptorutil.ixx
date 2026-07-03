@@ -84,7 +84,7 @@ export
 
         void Init(D3D12::ID3D12Device* device, Win32::UINT capacity)
         {
-            DescriptorHeap::Init(device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, capacity);
+            DescriptorHeap::Init(device, D3D12::D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, capacity);
 
             for (auto i = 0u; i < capacity; ++i)
                 mFreeIndices.push(i);
@@ -227,13 +227,13 @@ export
         SamplerHeap() = default;
 
         auto InitSamplerDesc(
-            D3D12::D3D12_FILTER filter = D3D12::D3D12_FILTER::D3D12_FILTER_ANISOTROPIC,
-            D3D12::D3D12_TEXTURE_ADDRESS_MODE addressU = D3D12::D3D12_TEXTURE_ADDRESS_MODE::D3D12_TEXTURE_ADDRESS_MODE_WRAP,
-            D3D12::D3D12_TEXTURE_ADDRESS_MODE addressV = D3D12::D3D12_TEXTURE_ADDRESS_MODE::D3D12_TEXTURE_ADDRESS_MODE_WRAP,
-            D3D12::D3D12_TEXTURE_ADDRESS_MODE addressW = D3D12::D3D12_TEXTURE_ADDRESS_MODE::D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+            D3D12::D3D12_FILTER filter = D3D12_FILTER_ANISOTROPIC,
+            D3D12::D3D12_TEXTURE_ADDRESS_MODE addressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+            D3D12::D3D12_TEXTURE_ADDRESS_MODE addressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+            D3D12::D3D12_TEXTURE_ADDRESS_MODE addressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
             Win32::FLOAT mipLODBias = 0,
             Win32::UINT maxAnisotropy = 16,
-            D3D12::D3D12_COMPARISON_FUNC comparisonFunc = D3D12::D3D12_COMPARISON_FUNC::D3D12_COMPARISON_FUNC_NONE,
+            D3D12::D3D12_COMPARISON_FUNC comparisonFunc = D3D12_COMPARISON_FUNC_NONE,
             const DirectX::XMFLOAT4& borderColor = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f),
             Win32::FLOAT minLOD = 0.f,
             Win32::FLOAT maxLOD = D3D12::D3d12Float32Max
@@ -305,15 +305,18 @@ export
         CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor
     )
     {
-        D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-        srvDesc.Shader4ComponentMapping = D3D12::DefaultShader4ComponentMapping();
-        srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
-        srvDesc.Texture2DArray.MostDetailedMip = 0;
-        srvDesc.Texture2DArray.FirstArraySlice = 0;
-        srvDesc.Texture2DArray.ArraySize = arraySize;
-        srvDesc.Texture2DArray.ResourceMinLODClamp = 0.0f;
-        srvDesc.Format = format;
-        srvDesc.Texture2DArray.MipLevels = mipLevels;
+        auto srvDesc = D3D12_SHADER_RESOURCE_VIEW_DESC{
+			.Format = format,
+			.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY,
+			.Shader4ComponentMapping = D3D12::DefaultShader4ComponentMapping(),
+			.Texture2DArray = {
+				.MostDetailedMip = 0,
+				.MipLevels = mipLevels,
+				.FirstArraySlice = 0,
+				.ArraySize = arraySize,
+				.ResourceMinLODClamp = 0.0f
+			}
+        };
         device->CreateShaderResourceView(resource, &srvDesc, hDescriptor);
     }
 
@@ -325,13 +328,16 @@ export
         D3D12::CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor
     )
     {
-        D3D12::D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-        srvDesc.Shader4ComponentMapping = D3D12::DefaultShader4ComponentMapping();
-        srvDesc.ViewDimension = D3D12::D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURECUBE;
-        srvDesc.TextureCube.MostDetailedMip = 0;
-        srvDesc.TextureCube.ResourceMinLODClamp = 0.0f;
-        srvDesc.Format = format;
-        srvDesc.TextureCube.MipLevels = mipLevels;
+        auto srvDesc = D3D12::D3D12_SHADER_RESOURCE_VIEW_DESC{
+			.Format = format,
+			.ViewDimension = D3D12::D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURECUBE,
+			.Shader4ComponentMapping = D3D12::DefaultShader4ComponentMapping(), 
+			.TextureCube = {
+				.MostDetailedMip = 0,
+				.MipLevels = mipLevels,
+				.ResourceMinLODClamp = 0.0f
+			}
+        };
         device->CreateShaderResourceView(resource, &srvDesc, hDescriptor);
     }
 
@@ -343,11 +349,14 @@ export
         D3D12::CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor
     )
     {
-        D3D12::D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
-        rtvDesc.ViewDimension = D3D12::D3D12_RTV_DIMENSION::D3D12_RTV_DIMENSION_TEXTURE2D;
-        rtvDesc.Format = format;
-        rtvDesc.Texture2D.MipSlice = mipSlice;
-        rtvDesc.Texture2D.PlaneSlice = 0;
+        auto rtvDesc = D3D12::D3D12_RENDER_TARGET_VIEW_DESC{
+            .Format = format,
+            .ViewDimension = D3D12::D3D12_RTV_DIMENSION::D3D12_RTV_DIMENSION_TEXTURE2D,
+            .Texture2D = {
+                .MipSlice = mipSlice,
+                .PlaneSlice = 0
+            }
+        };
         device->CreateRenderTargetView(resource, &rtvDesc, hDescriptor);
     }
     
@@ -359,10 +368,13 @@ export
         D3D12::CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor
     )
     {
-        D3D12::D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
-        uavDesc.Format = format;
-        uavDesc.ViewDimension = D3D12::D3D12_UAV_DIMENSION::D3D12_UAV_DIMENSION_TEXTURE2D;
-        uavDesc.Texture2D.MipSlice = mipSlice;
+        auto uavDesc = D3D12::D3D12_UNORDERED_ACCESS_VIEW_DESC{
+			.Format = format,
+			.ViewDimension = D3D12::D3D12_UAV_DIMENSION::D3D12_UAV_DIMENSION_TEXTURE2D,
+			.Texture2D = {
+				.MipSlice = mipSlice
+			}
+        };
         device->CreateUnorderedAccessView(resource, nullptr, &uavDesc, hDescriptor);
     }
 
@@ -377,14 +389,17 @@ export
         D3D12::CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor
     )
     {
-        D3D12::D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc;
-        uavDesc.Format = DXGI::DXGI_FORMAT::DXGI_FORMAT_UNKNOWN; // structured buffer
-        uavDesc.ViewDimension = D3D12::D3D12_UAV_DIMENSION::D3D12_UAV_DIMENSION_BUFFER;
-        uavDesc.Buffer.FirstElement = firstElement;
-        uavDesc.Buffer.NumElements = elementCount;
-        uavDesc.Buffer.StructureByteStride = elementByteSize;
-        uavDesc.Buffer.CounterOffsetInBytes = counterOffset;
-        uavDesc.Buffer.Flags = D3D12::D3D12_BUFFER_UAV_FLAGS::D3D12_BUFFER_UAV_FLAG_NONE;
+        auto uavDesc = D3D12::D3D12_UNORDERED_ACCESS_VIEW_DESC{
+			.Format = DXGI::DXGI_FORMAT::DXGI_FORMAT_UNKNOWN, // structured buffer
+            .ViewDimension = D3D12::D3D12_UAV_DIMENSION::D3D12_UAV_DIMENSION_BUFFER,
+			.Buffer = {
+				.FirstElement = firstElement,
+				.NumElements = elementCount,
+				.StructureByteStride = elementByteSize,
+				.CounterOffsetInBytes = counterOffset,
+				.Flags = D3D12::D3D12_BUFFER_UAV_FLAGS::D3D12_BUFFER_UAV_FLAG_NONE
+			}
+        };
         device->CreateUnorderedAccessView(resource, counterResource, &uavDesc, hDescriptor);
     }
 
