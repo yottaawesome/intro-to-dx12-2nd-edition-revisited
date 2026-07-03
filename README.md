@@ -25,11 +25,12 @@ Microsoft Visual Studio 2026 with the _Desktop development with C++_ and _Game d
 * Multiprocessor compilation has been enabled in the project settings.
 * A lightweight `Event` class has been added to prevent a potential memory leak in `FlushCommandQueue()`.
 * Function signatures are being updated to use trailing return type syntax, which are visually easier to navigate in classes with many methods.
-* Various class-level `static` variables have been made `inline`, simplifying their initialisation.
+* Various class-level `static` member variables have been made `inline`, simplifying their initialisation.
 * Variable declarations are being ported to Almost Always Auto (AAA) idiom with braced initialisation. AAA is easier to visually navigate, while braced initialisation guarantees left-to-right evaluation order and catches otherwise invisible narrowing conversions.
-* Replacement of certain raw arrays with `std::array`, which also removes the need for `_countof()`.
+* Replacement of certain raw arrays with `std::array`, which also removes the need for the non-standard `_countof()` extension.
 * The use of `!` is being with replaced with the more obvious `not`.
 * Use of certain macros and preprocessor checks such as `#if defined(DEBUG)` have been replaced with `if constexpr(...)` checks, which are far less uglier.
+* Use of `FLT_MAX` has been removed in favour of the standard `std::numeric_limits<float>::max()`.
 * `main()` code has been ported to function-try-block syntax.
 * General code cleanup. This includes removal of redundant conditionals, improvements to static initialisation, improvements to the `Random` class, and removal of declared but undefined functions that were found to not be used anywhere.
 
