@@ -20,21 +20,18 @@ public:
     // Returns random float in [0, 1).
     static auto RandF() -> float
     {
-        auto r = Random{};
-        return r.Uniform(0.0f, 1.0f);
+        return Random{}.Uniform(0.0f, 1.0f);
     }
 
     // Returns random float in [a, b).
     static auto RandF(float a, float b) -> float
     {
-        auto r = Random{};
-        return r.Uniform(a, b);
+        return Random{}.Uniform(a, b);
     }
 
     static auto Rand(int a, int b) -> int
     {
-        auto r = Random{};
-        return r.Uniform(a, b);
+        return Random{}.Uniform(a, b);
     }
 
     template<typename T>
