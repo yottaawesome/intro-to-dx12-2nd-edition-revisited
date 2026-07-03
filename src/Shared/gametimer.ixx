@@ -12,7 +12,7 @@ public:
 	GameTimer()
 	{
 		auto countsPerSec = std::int64_t{};
-		Win32::QueryPerformanceFrequency((LARGE_INTEGER*)&countsPerSec);
+		Win32::QueryPerformanceFrequency((Win32::LARGE_INTEGER*)&countsPerSec);
 		mSecondsPerCount = 1.0 / (double)countsPerSec;
 	}
 
@@ -66,36 +66,30 @@ public:
 
 	void Start()
 	{
-		auto startTime = std::int64_t{};
-		Win32::QueryPerformanceCounter((Win32::LARGE_INTEGER*)&startTime);
-
+		if (not mStopped)
+			return;
 
 		// Accumulate the time elapsed between stop and start pairs.
 		//
 		//                     |<-------d------->|
 		// ----*---------------*-----------------*------------> time
 		//  mBaseTime       mStopTime        startTime     
-
-		if (mStopped)
-		{
-			mPausedTime += (startTime - mStopTime);
-
-			mPrevTime = startTime;
-			mStopTime = 0;
-			mStopped = false;
-		}
+		auto startTime = std::int64_t{};
+		Win32::QueryPerformanceCounter((Win32::LARGE_INTEGER*)&startTime);
+		mPausedTime += (startTime - mStopTime);
+		mPrevTime = startTime;
+		mStopTime = 0;
+		mStopped = false;
 	}
 
 	void Stop()
 	{
-		if (!mStopped)
-		{
-			auto currTime = std::int64_t{};
-			Win32::QueryPerformanceCounter((Win32::LARGE_INTEGER*)&currTime);
-
-			mStopTime = currTime;
-			mStopped = true;
-		}
+		if (mStopped)
+			return;
+		auto currTime = std::int64_t{};
+		Win32::QueryPerformanceCounter((Win32::LARGE_INTEGER*)&currTime);
+		mStopTime = currTime;
+		mStopped = true;
 	}
 
 	void Tick()
@@ -120,9 +114,7 @@ public:
 		// processor goes into a power save mode or we get shuffled to another
 		// processor, then mDeltaTime can be negative.
 		if (mDeltaTime < 0.0)
-		{
 			mDeltaTime = 0.0;
-		}
 	}
 
 private:

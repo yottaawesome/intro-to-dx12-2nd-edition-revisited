@@ -337,25 +337,24 @@ protected:
 		}
 
 		// Create the depth/stencil buffer and view.
-		auto depthStencilDesc = D3D12::D3D12_RESOURCE_DESC{};
-		depthStencilDesc.Dimension = D3D12::D3D12_RESOURCE_DIMENSION::D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-		depthStencilDesc.Alignment = 0;
-		depthStencilDesc.Width = mClientWidth;
-		depthStencilDesc.Height = mClientHeight;
-		depthStencilDesc.DepthOrArraySize = 1;
-		depthStencilDesc.MipLevels = 1;
-		depthStencilDesc.Format = mDepthStencilFormat;
-		depthStencilDesc.SampleDesc.Count = 1;
-		depthStencilDesc.SampleDesc.Quality = 0;
-		depthStencilDesc.Layout = D3D12::D3D12_TEXTURE_LAYOUT::D3D12_TEXTURE_LAYOUT_UNKNOWN;
-		depthStencilDesc.Flags = D3D12::D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+		auto depthStencilDesc = D3D12::D3D12_RESOURCE_DESC{
+			.Dimension = D3D12::D3D12_RESOURCE_DIMENSION::D3D12_RESOURCE_DIMENSION_TEXTURE2D,
+			.Alignment = 0,
+			.Width = static_cast<UINT>(mClientWidth),
+			.Height = static_cast<UINT>(mClientHeight),
+			.DepthOrArraySize = 1,
+			.MipLevels = 1,
+			.Format = mDepthStencilFormat,
+			.SampleDesc = { .Count = 1, .Quality = 0 },
+			.Layout = D3D12::D3D12_TEXTURE_LAYOUT::D3D12_TEXTURE_LAYOUT_UNKNOWN,
+			.Flags = D3D12::D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL
+		};
+		auto heapProperties = D3D12::CD3DX12_HEAP_PROPERTIES{ D3D12::D3D12_HEAP_TYPE::D3D12_HEAP_TYPE_DEFAULT };
 
-		auto heapProperties = D3D12::CD3DX12_HEAP_PROPERTIES(D3D12::D3D12_HEAP_TYPE::D3D12_HEAP_TYPE_DEFAULT);
-
-		D3D12::D3D12_CLEAR_VALUE optClear;
-		optClear.Format = mDepthStencilFormat;
-		optClear.DepthStencil.Depth = 1.0f;
-		optClear.DepthStencil.Stencil = 0;
+		auto optClear = D3D12::D3D12_CLEAR_VALUE{
+			.Format = mDepthStencilFormat,
+			.DepthStencil = { .Depth = 1.0f, .Stencil = 0 }
+		};
 		ThrowIfFailed(md3dDevice->CreateCommittedResource(
 			&heapProperties,
 			D3D12::D3D12_HEAP_FLAGS::D3D12_HEAP_FLAG_NONE,
@@ -428,7 +427,7 @@ protected:
 		wc.lpszMenuName = 0;
 		wc.lpszClassName = L"MainWnd";
 
-		if (!Win32::RegisterClassW(&wc))
+		if (not Win32::RegisterClassW(&wc))
 		{
 			Win32::MessageBoxW(0, L"RegisterClass Failed.", 0, 0);
 			return false;
@@ -474,8 +473,8 @@ protected:
 			factoryFlags = DXGI::CreateFactoryDebug;
 
 			// Enable the D3D12 debug layer.
-			Microsoft::WRL::ComPtr<D3D12::ID3D12Debug> debugController0;
-			Microsoft::WRL::ComPtr<D3D12::ID3D12Debug1> debugController1;
+			auto debugController0 = Microsoft::WRL::ComPtr<D3D12::ID3D12Debug>{};
+			auto debugController1 = Microsoft::WRL::ComPtr<D3D12::ID3D12Debug1>{};
 			ThrowIfFailed(D3D12::D3D12GetDebugInterface(
 				__uuidof(D3D12::ID3D12Debug), &debugController0));
 			ThrowIfFailed(debugController0->QueryInterface(
@@ -584,19 +583,19 @@ protected:
 		// Release the previous swapchain we will be recreating.
 		mSwapChain.Reset();
 
-		DXGI::DXGI_SWAP_CHAIN_DESC1 sd;
-		sd.Width = mClientWidth;
-		sd.Height = mClientHeight;
-		sd.Format = mBackBufferFormat;
-		sd.Stereo = false;
-		sd.SampleDesc.Count = 1;
-		sd.SampleDesc.Quality = 0;
-		sd.BufferUsage = DXGI::DxgiUsageRenderTargetOutput;
-		sd.BufferCount = SwapChainBufferCount;
-		sd.Scaling = DXGI::DXGI_SCALING::DXGI_SCALING_NONE;
-		sd.SwapEffect = DXGI::DXGI_SWAP_EFFECT::DXGI_SWAP_EFFECT_FLIP_DISCARD;
-		sd.AlphaMode = DXGI::DXGI_ALPHA_MODE::DXGI_ALPHA_MODE_UNSPECIFIED;
-		sd.Flags = DXGI::DXGI_SWAP_CHAIN_FLAG::DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+		auto sd = DXGI::DXGI_SWAP_CHAIN_DESC1{
+			.Width = static_cast<UINT>(mClientWidth),
+			.Height = static_cast<UINT>(mClientHeight),
+			.Format = mBackBufferFormat,
+			.Stereo = false,
+			.SampleDesc = { .Count=1, .Quality=0 },
+			.BufferUsage = DXGI::DxgiUsageRenderTargetOutput,
+			.BufferCount = SwapChainBufferCount,
+			.Scaling = DXGI::DXGI_SCALING::DXGI_SCALING_NONE,
+			.SwapEffect = DXGI::DXGI_SWAP_EFFECT::DXGI_SWAP_EFFECT_FLIP_DISCARD,
+			.AlphaMode = DXGI::DXGI_ALPHA_MODE::DXGI_ALPHA_MODE_UNSPECIFIED,
+			.Flags = DXGI::DXGI_SWAP_CHAIN_FLAG::DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH
+		};
 
 		// Note: Swap chain uses queue to perform flush.
 		auto swapChain1 = Microsoft::WRL::ComPtr<DXGI::IDXGISwapChain1>{};
@@ -674,7 +673,7 @@ protected:
 		ImGui::ImGui_ImplWin32_Init(mhMainWnd);
 		// ImGui_ImplDX12_Init() used by the book is obsolete. Use ImGui_ImplDX12_Init() instead.
 		mImguiSrvAllocator.Heap = &cbvSrvUavHeap;
-		ImGui::ImGui_ImplDX12_InitInfo initInfo{};
+		auto initInfo = ImGui::ImGui_ImplDX12_InitInfo{};
 		initInfo.Device = md3dDevice.Get();
 		initInfo.CommandQueue = mCommandQueue.Get();
 		initInfo.NumFramesInFlight = gNumFrameResources;

@@ -59,17 +59,17 @@ public:
         std::vector<M3dMaterial>& mats
 	) -> bool
     {
-        std::ifstream fin(filename);
-        if (!fin)
+        auto fin = std::ifstream{filename};
+        if (not fin)
             return false;
 
-        UINT numMaterials = 0;
-        UINT numVertices = 0;
-        UINT numTriangles = 0;
-        UINT numBones = 0;
-        UINT numAnimationClips = 0;
+        auto numMaterials = 0u;
+        auto numVertices = 0u;
+        auto numTriangles = 0u;
+        auto numBones = 0u;
+        auto numAnimationClips = 0u;
 
-        std::string ignore;
+        auto ignore = std::string{};
 
         fin >> ignore; // file header text
         fin >> ignore >> numMaterials;
@@ -94,21 +94,20 @@ public:
         SkinnedData& skinInfo
     ) -> bool
     {
-        std::ifstream fin(filename.c_str());
-
-        if (!fin)
+        auto fin = std::ifstream{filename};
+        if (not fin)
         {
             Win32::MessageBoxW(0, L"LoadM3d failed--file not found.", 0, 0);
             return false;
         }
 
-        UINT numMaterials = 0;
-        UINT numVertices = 0;
-        UINT numTriangles = 0;
-        UINT numBones = 0;
-        UINT numAnimationClips = 0;
+        auto numMaterials = 0u;
+        auto numVertices = 0u;
+        auto numTriangles = 0u;
+        auto numBones = 0u;
+        auto numAnimationClips = 0u;
 
-        std::string ignore;
+        auto ignore = std::string{};
 
         fin >> ignore; // file header text
         fin >> ignore >> numMaterials;
@@ -117,9 +116,9 @@ public:
         fin >> ignore >> numBones;
         fin >> ignore >> numAnimationClips;
 
-        std::vector<DirectX::XMFLOAT4X4> boneOffsets;
-        std::vector<int> boneIndexToParentIndex;
-        std::unordered_map<std::string, AnimationClip> animations;
+        auto boneOffsets = std::vector<DirectX::XMFLOAT4X4>{};
+        auto boneIndexToParentIndex = std::vector<int>{};
+        auto animations = std::unordered_map<std::string, AnimationClip>{};
 
         ReadMaterials(fin, numMaterials, mats);
         ReadSubsetTable(fin, numMaterials, subsets);
@@ -137,14 +136,14 @@ public:
 private:
     void ReadMaterials(std::ifstream& fin, Win32::UINT numMaterials, std::vector<M3dMaterial>& mats)
     {
-        std::string ignore;
+        auto ignore = std::string{};
         mats.resize(numMaterials);
 
-        std::string diffuseMapName;
-        std::string normalMapName;
+        auto diffuseMapName = std::string{};
+        auto normalMapName = std::string{};
 
         fin >> ignore; // materials header text
-        for (UINT i = 0; i < numMaterials; ++i)
+        for (auto i = 0u; i < numMaterials; ++i)
         {
             fin >> ignore >> mats[i].Name;
             fin >> ignore >> mats[i].DiffuseAlbedo.x >> mats[i].DiffuseAlbedo.y >> mats[i].DiffuseAlbedo.z;
@@ -158,11 +157,11 @@ private:
     }
     void ReadSubsetTable(std::ifstream& fin, Win32::UINT numSubsets, std::vector<Subset>& subsets)
     {
-        std::string ignore;
+        auto ignore = std::string{};
         subsets.resize(numSubsets);
 
         fin >> ignore; // subset header text
-        for (UINT i = 0; i < numSubsets; ++i)
+        for (auto i = 0u; i < numSubsets; ++i)
         {
             fin >> ignore >> subsets[i].Id;
             fin >> ignore >> subsets[i].VertexStart;
@@ -173,11 +172,11 @@ private:
     }
     void ReadVertices(std::ifstream& fin, Win32::UINT numVertices, std::vector<Vertex>& vertices)
     {
-        std::string ignore;
+        auto ignore = std::string{};
         vertices.resize(numVertices);
 
         fin >> ignore; // vertices header text
-        for (UINT i = 0; i < numVertices; ++i)
+        for (auto i = 0u; i < numVertices; ++i)
         {
             fin >> ignore >> vertices[i].Pos.x >> vertices[i].Pos.y >> vertices[i].Pos.z;
             fin >> ignore >> vertices[i].TangentU.x >> vertices[i].TangentU.y >> vertices[i].TangentU.z >> vertices[i].TangentU.w;
@@ -187,15 +186,15 @@ private:
     }
     void ReadSkinnedVertices(std::ifstream& fin, Win32::UINT numVertices, std::vector<SkinnedVertex>& vertices)
     {
-        std::string ignore;
+        auto ignore = std::string{};
         vertices.resize(numVertices);
 
         fin >> ignore; // vertices header text
-        int boneIndices[4];
-        float weights[4];
-        for (UINT i = 0; i < numVertices; ++i)
+        auto boneIndices = std::array<int, 4>{};
+        auto weights = std::array<float, 4>{};
+        for (auto i = 0u; i < numVertices; ++i)
         {
-            float blah;
+            auto blah = float{};
             fin >> ignore >> vertices[i].Pos.x >> vertices[i].Pos.y >> vertices[i].Pos.z;
             fin >> ignore >> vertices[i].TangentU.x >> vertices[i].TangentU.y >> vertices[i].TangentU.z >> blah /*vertices[i].TangentU.w*/;
             fin >> ignore >> vertices[i].Normal.x >> vertices[i].Normal.y >> vertices[i].Normal.z;
@@ -215,22 +214,22 @@ private:
     }
     void ReadTriangles(std::ifstream& fin, Win32::UINT numTriangles, std::vector<Win32::UINT>& indices)
     {
-        std::string ignore;
+        auto ignore = std::string{};
         indices.resize(numTriangles * 3);
 
         fin >> ignore; // triangles header text
-        for (UINT i = 0; i < numTriangles; ++i)
+        for (auto i = 0u; i < numTriangles; ++i)
         {
             fin >> indices[i * 3 + 0] >> indices[i * 3 + 1] >> indices[i * 3 + 2];
         }
     }
     void ReadBoneOffsets(std::ifstream& fin, Win32::UINT numBones, std::vector<DirectX::XMFLOAT4X4>& boneOffsets)
     {
-        std::string ignore;
+        auto ignore = std::string{};
         boneOffsets.resize(numBones);
 
         fin >> ignore; // BoneOffsets header text
-        for (UINT i = 0; i < numBones; ++i)
+        for (auto i = 0u; i < numBones; ++i)
         {
             fin >> ignore >>
                 boneOffsets[i](0, 0) >> boneOffsets[i](0, 1) >> boneOffsets[i](0, 2) >> boneOffsets[i](0, 3) >>
@@ -241,29 +240,29 @@ private:
     }
     void ReadBoneHierarchy(std::ifstream& fin, Win32::UINT numBones, std::vector<int>& boneIndexToParentIndex)
     {
-        std::string ignore;
+        auto ignore = std::string{};
         boneIndexToParentIndex.resize(numBones);
 
         fin >> ignore; // BoneHierarchy header text
-        for (UINT i = 0; i < numBones; ++i)
+        for (auto i = 0u; i < numBones; ++i)
         {
             fin >> ignore >> boneIndexToParentIndex[i];
         }
     }
     void ReadAnimationClips(std::ifstream& fin, Win32::UINT numBones, Win32::UINT numAnimationClips, std::unordered_map<std::string, AnimationClip>& animations)
     {
-        std::string ignore;
+        auto ignore = std::string{};
         fin >> ignore; // AnimationClips header text
-        for (UINT clipIndex = 0; clipIndex < numAnimationClips; ++clipIndex)
+        for (auto clipIndex = 0u; clipIndex < numAnimationClips; ++clipIndex)
         {
-            std::string clipName;
+            auto clipName = std::string{};
             fin >> ignore >> clipName;
             fin >> ignore; // {
 
-            AnimationClip clip;
+            auto clip = AnimationClip{};
             clip.BoneAnimations.resize(numBones);
 
-            for (UINT boneIndex = 0; boneIndex < numBones; ++boneIndex)
+            for (auto boneIndex = 0u; boneIndex < numBones; ++boneIndex)
             {
                 ReadBoneKeyframes(fin, numBones, clip.BoneAnimations[boneIndex]);
             }
@@ -274,18 +273,18 @@ private:
     }
     void ReadBoneKeyframes(std::ifstream& fin, Win32::UINT numBones, BoneAnimation& boneAnimation)
     {
-        std::string ignore;
-        UINT numKeyframes = 0;
+        auto ignore = std::string{};
+        auto numKeyframes = 0u;
         fin >> ignore >> ignore >> numKeyframes;
         fin >> ignore; // {
 
         boneAnimation.Keyframes.resize(numKeyframes);
-        for (UINT i = 0; i < numKeyframes; ++i)
+        for (auto i = 0u; i < numKeyframes; ++i)
         {
-            float t = 0.0f;
-            DirectX::XMFLOAT3 p(0.0f, 0.0f, 0.0f);
-            DirectX::XMFLOAT3 s(1.0f, 1.0f, 1.0f);
-            DirectX::XMFLOAT4 q(0.0f, 0.0f, 0.0f, 1.0f);
+            auto t = 0.0f;
+            auto p = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+            auto s = DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f);
+            auto q = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
             fin >> ignore >> t;
             fin >> ignore >> p.x >> p.y >> p.z;
             fin >> ignore >> s.x >> s.y >> s.z;
