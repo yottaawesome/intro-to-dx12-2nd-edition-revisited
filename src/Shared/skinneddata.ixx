@@ -65,7 +65,7 @@ export struct BoneAnimation
 			{
 				if (t >= Keyframes[i].TimePos && t <= Keyframes[i + 1].TimePos)
 				{
-					float lerpPercent = (t - Keyframes[i].TimePos) / (Keyframes[i + 1].TimePos - Keyframes[i].TimePos);
+					auto lerpPercent = (t - Keyframes[i].TimePos) / (Keyframes[i + 1].TimePos - Keyframes[i].TimePos);
 
 					auto s0 = DirectX::XMVECTOR{DirectX::XMLoadFloat3(&Keyframes[i].Scale)};
 					auto s1 = DirectX::XMVECTOR{DirectX::XMLoadFloat3(&Keyframes[i + 1].Scale)};
@@ -104,10 +104,7 @@ export struct AnimationClip
 		// Find smallest start time over all bones in this clip.
 		auto t = MathHelper::Infinity;
 		for (auto i = 0u; i < BoneAnimations.size(); ++i)
-		{
-			t = MathHelper::Min(t, BoneAnimations[i].GetStartTime());
-		}
-
+			t = std::min(t, BoneAnimations[i].GetStartTime());
 		return t;
 	}
 	auto GetClipEndTime() const -> float
@@ -115,18 +112,14 @@ export struct AnimationClip
 		// Find largest end time over all bones in this clip.
 		auto t = 0.0f;
 		for (auto i = 0u; i < BoneAnimations.size(); ++i)
-		{
-			t = MathHelper::Max(t, BoneAnimations[i].GetEndTime());
-		}
+			t = std::max(t, BoneAnimations[i].GetEndTime());
 		return t;
 	}
 
 	void Interpolate(float t, std::vector<DirectX::XMFLOAT4X4>& boneTransforms) const
 	{
 		for (auto i = 0u; i < BoneAnimations.size(); ++i)
-		{
 			BoneAnimations[i].Interpolate(t, boneTransforms[i]);
-		}
 	}
 
 	std::vector<BoneAnimation> BoneAnimations;
@@ -215,8 +208,6 @@ public:
 private:
 	// Gives parentIndex of ith bone.
 	std::vector<int> mBoneHierarchy;
-
 	std::vector<DirectX::XMFLOAT4X4> mBoneOffsets;
-
 	std::unordered_map<std::string, AnimationClip> mAnimations;
 };

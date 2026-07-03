@@ -20,45 +20,27 @@ public:
     // Returns random float in [0, 1).
     static auto RandF() -> float
     {
-        Random r;
+        auto r = Random{};
         return r.Uniform(0.0f, 1.0f);
     }
 
     // Returns random float in [a, b).
     static auto RandF(float a, float b) -> float
     {
-        Random r;
+        auto r = Random{};
         return r.Uniform(a, b);
     }
 
     static auto Rand(int a, int b) -> int
     {
-        Random r;
+        auto r = Random{};
         return r.Uniform(a, b);
-    }
-
-    template<typename T>
-    static auto Min(const T& a, const T& b) -> T
-    {
-        return a < b ? a : b;
-    }
-
-    template<typename T>
-    static auto Max(const T& a, const T& b) -> T
-    {
-        return a > b ? a : b;
     }
 
     template<typename T>
     static auto Lerp(const T& a, const T& b, float t) -> T
     {
         return a + (b - a) * t;
-    }
-
-    template<typename T>
-    static auto Clamp(const T& x, const T& low, const T& high) -> T
-    {
-        return x < low ? low : (x > high ? high : x);
     }
 
     // Returns the polar angle of the point (x,y) in [0, 2*PI).
@@ -102,10 +84,10 @@ public:
         // Inverse-transpose is just applied to normals.  So zero out 
         // translation row so that it doesn't get into our inverse-transpose
         // calculation--we don't want the inverse-transpose of the translation.
-        DirectX::XMMATRIX A = M;
+        auto A = DirectX::XMMATRIX{ M };
         A.r[3] = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
 
-        DirectX::XMVECTOR det = DirectX::XMMatrixDeterminant(A);
+        auto det = DirectX::XMVECTOR{DirectX::XMMatrixDeterminant(A)};
         return DirectX::XMMatrixTranspose(DirectX::XMMatrixInverse(&det, A));
     }
 
@@ -196,7 +178,7 @@ public:
     // Order: left, right, bottom, top, near, far.
     static void ExtractFrustumPlanes(const Matrix& M, DirectX::XMFLOAT4 outPlanes[6])
     {
-        Plane planes[6];
+        auto planes = std::array<Plane, 6>{};
 
         //
         // Left
@@ -288,31 +270,27 @@ public:
         // If s > f, then C = (0, 0, f) with r = distance(C,Q) gives the smallest bounding sphere.
         // 
 
-        DirectX::XMFLOAT3 corners[8];
-        subfrustum.GetCorners(corners);
+        auto corners = std::array<DirectX::XMFLOAT3, 8>{};
+        subfrustum.GetCorners(corners.data());
 
         // Point on near plane (left-bottom).
-        const Vector3 P = corners[3];
+        const auto P = Vector3{ corners[3] };
 
         // Point on far plane (top-right).
-        const Vector3 Q = corners[5];
+        const auto Q = Vector3{ corners[5] };
 
         float n = subfrustum.Near;
         float f = subfrustum.Far;
 
         float s = (Q.Dot(Q) - P.Dot(P)) / (2.0f * (f - n));
 
-        DirectX::BoundingSphere result;
+        auto result = DirectX::BoundingSphere{};
 
         // This only happens if the frustum slope is steep.
         if (s > f)
-        {
-            result.Center = DirectX::XMFLOAT3(0.0f, 0.0f, f);
-        }
+            result.Center = DirectX::XMFLOAT3{0.0f, 0.0f, f};
         else
-        {
-            result.Center = DirectX::XMFLOAT3(0.0f, 0.0f, s);
-        }
+            result.Center = DirectX::XMFLOAT3{0.0f, 0.0f, s};
 
         // This works if s > f, too.
         // r = ||Q - C||

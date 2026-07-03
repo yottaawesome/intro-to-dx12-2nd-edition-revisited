@@ -295,7 +295,7 @@ private:
             mPhi += dy;
 
             // Restrict the angle mPhi.
-            mPhi = MathHelper::Clamp(mPhi, 0.1f, MathHelper::Pi - 0.1f);
+            mPhi = std::clamp(mPhi, 0.1f, MathHelper::Pi - 0.1f);
         }
         else if ((btnState & Win32::MK::RButton) != 0)
         {
@@ -307,7 +307,7 @@ private:
             mRadius += dx - dy;
 
             // Restrict the radius.
-            mRadius = MathHelper::Clamp(mRadius, 3.0f, 15.0f);
+            mRadius = std::clamp(mRadius, 3.0f, 15.0f);
         }
 
         mLastMousePos.x = x;

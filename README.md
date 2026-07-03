@@ -22,6 +22,7 @@ Microsoft Visual Studio 2026 with the _Desktop development with C++_ and _Game d
 * `vcpkg` (in manifest mode) has been used to manage dependencies such as the `DirectX12 Toolkit` ([dx12tk](https://github.com/microsoft/directxtk12)) and `imgui` ([imgui](https://github.com/ocornut/imgui)). This has resulted in the removal of these files being bundled with the sample projects, which makes it more obvious what is sample code and what's dependency code.
 * Use of `constexpr` where applicable, such as the replacement of the `Identity4x4()` function with a simpler `constexpr` variable.
 * The DirectX Agility SDK has been updated to version 619.
+* `MathHelper`'s `Min()`, `Max()` and `Clamp()` functions have been replaced with `std::min()`, `std::max()` and `std::clamp()` respectively.
 * Removal of macros like `CALLBACK` and `WINAPI`, these are ignored for x64 builds and add visual noise.
 * The original code used an obsolete version of `imgui`. Newer versions of `imgui` require the application to provide SRV allocation/deallocation functions; this is now done in the `D3DApp` superclass.
 * Multiprocessor compilation has been enabled in the project settings.
