@@ -51,8 +51,9 @@ export
             auto vertexOffset = static_cast<UINT>(Vertices.size());
             auto indexOffset = static_cast<UINT>(Indices32.size());
 
-            auto vMinf3 = DirectX::XMFLOAT3(+Win32::FltMax, +Win32::FltMax, +Win32::FltMax);
-            auto vMaxf3 = DirectX::XMFLOAT3(-Win32::FltMax, -Win32::FltMax, -Win32::FltMax);
+			constexpr auto fltMax = std::numeric_limits<float>::max();
+            constexpr auto vMinf3 = DirectX::XMFLOAT3(+fltMax, +fltMax, +fltMax);
+            constexpr auto vMaxf3 = DirectX::XMFLOAT3(-fltMax, -fltMax, -fltMax);
 
             auto vMin = DirectX::XMVECTOR{DirectX::XMLoadFloat3(&vMinf3)};
             auto vMax = DirectX::XMVECTOR{DirectX::XMLoadFloat3(&vMaxf3)};

@@ -29,14 +29,12 @@ export namespace Win32
 		{
 			return X;
 		}
-			static constexpr auto operator()() noexcept -> decltype(X)
+		static constexpr auto operator()() noexcept -> decltype(X)
 		{
 			return X;
 		}
 	};
 
-	constexpr auto FltMax = FLT_MAX;
-	constexpr auto FltMin = FLT_MIN;
 	constexpr auto CrtAllocMemDf = _CRTDBG_ALLOC_MEM_DF;
 	constexpr auto CrtLeakCheckDf = _CRTDBG_LEAK_CHECK_DF;
 	using
