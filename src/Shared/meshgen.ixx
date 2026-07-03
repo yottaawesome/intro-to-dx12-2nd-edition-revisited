@@ -698,8 +698,8 @@ private:
     {
         auto baseIndex = uint32_t{ static_cast<uint32_t>(meshData.Vertices.size()) };
 
-        float y = 0.5f * height;
-        float dTheta = 2.0f * DirectX::Pi / sliceCount;
+        auto y = 0.5f * height;
+        auto dTheta = 2.0f * DirectX::Pi / sliceCount;
 
         // Duplicate cap ring vertices because the texture coordinates and normals differ.
         for (auto i = 0u; i <= sliceCount; ++i)
