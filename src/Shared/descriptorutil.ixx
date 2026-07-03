@@ -22,14 +22,14 @@ export
             Win32::UINT capacity
         )
         {
-            D3D12_DESCRIPTOR_HEAP_DESC heapDesc;
-            heapDesc.NumDescriptors = capacity;
-            heapDesc.Type = type;
-            heapDesc.Flags =
-                type == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV || type == D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER
-                ? D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE
-                : D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-            heapDesc.NodeMask = 0;
+            auto heapDesc = D3D12_DESCRIPTOR_HEAP_DESC{
+				.Type = type,
+				.NumDescriptors = capacity,
+				.Flags = type == D3D12::D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV or type == D3D12::D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER
+				    ? D3D12::D3D12_DESCRIPTOR_HEAP_FLAGS::D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE
+				    : D3D12::D3D12_DESCRIPTOR_HEAP_FLAGS::D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+				.NodeMask = 0
+            };
             ThrowIfFailed(device->CreateDescriptorHeap(
                 &heapDesc,
                 __uuidof(D3D12::ID3D12DescriptorHeap),
@@ -45,13 +45,13 @@ export
 
         auto CpuHandle(Win32::UINT index) -> D3D12::CD3DX12_CPU_DESCRIPTOR_HANDLE
         {
-            auto hcpu = CD3DX12_CPU_DESCRIPTOR_HANDLE(mHeap->GetCPUDescriptorHandleForHeapStart());
+            auto hcpu = D3D12::CD3DX12_CPU_DESCRIPTOR_HANDLE{ mHeap->GetCPUDescriptorHandleForHeapStart() };
             hcpu.Offset(index, mDescriptorSize);
             return hcpu;
         }
         auto GpuHandle(Win32::UINT index) -> D3D12::CD3DX12_GPU_DESCRIPTOR_HANDLE
         {
-            auto hgpu = CD3DX12_GPU_DESCRIPTOR_HANDLE(mHeap->GetGPUDescriptorHandleForHeapStart());
+            auto hgpu = D3D12::CD3DX12_GPU_DESCRIPTOR_HANDLE{ mHeap->GetGPUDescriptorHandleForHeapStart() };
             hgpu.Offset(index, mDescriptorSize);
             return hgpu;
         }
@@ -71,9 +71,9 @@ export
         CbvSrvUavHeap(const DescriptorHeap& rhs) = delete;
         CbvSrvUavHeap& operator=(const CbvSrvUavHeap& rhs) = delete;
 
-        static CbvSrvUavHeap& Get()
+        static auto Get() -> CbvSrvUavHeap&
         {
-            static CbvSrvUavHeap singleton;
+            static auto singleton = CbvSrvUavHeap{};
             return singleton;
         }
 
@@ -86,7 +86,7 @@ export
         {
             DescriptorHeap::Init(device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, capacity);
 
-            for (UINT i = 0; i < capacity; ++i)
+            for (auto i = 0u; i < capacity; ++i)
                 mFreeIndices.push(i);
 
             mUsedIndices.clear();
@@ -97,7 +97,7 @@ export
         {
             //assert(!mFreeIndices.empty());
 
-            const uint32_t index = mFreeIndices.front();
+            const auto index = mFreeIndices.front();
 
             mUsedIndices.insert(index);
 

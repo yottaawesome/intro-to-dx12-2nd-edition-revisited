@@ -28,7 +28,7 @@ Microsoft Visual Studio 2026 with the _Desktop development with C++_ and _Game d
 * A lightweight `Event` class has been added to prevent a potential memory leak in `FlushCommandQueue()`.
 * Function signatures are being updated to use trailing return type syntax, which are visually easier to navigate in classes with many methods.
 * Various class-level `static` member variables have been made `inline`, simplifying their initialisation.
-* Variable declarations are being ported to Almost Always Auto (AAA) idiom with braced initialisation. AAA is easier to visually navigate, while braced initialisation guarantees left-to-right evaluation order and catches otherwise invisible narrowing conversions.
+* Variable declarations are being ported to Almost Always Auto (AAA) idiom with braced or designated initialisation. AAA is easier to visually navigate, while braced initialisation guarantees left-to-right evaluation order and catches otherwise invisible narrowing conversions. Designated initialisation is much cleaner for aggregate types.
 * Replacement of certain raw arrays with `std::array`, which also removes the need for the non-standard `_countof()` extension.
 * The use of `!` is being with replaced with the more obvious `not`.
 * Use of certain macros and preprocessor checks such as `#if defined(DEBUG)` have been replaced with `if constexpr(...)` checks, which are far less uglier.
