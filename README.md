@@ -20,8 +20,8 @@ Microsoft Visual Studio 2026 with the _Desktop development with C++_ and _Game d
 * Ported compiler settings from `c++17` to `c++latest`. This required fixing some compiler errors present in `c++20` and onward, mainly to do with temporaries being passed as arguments to functions.
 * The code has been ported to C++20 modules (with the exception of the first DirectX math related ones), with platform and dependecies exported via modules. This has eliminated the need for separate header and source files, which has improved the code locality and significantly reduced the total LoC.
 * `vcpkg` (in manifest mode) has been used to manage dependencies such as the `DirectX12 Toolkit` ([dx12tk](https://github.com/microsoft/directxtk12)) and `imgui` ([imgui](https://github.com/ocornut/imgui)). This has resulted in the removal of these files being bundled with the sample projects, which makes it more obvious what code is sample and what's a dependency.
-* Use of `constexpr` where applicable, such as the replacement of the `Identity4x4()` function with a `constexpr` variable.
-* The original code used an obsolete version `imgui`. Newer versions of `imgui` require the application to provide SRV allocation/deallocation functions; this is now done in the `D3DApp` superclass.
+* Use of `constexpr` where applicable, such as the replacement of the `Identity4x4()` function with a simpler `constexpr` variable.
+* The original code used an obsolete version of `imgui`. Newer versions of `imgui` require the application to provide SRV allocation/deallocation functions; this is now done in the `D3DApp` superclass.
 * Multiprocessor compilation has been enabled in the project settings.
 * A lightweight `Event` class has been added to prevent a potential memory leak in `FlushCommandQueue()`.
 * Function signatures are being updated to use trailing return type syntax, which are visually easier to navigate in classes with many methods.
