@@ -1,3 +1,7 @@
+//***************************************************************************************
+// d3dApp.cpp by Frank Luna (C) 2015 All Rights Reserved.
+//***************************************************************************************
+
 #include <Windows.h>
 #include <DirectXMath.h>
 #include <DirectXPackedVector.h>

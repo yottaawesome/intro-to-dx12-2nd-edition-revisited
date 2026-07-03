@@ -129,6 +129,7 @@
       <ModuleOutputFile>$(IntDir)%(RelativeDir)</ModuleOutputFile>
       <ModuleDependenciesFile>$(IntDir)%(RelativeDir)</ModuleDependenciesFile>
       <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -154,6 +155,7 @@
       <ModuleOutputFile>$(IntDir)%(RelativeDir)</ModuleOutputFile>
       <ModuleDependenciesFile>$(IntDir)%(RelativeDir)</ModuleDependenciesFile>
       <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -165,9 +167,11 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="build.ixx" />
     <ClCompile Include="d3dapp.ixx" />
     <ClCompile Include="d3dutil.ixx" />
     <ClCompile Include="descriptorutil.ixx" />
+    <ClCompile Include="event.ixx" />
     <ClCompile Include="gametimer.ixx" />
     <ClCompile Include="imgui.ixx" />
     <ClCompile Include="loadm3d.ixx" />

@@ -2,10 +2,9 @@ export module boxapp;
 import std;
 import shared;
 
-constexpr Win32::UINT CBV_SRV_UAV_HEAP_CAPACITY = 16384;
-
-export namespace Box
+export
 {
+    constexpr auto CBV_SRV_UAV_HEAP_CAPACITY = 16384u;
     struct ColorVertex
     {
         DirectX::XMFLOAT3 Pos;
@@ -14,12 +13,12 @@ export namespace Box
 
 	struct ObjectConstants
 	{
-		DirectX::XMFLOAT4X4 World = MathHelper::Identity4x4();
+		DirectX::XMFLOAT4X4 World = MathHelper::Identity4x4;
 	};
 
 	struct PassConstants
 	{
-		DirectX::XMFLOAT4X4 ViewProj = MathHelper::Identity4x4();
+		DirectX::XMFLOAT4X4 ViewProj = MathHelper::Identity4x4;
 	};
 
 	enum ROOT_ARG
@@ -43,19 +42,19 @@ export namespace Box
                 FlushCommandQueue();
         }
 
-        virtual bool Initialize()override
+		auto Initialize() -> bool override
         {
-            if (!D3DApp::Initialize())
+            if (not D3DApp::Initialize())
                 return false;
 
             // We will upload on the direct queue for the book samples, but 
             // copy queue would be better for real game.
-            mUploadBatch->Begin(D3D12_COMMAND_LIST_TYPE_DIRECT);
+            mUploadBatch->Begin(D3D12::D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT);
 
             BuildBoxGeometry(md3dDevice.Get(), *mUploadBatch.get());
 
             // Kick off upload work asyncronously.
-            std::future<void> result = mUploadBatch->End(mCommandQueue.Get());
+            auto result = std::future<void>{mUploadBatch->End(mCommandQueue.Get())};
 
             // Other init work...
             BuildCbvSrvUavDescriptorHeap();
@@ -71,52 +70,58 @@ export namespace Box
         }
 
     private:
-        virtual void CreateRtvAndDsvDescriptorHeaps()override
+        void CreateRtvAndDsvDescriptorHeaps()override
         {
             mRtvHeap.Init(md3dDevice.Get(), D3D12::D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_RTV, SwapChainBufferCount);
             mDsvHeap.Init(md3dDevice.Get(), D3D12::D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_DSV, SwapChainBufferCount);
         }
-        virtual void OnResize()override
+        void OnResize()override
         {
             D3DApp::OnResize();
 
             // The window resized, so update the aspect ratio and recompute the projection matrix.
-            DirectX::XMMATRIX P = DirectX::XMMatrixPerspectiveFovLH(0.25f * MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
+            auto P = DirectX::XMMATRIX{ 
+                DirectX::XMMatrixPerspectiveFovLH(
+                    0.25f * MathHelper::Pi, 
+                    AspectRatio(), 
+                    1.0f, 
+                    1000.0f
+                )};
             DirectX::XMStoreFloat4x4(&mProj, P);
         }
-        virtual void Update(const GameTimer& gt)override
+        void Update(const GameTimer& gt)override
         {
             // Convert Spherical to Cartesian coordinates.
-            float x = mRadius * std::sinf(mPhi) * std::cosf(mTheta);
-            float z = mRadius * std::sinf(mPhi) * std::sinf(mTheta);
-            float y = mRadius * std::cosf(mPhi);
+            auto x = mRadius * std::sinf(mPhi) * std::cosf(mTheta);
+            auto z = mRadius * std::sinf(mPhi) * std::sinf(mTheta);
+            auto y = mRadius * std::cosf(mPhi);
 
             // Build the view matrix.
-            DirectX::XMVECTOR pos = DirectX::XMVectorSet(x, y, z, 1.0f);
-            DirectX::XMVECTOR target = DirectX::XMVectorZero();
-            DirectX::XMVECTOR up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+            auto pos = DirectX::XMVECTOR{DirectX::XMVectorSet(x, y, z, 1.0f)};
+            auto target = DirectX::XMVECTOR{DirectX::XMVectorZero()};
+            auto up = DirectX::XMVECTOR{DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)};
 
-            DirectX::XMMATRIX view = DirectX::XMMatrixLookAtLH(pos, target, up);
+            auto view = DirectX::XMMATRIX{DirectX::XMMatrixLookAtLH(pos, target, up)};
             DirectX::XMStoreFloat4x4(&mView, view);
 
-            DirectX::XMMATRIX world = DirectX::XMLoadFloat4x4(&mWorld);
-            DirectX::XMMATRIX proj = DirectX::XMLoadFloat4x4(&mProj);
-            DirectX::XMMATRIX viewProj = view * proj;
+            auto world = DirectX::XMMATRIX{DirectX::XMLoadFloat4x4(&mWorld)};
+            auto proj = DirectX::XMMATRIX{DirectX::XMLoadFloat4x4(&mProj)};
+            auto viewProj = view * proj;
 
             // Update the per-object buffer with the latest world matrix.
-            ObjectConstants objConstants;
+            auto objConstants = ObjectConstants{};
             DirectX::XMStoreFloat4x4(&objConstants.World, DirectX::XMMatrixTranspose(world));
             mObjectCB->CopyData(0, objConstants);
 
             // Update the per-pass buffer with the latest viewProj matrix.
-            PassConstants passConstants;
+            auto passConstants = PassConstants{};
             DirectX::XMStoreFloat4x4(&passConstants.ViewProj, DirectX::XMMatrixTranspose(viewProj));
             mPassCB->CopyData(0, passConstants);
         }
         
-        virtual void Draw(const GameTimer& gt)override
+        void Draw(const GameTimer& gt)override
         {
-            CbvSrvUavHeap& cbvSrvUavHeap = CbvSrvUavHeap::Get();
+            auto& cbvSrvUavHeap = CbvSrvUavHeap::Get();
 
             UpdateImgui(gt);
 
@@ -128,20 +133,30 @@ export namespace Box
             // Reusing the command list reuses memory.
             ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), mSolidPSO.Get()));
 
-            ID3D12DescriptorHeap* descriptorHeaps[] = { cbvSrvUavHeap.GetD3dHeap() };
-            mCommandList->SetDescriptorHeaps(1, descriptorHeaps);
+			auto descriptorHeaps = std::array{ cbvSrvUavHeap.GetD3dHeap() };
+            mCommandList->SetDescriptorHeaps(static_cast<std::uint32_t>(descriptorHeaps.size()), descriptorHeaps.data());
 
             mCommandList->RSSetViewports(1, &mScreenViewport);
             mCommandList->RSSetScissorRects(1, &mScissorRect);
 
             // Indicate a state transition on the resource usage.
-            auto transition = D3D12::CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
-                D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+            auto transition = D3D12::CD3DX12_RESOURCE_BARRIER::Transition(
+                CurrentBackBuffer(),
+                D3D12::D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_PRESENT,
+                D3D12::D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_RENDER_TARGET
+            );
             mCommandList->ResourceBarrier(1, &transition);
 
             // Clear the back buffer and depth buffer.
             mCommandList->ClearRenderTargetView(CurrentBackBufferView(), DirectX::Colors::LightSteelBlue, 0, nullptr);
-            mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAGS{ D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL }, 1.0f, 0, 0, nullptr);
+            mCommandList->ClearDepthStencilView(
+                DepthStencilView(), 
+                D3D12::D3D12_CLEAR_FLAGS{ D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL }, 
+                1.0f, 
+                0, 
+                0, 
+                nullptr
+            );
 
             // Specify the buffers we are going to render to.
             auto cbbv = CurrentBackBufferView();
@@ -163,14 +178,15 @@ export namespace Box
 			auto ibv = mBoxGeo->IndexBufferView();
             mCommandList->IASetVertexBuffers(0, 1, &vbv);
             mCommandList->IASetIndexBuffer(&ibv);
-            mCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+            mCommandList->IASetPrimitiveTopology(D3D12::D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
             mCommandList->DrawIndexedInstanced(
                 mBoxGeo->DrawArgs["box"].IndexCount,
                 1, // instanceCount
                 mBoxGeo->DrawArgs["box"].StartIndexLocation,
                 mBoxGeo->DrawArgs["box"].BaseVertexLocation,
-                0); // startInstanceLocation
+                0 // startInstanceLocation
+            );
 
             // Draw imgui UI.
             ImGui::ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), mCommandList.Get());
@@ -184,11 +200,11 @@ export namespace Box
             ThrowIfFailed(mCommandList->Close());
 
             // Add the command list to the queue for execution.
-            ID3D12CommandList* cmdsLists[] = { mCommandList.Get() };
-            mCommandQueue->ExecuteCommandLists(1, cmdsLists);
+			auto cmdsLists = std::array<D3D12::ID3D12CommandList*, 1>{ mCommandList.Get() };
+            mCommandQueue->ExecuteCommandLists(static_cast<std::uint32_t>(cmdsLists.size()), cmdsLists.data());
 
             // Swap the back and front buffers
-            DXGI::DXGI_PRESENT_PARAMETERS presentParams = { 0 };
+            auto presentParams = DXGI::DXGI_PRESENT_PARAMETERS{ 0 };
             ThrowIfFailed(mSwapChain->Present1(0, 0, &presentParams));
             mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
 
@@ -198,7 +214,7 @@ export namespace Box
             FlushCommandQueue();
         }
 
-        virtual void UpdateImgui(const GameTimer& gt)override
+        void UpdateImgui(const GameTimer& gt)override
         {
             D3DApp::UpdateImgui(gt);
 
@@ -211,14 +227,14 @@ export namespace Box
 
             ImGui::Checkbox("Wireframe", &mDrawWireframe);
 
-            DirectX::GraphicsMemoryStatistics gfxMemStats = DirectX::GraphicsMemory::Get(md3dDevice.Get()).GetStatistics();
+            auto gfxMemStats = DirectX::GraphicsMemoryStatistics{ DirectX::GraphicsMemory::Get(md3dDevice.Get()).GetStatistics() };
 
             if (ImGui::CollapsingHeader("VideoMemoryInfo"))
             {
-                static float vidMemPollTime = 0.0f;
+                static auto vidMemPollTime = 0.0f;
                 vidMemPollTime += gt.DeltaTime();
 
-                static DXGI::DXGI_QUERY_VIDEO_MEMORY_INFO videoMemInfo;
+                static auto videoMemInfo = DXGI::DXGI_QUERY_VIDEO_MEMORY_INFO{};
                 if (vidMemPollTime >= 1.0f) // poll every second
                 {
                     mDefaultAdapter->QueryVideoMemoryInfo(
@@ -243,14 +259,12 @@ export namespace Box
             }
 
             ImGui::End();
-
             ImGui::Render();
         }
 
-        virtual void OnMouseDown(Win32::WPARAM btnState, int x, int y)override
+        void OnMouseDown(Win32::WPARAM btnState, int x, int y)override
         {
             ImGui::ImGuiIO& io = ImGui::GetIO();
-
             if (!io.WantCaptureMouse)
             {
                 mLastMousePos.x = x;
@@ -259,68 +273,64 @@ export namespace Box
                 Win32::SetCapture(mhMainWnd);
             }
         }
-        virtual void OnMouseUp(WPARAM btnState, int x, int y)override
+        void OnMouseUp(WPARAM btnState, int x, int y)override
         {
             ImGui::ImGuiIO& io = ImGui::GetIO();
-
             if (!io.WantCaptureMouse)
-            {
                 Win32::ReleaseCapture();
-            }
         }
-        virtual void OnMouseMove(Win32::WPARAM btnState, int x, int y)override
+        void OnMouseMove(Win32::WPARAM btnState, int x, int y)override
         {
             ImGui::ImGuiIO& io = ImGui::GetIO();
+            if (io.WantCaptureMouse)
+                return;
 
-            if (!io.WantCaptureMouse)
+            if ((btnState & Win32::MK::LButton) != 0)
             {
-                if ((btnState & Win32::MK::LButton) != 0)
-                {
-                    // Make each pixel correspond to a quarter of a degree.
-                    float dx = DirectX::XMConvertToRadians(0.25f * static_cast<float>(x - mLastMousePos.x));
-                    float dy = DirectX::XMConvertToRadians(0.25f * static_cast<float>(y - mLastMousePos.y));
+                // Make each pixel correspond to a quarter of a degree.
+                auto dx = DirectX::XMConvertToRadians(0.25f * static_cast<float>(x - mLastMousePos.x));
+                auto dy = DirectX::XMConvertToRadians(0.25f * static_cast<float>(y - mLastMousePos.y));
 
-                    // Update angles based on input to orbit camera around box.
-                    mTheta += dx;
-                    mPhi += dy;
+                // Update angles based on input to orbit camera around box.
+                mTheta += dx;
+                mPhi += dy;
 
-                    // Restrict the angle mPhi.
-                    mPhi = MathHelper::Clamp(mPhi, 0.1f, MathHelper::Pi - 0.1f);
-                }
-                else if ((btnState & Win32::MK::RButton) != 0)
-                {
-                    // Make each pixel correspond to 0.005 unit in the scene.
-                    float dx = 0.005f * static_cast<float>(x - mLastMousePos.x);
-                    float dy = 0.005f * static_cast<float>(y - mLastMousePos.y);
-
-                    // Update the camera radius based on input.
-                    mRadius += dx - dy;
-
-                    // Restrict the radius.
-                    mRadius = MathHelper::Clamp(mRadius, 3.0f, 15.0f);
-                }
-
-                mLastMousePos.x = x;
-                mLastMousePos.y = y;
+                // Restrict the angle mPhi.
+                mPhi = MathHelper::Clamp(mPhi, 0.1f, MathHelper::Pi - 0.1f);
             }
+            else if ((btnState & Win32::MK::RButton) != 0)
+            {
+                // Make each pixel correspond to 0.005 unit in the scene.
+                auto dx = 0.005f * static_cast<float>(x - mLastMousePos.x);
+                auto dy = 0.005f * static_cast<float>(y - mLastMousePos.y);
+
+                // Update the camera radius based on input.
+                mRadius += dx - dy;
+
+                // Restrict the radius.
+                mRadius = MathHelper::Clamp(mRadius, 3.0f, 15.0f);
+            }
+
+            mLastMousePos.x = x;
+            mLastMousePos.y = y;
         }
 
         void BuildCbvSrvUavDescriptorHeap()
         {
-            CbvSrvUavHeap& cbvSrvUavHeap = CbvSrvUavHeap::Get();
+            auto& cbvSrvUavHeap = CbvSrvUavHeap::Get();
             cbvSrvUavHeap.Init(md3dDevice.Get(), CBV_SRV_UAV_HEAP_CAPACITY);
 
             InitImgui(cbvSrvUavHeap);
         }
         void BuildConstantBuffers()
         {
-            CbvSrvUavHeap& cbvSrvUavHeap = CbvSrvUavHeap::Get();
+            auto& cbvSrvUavHeap = CbvSrvUavHeap::Get();
 
             mBoxCBHeapIndex = cbvSrvUavHeap.NextFreeIndex();
             mPassCBHeapIndex = cbvSrvUavHeap.NextFreeIndex();
 
-            const std::uint32_t elementCount = 1;
-            const bool isConstantBuffer = true;
+            constexpr auto elementCount = 1u;
+            constexpr auto isConstantBuffer = true;
             mObjectCB = std::make_unique<UploadBuffer<ObjectConstants>>(
                 md3dDevice.Get(),
                 elementCount,
@@ -333,34 +343,36 @@ export namespace Box
 
             // Constant buffers must be a multiple of the
             // minimum hardware allocation size (usually 256 bytes).
-            std::uint32_t objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
-            std::uint32_t passCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(PassConstants));
+            constexpr auto objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
+            constexpr auto passCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(PassConstants));
 
             // In this demo we only have one constant buffer element per upload buffer, 
             // but a buffer could store an array of constant buffers. So, in general, we need to 
             // offset to the ith constant buffer when creating a view to it.
-            int cbObjElementOffset = 0;
-            D3D12::D3D12_GPU_VIRTUAL_ADDRESS objCBAddress =
+            constexpr auto cbObjElementOffset = 0;
+            auto objCBAddress = D3D12::D3D12_GPU_VIRTUAL_ADDRESS{
                 mObjectCB->Resource()->GetGPUVirtualAddress() +
-                cbObjElementOffset * objCBByteSize;
+                cbObjElementOffset * objCBByteSize
+            };
 
-            int cbPassElementOffset = 0;
-            D3D12::D3D12_GPU_VIRTUAL_ADDRESS passCBAddress =
+            constexpr auto cbPassElementOffset = 0;
+            auto passCBAddress = D3D12::D3D12_GPU_VIRTUAL_ADDRESS{
                 mPassCB->Resource()->GetGPUVirtualAddress() +
-                cbPassElementOffset * passCBByteSize;
+                cbPassElementOffset * passCBByteSize
+            };
 
-            D3D12::D3D12_CONSTANT_BUFFER_VIEW_DESC cbvObj;
-            cbvObj.BufferLocation = objCBAddress;
-            cbvObj.SizeInBytes = objCBByteSize;
-
+            auto cbvObj = D3D12::D3D12_CONSTANT_BUFFER_VIEW_DESC{
+                .BufferLocation = objCBAddress,
+                .SizeInBytes = objCBByteSize
+            };
             md3dDevice->CreateConstantBufferView(
                 &cbvObj,
                 cbvSrvUavHeap.CpuHandle(mBoxCBHeapIndex));
 
-            D3D12::D3D12_CONSTANT_BUFFER_VIEW_DESC cbvPassDesc;
-            cbvPassDesc.BufferLocation = passCBAddress;
-            cbvPassDesc.SizeInBytes = passCBByteSize;
-
+            auto cbvPassDesc = D3D12::D3D12_CONSTANT_BUFFER_VIEW_DESC{
+                .BufferLocation = passCBAddress,
+                .SizeInBytes = passCBByteSize
+            };
             md3dDevice->CreateConstantBufferView(
                 &cbvPassDesc,
                 cbvSrvUavHeap.CpuHandle(mPassCBHeapIndex));
@@ -527,19 +539,23 @@ export namespace Box
         }
         void BuildPSO()
         {
-            D3D12::D3D12_GRAPHICS_PIPELINE_STATE_DESC basePsoDesc = d3dUtil::InitDefaultPso(
-                mBackBufferFormat,
-                mDepthStencilFormat,
-                mInputLayout,
-                mRootSignature.Get(),
-                mvsByteCode.Get(), mpsByteCode.Get());
+            auto basePsoDesc = D3D12::D3D12_GRAPHICS_PIPELINE_STATE_DESC{
+                d3dUtil::InitDefaultPso(
+                    mBackBufferFormat,
+                    mDepthStencilFormat,
+                    mInputLayout,
+                    mRootSignature.Get(),
+                    mvsByteCode.Get(),
+                    mpsByteCode.Get()
+                )};
 
             ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(
                 &basePsoDesc,
-                __uuidof(D3D12::ID3D12PipelineState), &mSolidPSO));
+                __uuidof(D3D12::ID3D12PipelineState), 
+                &mSolidPSO));
 
             // Create a new PSO based off the default PSO:
-            D3D12::D3D12_GRAPHICS_PIPELINE_STATE_DESC wireframePsoDesc = basePsoDesc;
+            auto wireframePsoDesc = D3D12::D3D12_GRAPHICS_PIPELINE_STATE_DESC{ basePsoDesc };
             wireframePsoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
 
             ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(
@@ -549,27 +565,27 @@ export namespace Box
 
     private:
 
-        Microsoft::WRL::ComPtr<D3D12::ID3D12RootSignature> mRootSignature = nullptr;
+        Microsoft::WRL::ComPtr<D3D12::ID3D12RootSignature> mRootSignature;
 
         std::uint32_t mBoxCBHeapIndex = -1;
-        std::unique_ptr<UploadBuffer<ObjectConstants>> mObjectCB = nullptr;
+        std::unique_ptr<UploadBuffer<ObjectConstants>> mObjectCB;
 
         std::uint32_t mPassCBHeapIndex = -1;
-        std::unique_ptr<UploadBuffer<PassConstants>> mPassCB = nullptr;
+        std::unique_ptr<UploadBuffer<PassConstants>> mPassCB;
 
-        std::unique_ptr<MeshGeometry> mBoxGeo = nullptr;
+        std::unique_ptr<MeshGeometry> mBoxGeo;
 
-        Microsoft::WRL::ComPtr<DXC::IDxcBlob> mvsByteCode = nullptr;
-        Microsoft::WRL::ComPtr<DXC::IDxcBlob> mpsByteCode = nullptr;
+        Microsoft::WRL::ComPtr<DXC::IDxcBlob> mvsByteCode;
+        Microsoft::WRL::ComPtr<DXC::IDxcBlob> mpsByteCode;
 
         std::vector<D3D12::D3D12_INPUT_ELEMENT_DESC> mInputLayout;
 
-        Microsoft::WRL::ComPtr<D3D12::ID3D12PipelineState> mSolidPSO = nullptr;
-        Microsoft::WRL::ComPtr<D3D12::ID3D12PipelineState> mWireframePSO = nullptr;
+        Microsoft::WRL::ComPtr<D3D12::ID3D12PipelineState> mSolidPSO;
+        Microsoft::WRL::ComPtr<D3D12::ID3D12PipelineState> mWireframePSO;
 
-        DirectX::XMFLOAT4X4 mWorld = MathHelper::Identity4x4();
-        DirectX::XMFLOAT4X4 mView = MathHelper::Identity4x4();
-        DirectX::XMFLOAT4X4 mProj = MathHelper::Identity4x4();
+        DirectX::XMFLOAT4X4 mWorld = MathHelper::Identity4x4;
+        DirectX::XMFLOAT4X4 mView = MathHelper::Identity4x4;
+        DirectX::XMFLOAT4X4 mProj = MathHelper::Identity4x4;
 
         float mTheta = 1.25f * DirectX::XM_Pi;
         float mPhi = 0.25f * DirectX::XM_Pi;

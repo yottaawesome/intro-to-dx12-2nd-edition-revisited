@@ -1,3 +1,7 @@
+//***************************************************************************************
+// d3dApp.cpp by Frank Luna (C) 2015 All Rights Reserved.
+//***************************************************************************************
+
 export module shared:mathhelper;
 import std;
 import :win32;
@@ -105,31 +109,29 @@ public:
         return DirectX::XMMatrixTranspose(DirectX::XMMatrixInverse(&det, A));
     }
 
-    static auto Identity4x4() -> DirectX::XMFLOAT4X4
-    {
-        return DirectX::XMFLOAT4X4{
-            1.0f, 0.0f, 0.0f, 0.0f,
-            0.0f, 1.0f, 0.0f, 0.0f,
-            0.0f, 0.0f, 1.0f, 0.0f,
-            0.0f, 0.0f, 0.0f, 1.0f 
-        };
-    }
+	constexpr static auto Identity4x4 = DirectX::XMFLOAT4X4{
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    };
 
     static auto RandUnitVec3() -> DirectX::XMVECTOR
     {
-        DirectX::XMVECTOR One = DirectX::XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f);
-        DirectX::XMVECTOR Zero = DirectX::XMVectorZero();
+        auto One = DirectX::XMVECTOR{DirectX::XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f)};
+        auto Zero = DirectX::XMVECTOR{DirectX::XMVectorZero()};
 
         // Keep trying until we get a point on/in the sphere.
         while (true)
         {
             // Generate random point in the cube [-1,1]^3.
-            DirectX::XMVECTOR v = DirectX::XMVectorSet(MathHelper::RandF(-1.0f, 1.0f), MathHelper::RandF(-1.0f, 1.0f), MathHelper::RandF(-1.0f, 1.0f), 0.0f);
+            auto v = DirectX::XMVECTOR{
+                DirectX::XMVectorSet(MathHelper::RandF(-1.0f, 1.0f), MathHelper::RandF(-1.0f, 1.0f), MathHelper::RandF(-1.0f, 1.0f), 0.0f)
+            };
 
             // Ignore points outside the unit sphere in order to get an even distribution 
             // over the unit sphere.  Otherwise points will clump more on the sphere near 
             // the corners of the cube.
-
             if (DirectX::XMVector3Greater(DirectX::XMVector3LengthSq(v), One))
                 continue;
 
@@ -139,14 +141,15 @@ public:
 
     static auto RandHemisphereUnitVec3(DirectX::XMVECTOR n) -> DirectX::XMVECTOR
     {
-        DirectX::XMVECTOR One = DirectX::XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f);
-        DirectX::XMVECTOR Zero = DirectX::XMVectorZero();
+        auto One = DirectX::XMVECTOR{DirectX::XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f)};
+        auto Zero = DirectX::XMVECTOR{DirectX::XMVectorZero()};
 
         // Keep trying until we get a point on/in the hemisphere.
         while (true)
         {
             // Generate random point in the cube [-1,1]^3.
-            DirectX::XMVECTOR v = DirectX::XMVectorSet(MathHelper::RandF(-1.0f, 1.0f), MathHelper::RandF(-1.0f, 1.0f), MathHelper::RandF(-1.0f, 1.0f), 0.0f);
+            auto v = DirectX::XMVECTOR{
+                DirectX::XMVectorSet(MathHelper::RandF(-1.0f, 1.0f), MathHelper::RandF(-1.0f, 1.0f), MathHelper::RandF(-1.0f, 1.0f), 0.0f)};
 
             // Ignore points outside the unit sphere in order to get an even distribution 
             // over the unit sphere.  Otherwise points will clump more on the sphere near 
@@ -172,16 +175,15 @@ public:
         Vector3& worldRayDirection
     )
     {
-
-        Matrix invView = viewMatrix.Invert();
+        auto invView = Matrix{viewMatrix.Invert()};
 
         // Compute picking ray in view space.
-        float vx = (+2.0f * screenPos.x / screenSize.x - 1.0f) / projMatrix(0, 0);
-        float vy = (-2.0f * screenPos.y / screenSize.y + 1.0f) / projMatrix(1, 1);
+        auto vx = (+2.0f * screenPos.x / screenSize.x - 1.0f) / projMatrix(0, 0);
+        auto vy = (-2.0f * screenPos.y / screenSize.y + 1.0f) / projMatrix(1, 1);
 
         // Ray definition in view space.
-        Vector3 rayOrigin = Vector3(0.0f, 0.0f, 0.0f);
-        Vector3 rayDir = Vector3(vx, vy, 1.0f);
+        auto rayOrigin = Vector3{0.0f, 0.0f, 0.0f};
+        auto rayDir = Vector3{vx, vy, 1.0f};
 
         worldRayOrigin = Vector3::Transform(rayOrigin, invView);
         worldRayDirection = Vector3::TransformNormal(rayDir, invView);

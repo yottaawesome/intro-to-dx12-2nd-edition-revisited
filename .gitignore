@@ -430,3 +430,4 @@ FodyWeavers.xsd
 
 vcpkg_installed/
 /src/InitDirect3D/imgui.ini
+/src/imgui.ini

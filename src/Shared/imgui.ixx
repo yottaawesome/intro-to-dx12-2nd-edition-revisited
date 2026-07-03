@@ -1,3 +1,5 @@
+// Copyright (c) 2026, Vasilios Magriplis
+// Licensed under the MIT License.
 module;
 
 // IMGUI is an opensource library used for drawing GUI elements

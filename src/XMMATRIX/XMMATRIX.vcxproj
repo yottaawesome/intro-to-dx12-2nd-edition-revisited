@@ -117,6 +117,7 @@
       <ModuleOutputFile>$(IntDir)%(RelativeDir)</ModuleOutputFile>
       <ModuleDependenciesFile>$(IntDir)%(RelativeDir)</ModuleDependenciesFile>
       <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -139,6 +140,7 @@
       <ModuleOutputFile>$(IntDir)%(RelativeDir)</ModuleOutputFile>
       <ModuleDependenciesFile>$(IntDir)%(RelativeDir)</ModuleDependenciesFile>
       <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -150,6 +152,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Shared\Shared.vcxproj">
+      <Project>{71a3731d-95eb-49ec-b69f-e0b5e166115b}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,3 +1,7 @@
+//***************************************************************************************
+// d3dApp.cpp by Frank Luna (C) 2015 All Rights Reserved.
+//***************************************************************************************
+
 export module shared:d3dutil;
 import std;
 import :win32;
@@ -113,12 +117,12 @@ export
             return (Win32::GetAsyncKeyState(vkeyCode) & 0x8000) != 0;
         }
 
-        static auto Align(Win32::UINT size, Win32::UINT alignment) -> Win32::UINT
+        static constexpr auto Align(Win32::UINT size, Win32::UINT alignment) -> Win32::UINT
         {
             return (size + (alignment - 1)) & ~(alignment - 1);
         }
 
-        static auto CalcConstantBufferByteSize(Win32::UINT byteSize) -> Win32::UINT
+        static constexpr auto CalcConstantBufferByteSize(Win32::UINT byteSize) -> Win32::UINT
         {
             // Constant buffers must be a multiple of the minimum hardware
             // allocation size (usually 256 bytes).  So round up to nearest
@@ -699,7 +703,7 @@ export
         DirectX::XMFLOAT3 FresnelR0 = { 0.01f, 0.01f, 0.01f };
         float Roughness = .25f;
         float DisplacementScale = 1.0f;
-        DirectX::XMFLOAT4X4 MatTransform = MathHelper::Identity4x4();
+        DirectX::XMFLOAT4X4 MatTransform = MathHelper::Identity4x4;
 
         // Used in ray tracing demos only.
         float TransparencyWeight = 0.0f;

@@ -1,3 +1,5 @@
+// Copyright (c) 2026, Vasilios Magriplis
+// Licensed under the MIT License.
 module;
 
 #include <Windows.h>
@@ -18,21 +20,21 @@ module;
 
 export module shared:win32;
 
-template<auto X>
-struct ConstValue
-{
-	constexpr operator decltype(X)() noexcept
-	{ 
-		return X; 
-	}
-	static constexpr auto operator()() noexcept -> decltype(X)
-	{
-		return X;
-	}
-};
-
 export namespace Win32
 {
+	template<auto X>
+	struct ConstValue
+	{
+		constexpr operator decltype(X)() noexcept
+		{
+			return X;
+		}
+			static constexpr auto operator()() noexcept -> decltype(X)
+		{
+			return X;
+		}
+	};
+
 	constexpr auto FltMax = FLT_MAX;
 	constexpr auto FltMin = FLT_MIN;
 	constexpr auto CrtAllocMemDf = _CRTDBG_ALLOC_MEM_DF;
@@ -201,6 +203,13 @@ export namespace Win32
 	constexpr auto CpAcp = CP_ACP;
 	constexpr auto CpUtf8 = CP_UTF8;
 	constexpr auto UIntMax = UINT_MAX;
+
+	enum WaitResult
+	{
+		Object0 = WAIT_OBJECT_0,
+		Timeout = WAIT_TIMEOUT,
+		WaitFailed = WAIT_FAILED
+	};
 }
 
 export namespace Microsoft::WRL
@@ -306,6 +315,7 @@ export namespace D3D12
 	}
 
 	using
+		::D3D_PRIMITIVE_TOPOLOGY,
 		::D3D12_INPUT_CLASSIFICATION,
 		::D3D12_ROOT_SIGNATURE_FLAGS,
 		::D3D12_DESCRIPTOR_RANGE_TYPE,

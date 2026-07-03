@@ -1,3 +1,7 @@
+//***************************************************************************************
+// d3dApp.cpp by Frank Luna (C) 2015 All Rights Reserved.
+//***************************************************************************************
+
 export module shared:d3dapp;
 import std;
 import :win32;
@@ -5,8 +9,8 @@ import :gametimer;
 import :descriptorutil;
 import :imgui;
 import :d3dutil;
-
-//extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+import :build;
+import :event;
 
 namespace
 {
@@ -34,7 +38,6 @@ export struct ImGuiSrvAllocator
 	std::unordered_map<SIZE_T, std::uint32_t> AllocatedIndices;
 };
 
-// TODO -- done?
 export class D3DApp
 {
 protected:
@@ -95,8 +98,7 @@ public:
 			else
 			{
 				mTimer.Tick();
-
-				if (!mAppPaused)
+				if (not mAppPaused)
 				{
 					CalculateFrameStats();
 					Update(mTimer);
@@ -125,23 +127,20 @@ public:
 		// Wait until the GPU has completed commands up to this fence point.
 		if (mFence->GetCompletedValue() < mCurrentFence)
 		{
-			Win32::HANDLE eventHandle = Win32::CreateEventExW(nullptr, nullptr, 0, Win32::EventAllAccess);
-
+			auto event = Event{};
 			// Fire event when GPU hits current fence.  
-			ThrowIfFailed(mFence->SetEventOnCompletion(mCurrentFence, eventHandle));
-
+			ThrowIfFailed(mFence->SetEventOnCompletion(mCurrentFence, event.Get()));
 			// Wait until the GPU hits current fence event is fired.
-			Win32::WaitForSingleObject(eventHandle, Win32::Infinite);
-			Win32::CloseHandle(eventHandle);
+			event.Wait();
 		}
 	}
 
-	virtual bool Initialize()
+	virtual auto Initialize() -> bool
 	{
-		if (!InitMainWindow())
+		if (not InitMainWindow())
 			return false;
 
-		if (!InitDirect3D())
+		if (not InitDirect3D())
 			return false;
 
 		mLinearAllocator = std::make_unique<DirectX::GraphicsMemory>(md3dDevice.Get());
@@ -470,21 +469,21 @@ protected:
 	auto InitDirect3D() -> bool
 	{
 		auto factoryFlags = 0u;
+		if constexpr (IsDebugBuild)
+		{
+			factoryFlags = DXGI::CreateFactoryDebug;
 
-#if defined(DEBUG) || defined(_DEBUG) 
-		factoryFlags = DXGI::CreateFactoryDebug;
-
-		// Enable the D3D12 debug layer.
-		Microsoft::WRL::ComPtr<D3D12::ID3D12Debug> debugController0;
-		Microsoft::WRL::ComPtr<D3D12::ID3D12Debug1> debugController1;
-		ThrowIfFailed(D3D12::D3D12GetDebugInterface(
-			__uuidof(D3D12::ID3D12Debug), &debugController0));
-		ThrowIfFailed(debugController0->QueryInterface(
-			__uuidof(D3D12::ID3D12Debug1), &debugController1
-		));
-		debugController1->EnableDebugLayer();
-		//debugController1->SetEnableGPUBasedValidation(true);
-#endif
+			// Enable the D3D12 debug layer.
+			Microsoft::WRL::ComPtr<D3D12::ID3D12Debug> debugController0;
+			Microsoft::WRL::ComPtr<D3D12::ID3D12Debug1> debugController1;
+			ThrowIfFailed(D3D12::D3D12GetDebugInterface(
+				__uuidof(D3D12::ID3D12Debug), &debugController0));
+			ThrowIfFailed(debugController0->QueryInterface(
+				__uuidof(D3D12::ID3D12Debug1), &debugController1
+			));
+			debugController1->EnableDebugLayer();
+			//debugController1->SetEnableGPUBasedValidation(true);
+		}
 
 		ThrowIfFailed(DXGI::CreateDXGIFactory2(
 			factoryFlags,
@@ -493,17 +492,16 @@ protected:
 		auto adapters = std::vector<Microsoft::WRL::ComPtr<DXGI::IDXGIAdapter>>{};
 		auto foundAdapter = Microsoft::WRL::ComPtr<DXGI::IDXGIAdapter>{};
 
-
-
 		// Find an adapter that supports D3D_FEATURE_LEVEL_12_2. This is mainly for laptops so 
 		// it picks the discrete GPU over the integrated GPU.
 		auto hardwareResult = Win32::HRCodes::Fail;
 		for (int i = 0; mdxgiFactory->EnumAdapters(i, &foundAdapter) != DXGI::Error::NotFound; ++i)
 		{
-#if 0 
-			// Force WARP adapter.
-			mdxgiFactory->EnumWarpAdapter(IID_PPV_ARGS(&foundAdapter));
-#endif
+			if constexpr (ForceWARPAdapter)
+			{
+				// Force WARP adapter.
+				mdxgiFactory->EnumWarpAdapter(__uuidof(DXGI::IDXGIAdapter), &foundAdapter);
+			}
 
 			// Try to create hardware device.
 			auto device = Microsoft::WRL::ComPtr<D3D12::ID3D12Device>{};
@@ -675,7 +673,6 @@ protected:
 		// Setup Platform/Renderer backends
 		ImGui::ImGui_ImplWin32_Init(mhMainWnd);
 		// ImGui_ImplDX12_Init() used by the book is obsolete. Use ImGui_ImplDX12_Init() instead.
-
 		mImguiSrvAllocator.Heap = &cbvSrvUavHeap;
 		ImGui::ImGui_ImplDX12_InitInfo initInfo{};
 		initInfo.Device = md3dDevice.Get();
@@ -690,14 +687,6 @@ protected:
 		/* release back to CbvSrvUavHeap */
 		initInfo.SrvDescriptorFreeFn = FreeImGuiSrv;
 		ImGui::ImGui_ImplDX12_Init(&initInfo);
-
-		/*ImGui::ImGui_ImplDX12_Init(
-			md3dDevice.Get(), 
-			gNumFrameResources,
-			mBackBufferFormat,
-			cbvSrvUavHeap.GetD3dHeap(),
-			cbvSrvUavHeap.CpuHandle(imgGuiBindlessIndex),
-			cbvSrvUavHeap.GpuHandle(imgGuiBindlessIndex));*/
 	}
 
 	void ShutdownImgui()
