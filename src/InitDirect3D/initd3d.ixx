@@ -5,52 +5,50 @@
 export module initd3d;
 import shared;
 
-export
+export constexpr auto CBV_SRV_UAV_HEAP_CAPACITY = 16384u;
+
+// CBV = Constant Buffer View
+// SRV = Shader Resource View
+// UAV = Unordered Access View
+
+export class InitDirect3DApp : public D3DApp
 {
-    constexpr auto CBV_SRV_UAV_HEAP_CAPACITY = 16384u;
+public:
+    InitDirect3DApp(Win32::HINSTANCE hInstance)
+        : D3DApp(hInstance)
+    {}
 
-    // CBV = Constant Buffer View
-    // SRV = Shader Resource View
-    // UAV = Unordered Access View
-
-    class InitDirect3DApp : public D3DApp
+    InitDirect3DApp(const InitDirect3DApp& rhs) = delete;
+    InitDirect3DApp& operator=(const InitDirect3DApp& rhs) = delete;
+    ~InitDirect3DApp()
     {
-    public:
-        InitDirect3DApp(Win32::HINSTANCE hInstance)
-            : D3DApp(hInstance)
-        {}
+        if (md3dDevice != nullptr)
+            FlushCommandQueue();
+    }
 
-        InitDirect3DApp(const InitDirect3DApp& rhs) = delete;
-        InitDirect3DApp& operator=(const InitDirect3DApp& rhs) = delete;
-        ~InitDirect3DApp()
-        {
-            if (md3dDevice != nullptr)
-                FlushCommandQueue();
-        }
+    auto Initialize() -> bool override
+    {
+        if (not D3DApp::Initialize())
+            return false;
+        BuildCbvSrvUavDescriptorHeap();
+        return true;
+    }
 
-        auto Initialize() -> bool override
-        {
-            if (not D3DApp::Initialize())
-                return false;
-            BuildCbvSrvUavDescriptorHeap();
-            return true;
-        }
+private:
+    void CreateRtvAndDsvDescriptorHeaps()override
+    {
+        mRtvHeap.Init(md3dDevice.Get(), D3D12::D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_RTV, SwapChainBufferCount);
+        mDsvHeap.Init(md3dDevice.Get(), D3D12::D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_DSV, SwapChainBufferCount);
+    }
+    void OnResize()override
+    {
+        D3DApp::OnResize();
+    }
+    void Update(const GameTimer& gt)override
+    {
 
-    private:
-        void CreateRtvAndDsvDescriptorHeaps()override
-        {
-            mRtvHeap.Init(md3dDevice.Get(), D3D12::D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_RTV, SwapChainBufferCount);
-            mDsvHeap.Init(md3dDevice.Get(), D3D12::D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_DSV, SwapChainBufferCount);
-        }
-        void OnResize()override
-        {
-            D3DApp::OnResize();
-        }
-        void Update(const GameTimer& gt)override
-        {
-
-        }
-        void Draw(const GameTimer& gt)override
+    }
+    void Draw(const GameTimer& gt)override
         {
             auto& cbvSrvUavHeap = CbvSrvUavHeap::Get();
 
@@ -126,85 +124,84 @@ export
             FlushCommandQueue();
         }
 
-        void UpdateImgui(const GameTimer& gt)override
+    void UpdateImgui(const GameTimer& gt)override
+    {
+        D3DApp::UpdateImgui(gt);
+
+        //
+        // Define a panel to render GUI elements.
+        // 
+        ImGui::Begin("Options");
+
+        ImGui::Text(
+            "Application average %.3f ms/frame (%.1f FPS)",
+            1000.0f / ImGui::GetIO().Framerate,
+            ImGui::GetIO().Framerate);
+
+        auto gfxMemStats = DirectX::GraphicsMemoryStatistics{
+            DirectX::GraphicsMemory::Get(md3dDevice.Get()).GetStatistics() };
+
+        if (ImGui::CollapsingHeader("VideoMemoryInfo"))
         {
-            D3DApp::UpdateImgui(gt);
+            static auto vidMemPollTime = 0.0f;
+            vidMemPollTime += gt.DeltaTime();
 
-            //
-            // Define a panel to render GUI elements.
-            // 
-            ImGui::Begin("Options");
-
-            ImGui::Text(
-                "Application average %.3f ms/frame (%.1f FPS)",
-                1000.0f / ImGui::GetIO().Framerate,
-                ImGui::GetIO().Framerate);
-
-            auto gfxMemStats = DirectX::GraphicsMemoryStatistics{
-                DirectX::GraphicsMemory::Get(md3dDevice.Get()).GetStatistics() };
-
-            if (ImGui::CollapsingHeader("VideoMemoryInfo"))
+            static auto videoMemInfo = DXGI::DXGI_QUERY_VIDEO_MEMORY_INFO{};
+            if (vidMemPollTime >= 1.0f) // poll every second
             {
-                static auto vidMemPollTime = 0.0f;
-                vidMemPollTime += gt.DeltaTime();
-
-                static auto videoMemInfo = DXGI::DXGI_QUERY_VIDEO_MEMORY_INFO{};
-                if (vidMemPollTime >= 1.0f) // poll every second
-                {
-                    mDefaultAdapter->QueryVideoMemoryInfo(
-                        0, // assume single GPU
-                        DXGI::DXGI_MEMORY_SEGMENT_GROUP::DXGI_MEMORY_SEGMENT_GROUP_LOCAL, // interested in local GPU memory, not shared
-                        &videoMemInfo);
-                    vidMemPollTime -= 1.0f;
-                }
-
-                ImGui::Text("Budget (bytes): %u", videoMemInfo.Budget);
-                ImGui::Text("CurrentUsage (bytes): %u", videoMemInfo.CurrentUsage);
-                ImGui::Text("AvailableForReservation (bytes): %u", videoMemInfo.AvailableForReservation);
-                ImGui::Text("CurrentReservation (bytes): %u", videoMemInfo.CurrentReservation);
-            }
-            if (ImGui::CollapsingHeader("GraphicsMemoryStatistics"))
-            {
-                ImGui::Text("Bytes of memory in-flight: %u", gfxMemStats.committedMemory);
-                ImGui::Text("Total bytes used: %u", gfxMemStats.totalMemory);
-                ImGui::Text("Total page count: %u", gfxMemStats.totalPages);
+                mDefaultAdapter->QueryVideoMemoryInfo(
+                    0, // assume single GPU
+                    DXGI::DXGI_MEMORY_SEGMENT_GROUP::DXGI_MEMORY_SEGMENT_GROUP_LOCAL, // interested in local GPU memory, not shared
+                    &videoMemInfo);
+                vidMemPollTime -= 1.0f;
             }
 
-            ImGui::End();
-            ImGui::Render();
+            ImGui::Text("Budget (bytes): %u", videoMemInfo.Budget);
+            ImGui::Text("CurrentUsage (bytes): %u", videoMemInfo.CurrentUsage);
+            ImGui::Text("AvailableForReservation (bytes): %u", videoMemInfo.AvailableForReservation);
+            ImGui::Text("CurrentReservation (bytes): %u", videoMemInfo.CurrentReservation);
+        }
+        if (ImGui::CollapsingHeader("GraphicsMemoryStatistics"))
+        {
+            ImGui::Text("Bytes of memory in-flight: %u", gfxMemStats.committedMemory);
+            ImGui::Text("Total bytes used: %u", gfxMemStats.totalMemory);
+            ImGui::Text("Total page count: %u", gfxMemStats.totalPages);
         }
 
-        void OnMouseDown(Win32::WPARAM btnState, int x, int y)override
-        {
-            if (ImGui::ImGuiIO& io = ImGui::GetIO(); not io.WantCaptureMouse)
-            {
-                mLastMousePos.x = x;
-                mLastMousePos.y = y;
-                Win32::SetCapture(mhMainWnd);
-            }
-        }
-        void OnMouseUp(Win32::WPARAM btnState, int x, int y)override
-        {
-            if (ImGui::ImGuiIO& io = ImGui::GetIO(); not io.WantCaptureMouse)
-                Win32::ReleaseCapture();
-        }
-        void OnMouseMove(Win32::WPARAM btnState, int x, int y)override
-        {
-            if (ImGui::ImGuiIO& io = ImGui::GetIO(); not io.WantCaptureMouse)
-            {
-                mLastMousePos.x = x;
-                mLastMousePos.y = y;
-            }
-        }
+        ImGui::End();
+        ImGui::Render();
+    }
 
-        void BuildCbvSrvUavDescriptorHeap()
+    void OnMouseDown(Win32::WPARAM btnState, int x, int y)override
+    {
+        if (ImGui::ImGuiIO& io = ImGui::GetIO(); not io.WantCaptureMouse)
         {
-            auto& cbvSrvUavHeap = CbvSrvUavHeap::Get();
-            cbvSrvUavHeap.Init(md3dDevice.Get(), CBV_SRV_UAV_HEAP_CAPACITY);
-            InitImgui(cbvSrvUavHeap);
+            mLastMousePos.x = x;
+            mLastMousePos.y = y;
+            Win32::SetCapture(mhMainWnd);
         }
+    }
+    void OnMouseUp(Win32::WPARAM btnState, int x, int y)override
+    {
+        if (ImGui::ImGuiIO& io = ImGui::GetIO(); not io.WantCaptureMouse)
+            Win32::ReleaseCapture();
+    }
+    void OnMouseMove(Win32::WPARAM btnState, int x, int y)override
+    {
+        if (ImGui::ImGuiIO& io = ImGui::GetIO(); not io.WantCaptureMouse)
+        {
+            mLastMousePos.x = x;
+            mLastMousePos.y = y;
+        }
+    }
 
-    private:
-        Win32::POINT mLastMousePos;
-    };
-}
+    void BuildCbvSrvUavDescriptorHeap()
+    {
+        auto& cbvSrvUavHeap = CbvSrvUavHeap::Get();
+        cbvSrvUavHeap.Init(md3dDevice.Get(), CBV_SRV_UAV_HEAP_CAPACITY);
+        InitImgui(cbvSrvUavHeap);
+    }
+
+private:
+    Win32::POINT mLastMousePos;
+};
