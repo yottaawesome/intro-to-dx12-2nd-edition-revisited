@@ -7,7 +7,8 @@ import initd3d;
 
 // Required exports for DX12-Agility SDK
 // https://devblogs.microsoft.com/directx/gettingstarted-dx12agility/
-extern "C" { __declspec(dllexport) extern const unsigned D3D12SDKVersion = 614u; }
+// Make sure this is in sync with the nuget package version.
+extern "C" { __declspec(dllexport) extern const unsigned D3D12SDKVersion = 619u; }
 extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = ".\\D3D12\\"; }
 
 #pragma comment(lib,"d3dcompiler.lib")
