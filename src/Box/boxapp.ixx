@@ -587,8 +587,8 @@ export
         DirectX::XMFLOAT4X4 mView = MathHelper::Identity4x4;
         DirectX::XMFLOAT4X4 mProj = MathHelper::Identity4x4;
 
-        float mTheta = 1.25f * DirectX::XM_Pi;
-        float mPhi = 0.25f * DirectX::XM_Pi;
+        float mTheta = 1.25f * DirectX::Pi;
+        float mPhi = 0.25f * DirectX::Pi;
         float mRadius = 5.0f;
 
         Win32::POINT mLastMousePos;

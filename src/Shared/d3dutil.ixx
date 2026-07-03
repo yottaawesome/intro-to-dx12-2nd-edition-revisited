@@ -475,12 +475,12 @@ export
 
                 // Put in [0, 2pi].
                 if (theta < 0.0f)
-                    theta += DirectX::XM_2Pi;
+                    theta += DirectX::TwoPi;
 
                 float phi = std::acos(spherePos.y);
 
-                float u = theta / (2.0f * DirectX::XM_Pi);
-                float v = phi / DirectX::XM_Pi;
+                float u = theta / (2.0f * DirectX::Pi);
+                float v = phi / DirectX::Pi;
 
                 vertices[i].TexC = { u, v };
 
