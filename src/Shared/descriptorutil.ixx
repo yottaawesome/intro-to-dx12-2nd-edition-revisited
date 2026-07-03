@@ -22,7 +22,7 @@ export
             Win32::UINT capacity
         )
         {
-            auto heapDesc = D3D12_DESCRIPTOR_HEAP_DESC{
+            auto heapDesc = D3D12::D3D12_DESCRIPTOR_HEAP_DESC{
 				.Type = type,
 				.NumDescriptors = capacity,
 				.Flags = type == D3D12::D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV or type == D3D12::D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER
@@ -82,7 +82,7 @@ export
             return mIsInitialized;
         }
 
-        void Init(ID3D12Device* device, Win32::UINT capacity)
+        void Init(D3D12::ID3D12Device* device, Win32::UINT capacity)
         {
             DescriptorHeap::Init(device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, capacity);
 
@@ -137,7 +137,7 @@ export
 
         static auto Get() -> SamplerHeap&
         {
-            static SamplerHeap singleton;
+            static auto singleton = SamplerHeap{};
             return singleton;
         }
 
@@ -154,59 +154,59 @@ export
             // bump as needed
             constexpr auto capacity = 16u;
 
-            DescriptorHeap::Init(device, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, capacity);
+            DescriptorHeap::Init(device, D3D12::D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, capacity);
 
-            const D3D12_SAMPLER_DESC pointWrap = InitSamplerDesc(
-                D3D12_FILTER_MIN_MAG_MIP_POINT,    // filter
-                D3D12_TEXTURE_ADDRESS_MODE_WRAP,   // addressU
-                D3D12_TEXTURE_ADDRESS_MODE_WRAP,   // addressV
-                D3D12_TEXTURE_ADDRESS_MODE_WRAP);  // addressW
+            const auto pointWrap = InitSamplerDesc(
+                D3D12::D3D12_FILTER::D3D12_FILTER_MIN_MAG_MIP_POINT,    // filter
+                D3D12::D3D12_TEXTURE_ADDRESS_MODE::D3D12_TEXTURE_ADDRESS_MODE_WRAP,   // addressU
+                D3D12::D3D12_TEXTURE_ADDRESS_MODE::D3D12_TEXTURE_ADDRESS_MODE_WRAP,   // addressV
+                D3D12::D3D12_TEXTURE_ADDRESS_MODE::D3D12_TEXTURE_ADDRESS_MODE_WRAP);  // addressW
 
-            const D3D12_SAMPLER_DESC pointClamp = InitSamplerDesc(
-                D3D12_FILTER_MIN_MAG_MIP_POINT,    // filter
-                D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
-                D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
-                D3D12_TEXTURE_ADDRESS_MODE_CLAMP); // addressW
+            const auto pointClamp = InitSamplerDesc(
+                D3D12::D3D12_FILTER::D3D12_FILTER_MIN_MAG_MIP_POINT,    // filter
+                D3D12::D3D12_TEXTURE_ADDRESS_MODE::D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
+                D3D12::D3D12_TEXTURE_ADDRESS_MODE::D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
+                D3D12::D3D12_TEXTURE_ADDRESS_MODE::D3D12_TEXTURE_ADDRESS_MODE_CLAMP); // addressW
 
-            const D3D12_SAMPLER_DESC linearWrap = InitSamplerDesc(
-                D3D12_FILTER_MIN_MAG_MIP_LINEAR,  // filter
-                D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
-                D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
-                D3D12_TEXTURE_ADDRESS_MODE_WRAP); // addressW
+            const auto linearWrap = InitSamplerDesc(
+                D3D12::D3D12_FILTER::D3D12_FILTER_MIN_MAG_MIP_LINEAR,  // filter
+                D3D12::D3D12_TEXTURE_ADDRESS_MODE::D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
+                D3D12::D3D12_TEXTURE_ADDRESS_MODE::D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
+                D3D12::D3D12_TEXTURE_ADDRESS_MODE::D3D12_TEXTURE_ADDRESS_MODE_WRAP); // addressW
 
-            const D3D12_SAMPLER_DESC linearClamp = InitSamplerDesc(
-                D3D12_FILTER_MIN_MAG_MIP_LINEAR,   // filter
-                D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
-                D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
-                D3D12_TEXTURE_ADDRESS_MODE_CLAMP); // addressW
+            const auto linearClamp = InitSamplerDesc(
+                D3D12::D3D12_FILTER::D3D12_FILTER_MIN_MAG_MIP_LINEAR,   // filter
+                D3D12::D3D12_TEXTURE_ADDRESS_MODE::D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
+                D3D12::D3D12_TEXTURE_ADDRESS_MODE::D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
+                D3D12::D3D12_TEXTURE_ADDRESS_MODE::D3D12_TEXTURE_ADDRESS_MODE_CLAMP); // addressW
 
-            const D3D12_SAMPLER_DESC anisotropicWrap = InitSamplerDesc(
-                D3D12_FILTER_ANISOTROPIC,         // filter
-                D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
-                D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
-                D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressW
+            const auto anisotropicWrap = InitSamplerDesc(
+                D3D12::D3D12_FILTER::D3D12_FILTER_ANISOTROPIC,         // filter
+                D3D12::D3D12_TEXTURE_ADDRESS_MODE::D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
+                D3D12::D3D12_TEXTURE_ADDRESS_MODE::D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
+                D3D12::D3D12_TEXTURE_ADDRESS_MODE::D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressW
                 0.0f,                             // mipLODBias
                 8);                               // maxAnisotropy
 
-            const D3D12_SAMPLER_DESC anisotropicClamp = InitSamplerDesc(
-                D3D12_FILTER_ANISOTROPIC,          // filter
-                D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
-                D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
-                D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressW
+            const auto anisotropicClamp = InitSamplerDesc(
+                D3D12::D3D12_FILTER::D3D12_FILTER_ANISOTROPIC,          // filter
+                D3D12::D3D12_TEXTURE_ADDRESS_MODE::D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
+                D3D12::D3D12_TEXTURE_ADDRESS_MODE::D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
+                D3D12::D3D12_TEXTURE_ADDRESS_MODE::D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressW
                 0.0f,                              // mipLODBias
                 8);                                // maxAnisotropy
 
-            const D3D12_SAMPLER_DESC shadow = InitSamplerDesc(
-                D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT, // filter
-                D3D12_TEXTURE_ADDRESS_MODE_BORDER,                // addressU
-                D3D12_TEXTURE_ADDRESS_MODE_BORDER,                // addressV
-                D3D12_TEXTURE_ADDRESS_MODE_BORDER,                // addressW
+            const auto shadow = InitSamplerDesc(
+                D3D12::D3D12_FILTER::D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT, // filter
+                D3D12::D3D12_TEXTURE_ADDRESS_MODE::D3D12_TEXTURE_ADDRESS_MODE_BORDER,                // addressU
+                D3D12::D3D12_TEXTURE_ADDRESS_MODE::D3D12_TEXTURE_ADDRESS_MODE_BORDER,                // addressV
+                D3D12::D3D12_TEXTURE_ADDRESS_MODE::D3D12_TEXTURE_ADDRESS_MODE_BORDER,                // addressW
                 0.0f,                                             // mipLODBias
                 16,                                               // maxAnisotropy
-                D3D12_COMPARISON_FUNC_LESS_EQUAL,
+                D3D12::D3D12_COMPARISON_FUNC::D3D12_COMPARISON_FUNC_LESS_EQUAL,
                 DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f));
 
-            auto samplers = std::array<D3D12_SAMPLER_DESC, 7>{
+            auto samplers = std::array{
                 pointWrap,
                 pointClamp,
                 linearWrap,
@@ -216,9 +216,9 @@ export
                 shadow,
             };
 
-            for (int i = 0; i < static_cast<int>(samplers.size()); ++i)
+            for (auto i = 0u; i < static_cast<std::uint32_t>(samplers.size()); ++i)
             {
-                CD3DX12_CPU_DESCRIPTOR_HANDLE h = CpuHandle(i);
+                auto h = D3D12::CD3DX12_CPU_DESCRIPTOR_HANDLE{CpuHandle(i)};
                 device->CreateSampler(&samplers[i], h);
             }
         }
@@ -266,29 +266,33 @@ export
         D3D12::CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor
     )
     {
-        D3D12::D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc;
-        dsvDesc.Flags = flags;
-        dsvDesc.ViewDimension = D3D12::D3D12_DSV_DIMENSION::D3D12_DSV_DIMENSION_TEXTURE2D;
-        dsvDesc.Format = format;
-        dsvDesc.Texture2D.MipSlice = mipSlice;
+        auto dsvDesc = D3D12::D3D12_DEPTH_STENCIL_VIEW_DESC{
+            .Format = format,
+            .ViewDimension = D3D12::D3D12_DSV_DIMENSION::D3D12_DSV_DIMENSION_TEXTURE2D,
+            .Flags = flags,
+			.Texture2D = {.MipSlice = mipSlice }
+        };
         device->CreateDepthStencilView(resource, &dsvDesc, hDescriptor);
     }
 
     inline void CreateSrv2d(
-        ID3D12Device* device, 
-        ID3D12Resource* resource, 
-        DXGI_FORMAT format, 
-        UINT mipLevels, 
-        CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor
+        D3D12::ID3D12Device* device, 
+        D3D12::ID3D12Resource* resource, 
+        DXGI::DXGI_FORMAT format, 
+        Win32::UINT mipLevels, 
+        D3D12::CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor
     )
     {
-        D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-        srvDesc.Shader4ComponentMapping = D3D12::DefaultShader4ComponentMapping();
-        srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-        srvDesc.Texture2D.MostDetailedMip = 0;
-        srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
-        srvDesc.Format = format;
-        srvDesc.Texture2D.MipLevels = mipLevels;
+        auto srvDesc = D3D12::D3D12_SHADER_RESOURCE_VIEW_DESC{
+            .Format = format,
+            .ViewDimension = D3D12::D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE2D,
+			.Shader4ComponentMapping = D3D12::DefaultShader4ComponentMapping(),
+			.Texture2D = { 
+                .MostDetailedMip = 0, 
+                .MipLevels = mipLevels, 
+                .ResourceMinLODClamp = 0.0f 
+            }
+        };
         device->CreateShaderResourceView(resource, &srvDesc, hDescriptor);
     }
 
@@ -314,16 +318,16 @@ export
     }
 
     inline void CreateSrvCube(
-        ID3D12Device* device, 
-        ID3D12Resource* resource, 
-        DXGI_FORMAT format, 
-        UINT mipLevels, 
-        CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor
+        D3D12::ID3D12Device* device, 
+        D3D12::ID3D12Resource* resource, 
+        DXGI::DXGI_FORMAT format, 
+        Win32::UINT mipLevels, 
+        D3D12::CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor
     )
     {
-        D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+        D3D12::D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
         srvDesc.Shader4ComponentMapping = D3D12::DefaultShader4ComponentMapping();
-        srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+        srvDesc.ViewDimension = D3D12::D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURECUBE;
         srvDesc.TextureCube.MostDetailedMip = 0;
         srvDesc.TextureCube.ResourceMinLODClamp = 0.0f;
         srvDesc.Format = format;
@@ -331,10 +335,16 @@ export
         device->CreateShaderResourceView(resource, &srvDesc, hDescriptor);
     }
 
-    inline void CreateRtv2d(ID3D12Device* device, ID3D12Resource* resource, DXGI_FORMAT format, UINT mipSlice, CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor)
+    inline void CreateRtv2d(
+        D3D12::ID3D12Device* device, 
+        D3D12::ID3D12Resource* resource, 
+        DXGI::DXGI_FORMAT format, 
+        Win32::UINT mipSlice, 
+        D3D12::CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor
+    )
     {
-        D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
-        rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+        D3D12::D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
+        rtvDesc.ViewDimension = D3D12::D3D12_RTV_DIMENSION::D3D12_RTV_DIMENSION_TEXTURE2D;
         rtvDesc.Format = format;
         rtvDesc.Texture2D.MipSlice = mipSlice;
         rtvDesc.Texture2D.PlaneSlice = 0;
@@ -342,59 +352,62 @@ export
     }
     
     inline void CreateUav2d(
-        ID3D12Device* device, 
-        ID3D12Resource* resource, 
-        DXGI_FORMAT format, 
-        UINT mipSlice, 
-        CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor
+        D3D12::ID3D12Device* device,
+        D3D12::ID3D12Resource* resource, 
+        DXGI::DXGI_FORMAT format, 
+        Win32::UINT mipSlice, 
+        D3D12::CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor
     )
     {
-        D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+        D3D12::D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
         uavDesc.Format = format;
-        uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+        uavDesc.ViewDimension = D3D12::D3D12_UAV_DIMENSION::D3D12_UAV_DIMENSION_TEXTURE2D;
         uavDesc.Texture2D.MipSlice = mipSlice;
         device->CreateUnorderedAccessView(resource, nullptr, &uavDesc, hDescriptor);
     }
 
     inline void CreateBufferUav(
-        ID3D12Device* device, 
-        UINT64 firstElement, 
-        UINT elementCount,
-        UINT elementByteSize, 
-        UINT64 counterOffset,
-        ID3D12Resource* resource, 
-        ID3D12Resource* counterResource,
-        CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor
+        D3D12::ID3D12Device* device, 
+        Win32::UINT64 firstElement, 
+        Win32::UINT elementCount,
+        Win32::UINT elementByteSize, 
+        Win32::UINT64 counterOffset,
+        D3D12::ID3D12Resource* resource, 
+        D3D12::ID3D12Resource* counterResource,
+        D3D12::CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor
     )
     {
-        D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc;
-        uavDesc.Format = DXGI_FORMAT_UNKNOWN; // structured buffer
-        uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+        D3D12::D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc;
+        uavDesc.Format = DXGI::DXGI_FORMAT::DXGI_FORMAT_UNKNOWN; // structured buffer
+        uavDesc.ViewDimension = D3D12::D3D12_UAV_DIMENSION::D3D12_UAV_DIMENSION_BUFFER;
         uavDesc.Buffer.FirstElement = firstElement;
         uavDesc.Buffer.NumElements = elementCount;
         uavDesc.Buffer.StructureByteStride = elementByteSize;
         uavDesc.Buffer.CounterOffsetInBytes = counterOffset;
-        uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
+        uavDesc.Buffer.Flags = D3D12::D3D12_BUFFER_UAV_FLAGS::D3D12_BUFFER_UAV_FLAG_NONE;
         device->CreateUnorderedAccessView(resource, counterResource, &uavDesc, hDescriptor);
     }
 
     inline void CreateBufferSrv(
-        ID3D12Device* device, 
-        UINT64 firstElement, 
-        UINT elementCount, 
-        UINT elementByteSize,
-        ID3D12Resource* resource, 
-        CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor
+        D3D12::ID3D12Device* device,
+        Win32::UINT64 firstElement, 
+        Win32::UINT elementCount,
+        Win32::UINT elementByteSize,
+        D3D12::ID3D12Resource* resource,
+        D3D12::CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor
     )
     {
-        D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-        srvDesc.Format = DXGI_FORMAT_UNKNOWN; // structured buffer
-        srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
-        srvDesc.Shader4ComponentMapping = D3D12::DefaultShader4ComponentMapping();
-        srvDesc.Buffer.FirstElement = firstElement;
-        srvDesc.Buffer.NumElements = elementCount;
-        srvDesc.Buffer.StructureByteStride = elementByteSize;
-        srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+        auto srvDesc = D3D12::D3D12_SHADER_RESOURCE_VIEW_DESC{
+            .Format = DXGI::DXGI_FORMAT::DXGI_FORMAT_UNKNOWN, // structured buffer,
+            .ViewDimension = D3D12::D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_BUFFER,
+            .Shader4ComponentMapping = D3D12::DefaultShader4ComponentMapping(),
+            .Buffer = {
+                .FirstElement = firstElement,
+                .NumElements = elementCount,
+                .StructureByteStride = elementByteSize,
+                .Flags = D3D12::D3D12_BUFFER_SRV_FLAGS::D3D12_BUFFER_SRV_FLAG_NONE
+            }
+        };
         device->CreateShaderResourceView(resource, &srvDesc, hDescriptor);
     }
 }
