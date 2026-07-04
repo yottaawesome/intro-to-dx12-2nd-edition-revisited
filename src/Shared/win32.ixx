@@ -446,6 +446,7 @@ export namespace DirectX
 		::DirectX::BoundingFrustum,
 		::DirectX::GraphicsMemory,
 		::DirectX::BoundingBox,
+		::DirectX::XMMatrixTranslation,
 		::DirectX::XMMatrixPerspectiveFovLH,
 		::DirectX::XMMatrixLookAtLH,
 		::DirectX::XMStoreFloat2,

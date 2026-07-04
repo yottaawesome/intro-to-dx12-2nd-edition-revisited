@@ -16,7 +16,10 @@ extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = ".\\D3D12\\
 auto wWinMain(Win32::HINSTANCE hInstance, Win32::HINSTANCE, Win32::LPWSTR, int) -> int
 try
 {
-	return 0;
+	auto theApp = BoxGridApp{hInstance};
+	if (not theApp.Initialize())
+		return 0;
+	return theApp.Run();
 }
 catch (const DxException& e)
 {
