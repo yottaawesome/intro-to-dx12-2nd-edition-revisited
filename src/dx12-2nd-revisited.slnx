@@ -14,6 +14,7 @@
   </Folder>
   <Folder Name="/06/">
     <Project Path="Box/Box.vcxproj" Id="d8c7642c-defd-47b7-aaa1-0f5a354b2d75" />
+    <Project Path="BoxGrid/BoxGrid.vcxproj" Id="0ce0cef8-2729-498f-ac85-a194d60a5b8f" />
   </Folder>
   <Folder Name="/Common/">
     <Project Path="Shared/Shared.vcxproj" Id="71a3731d-95eb-49ec-b69f-e0b5e166115b" />
