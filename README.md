@@ -8,7 +8,14 @@ I began this effort with the original book, but have since moved on to the secon
 
 ## Status
 
-The effort is currently in progress. The `Common` code and the first four chapters have been partially refactored and are functional.
+The effort is currently in progress. The following projects have been converted and are functional.
+
+* `Common` code moved to static library `Shared`;
+* XMVECTOPR;
+* XMMATRIX;
+* InitDirect3D;
+* Box;
+* BoxGrid.
 
 ## Building and running
 
