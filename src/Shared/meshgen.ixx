@@ -1,5 +1,5 @@
 //***************************************************************************************
-// d3dApp.cpp by Frank Luna (C) 2015 All Rights Reserved.
+// d3dApp.cpp by Frank Luna (C) 2011 All Rights Reserved.
 //***************************************************************************************
 
 export module shared:meshgen;
@@ -155,7 +155,7 @@ public:
         v[22] = MeshGenVertex(+w2, +h2, +d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f);
         v[23] = MeshGenVertex(+w2, -h2, +d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
 
-        meshData.Vertices.assign(&v[0], &v[24]);
+        meshData.Vertices.assign(std::begin(v), std::end(v));
 
         //
         // Create the indices.
@@ -186,10 +186,10 @@ public:
         i[30] = 20; i[31] = 21; i[32] = 22;
         i[33] = 20; i[34] = 22; i[35] = 23;
 
-        meshData.Indices32.assign(&i[0], &i[36]);
+        meshData.Indices32.assign(std::begin(i), std::end(i));
 
         // Put a cap on the number of subdivisions.
-        numSubdivisions = std::min<uint32_t>(numSubdivisions, 6u);
+        numSubdivisions = std::min<std::uint32_t>(numSubdivisions, 6u);
 
         for (auto i = 0u; i < numSubdivisions; ++i)
             Subdivide(meshData);
@@ -201,7 +201,7 @@ public:
     /// Creates a sphere centered at the origin with the given radius.  The
     /// slices and stacks parameters control the degree of tessellation.
     ///</summary>
-    auto CreateSphere(float radius, uint32_t sliceCount, uint32_t stackCount) -> MeshGenData
+    auto CreateSphere(float radius, std::uint32_t sliceCount, std::uint32_t stackCount) -> MeshGenData
     {
         auto meshData = MeshGenData{};
 
@@ -297,7 +297,7 @@ public:
         //
 
         // South pole vertex was added last.
-        auto southPoleIndex = static_cast<uint32_t>(meshData.Vertices.size() - 1);
+        auto southPoleIndex = static_cast<std::uint32_t>(meshData.Vertices.size() - 1);
 
         // Offset the indices to the index of the first vertex in the last ring.
         baseIndex = southPoleIndex - ringVertexCount;
@@ -316,12 +316,12 @@ public:
     /// Creates a geosphere centered at the origin with the given radius.  The
     /// depth controls the level of tessellation.
     ///</summary>
-    auto CreateGeosphere(float radius, uint32_t numSubdivisions) -> MeshGenData
+    auto CreateGeosphere(float radius, std::uint32_t numSubdivisions) -> MeshGenData
     {
         auto meshData = MeshGenData{};
 
         // Put a cap on the number of subdivisions.
-        numSubdivisions = std::min<uint32_t>(numSubdivisions, 6u);
+        numSubdivisions = std::min<std::uint32_t>(numSubdivisions, 6u);
 
         // Approximate a sphere by tessellating an icosahedron.
 
@@ -338,7 +338,7 @@ public:
             DirectX::XMFLOAT3{Z, -X, 0.0f},  DirectX::XMFLOAT3{-Z, -X, 0.0f}
         };
 
-        auto k = std::array<uint32_t, 60>
+        auto k = std::array<std::uint32_t, 60>
         {
             1,4,0,  4,9,0,  4,5,9,  8,5,4,  1,8,4,
             1,10,8, 10,3,8, 8,3,5,  3,2,5,  3,7,2,
@@ -396,7 +396,7 @@ public:
     /// The bottom and top radius can vary to form various cone shapes rather than true
     // cylinders.  The slices and stacks parameters control the degree of tessellation.
     ///</summary>
-    auto CreateCylinder(float bottomRadius, float topRadius, float height, uint32_t sliceCount, uint32_t stackCount) -> MeshGenData
+    auto CreateCylinder(float bottomRadius, float topRadius, float height, std::uint32_t sliceCount, uint32_t stackCount) -> MeshGenData
     {
         auto meshData = MeshGenData{};
 

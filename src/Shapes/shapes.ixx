@@ -1,0 +1,670 @@
+export module shapes;
+import std;
+import shared;
+
+constexpr auto CBV_SRV_UAV_HEAP_CAPACITY = 16384u;
+
+struct ColorVertex
+{
+    DirectX::XMFLOAT3 Pos;
+    DirectX::XMFLOAT4 Color;
+};
+
+struct ObjectConstants
+{
+    DirectX::XMFLOAT4X4 World = MathHelper::Identity4x4;
+};
+
+struct PassConstants
+{
+    DirectX::XMFLOAT4X4 ViewProj = MathHelper::Identity4x4;
+};
+
+// Stores the resources needed for the CPU to build the command lists
+// for a frame. The contents here will vary from app to app based on
+// the needed resources.
+struct FrameResource
+{
+public:
+    FrameResource(D3D12::ID3D12Device* device, Win32::UINT passCount)
+    {
+        ThrowIfFailed(device->CreateCommandAllocator(
+            D3D12_COMMAND_LIST_TYPE_DIRECT,
+            __uuidof(D3D12::ID3D12CommandAllocator), &CmdListAlloc));
+
+        PassCB = std::make_unique<UploadBuffer<PassConstants>>(device, passCount, true);
+    }
+    FrameResource(const FrameResource& rhs) = delete;
+    FrameResource& operator=(const FrameResource& rhs) = delete;
+
+    // We cannot reset the allocator until the GPU is done processing the commands.
+    // So each frame needs their own allocator.
+    Microsoft::WRL::ComPtr<D3D12::ID3D12CommandAllocator> CmdListAlloc;
+
+    // We cannot update a buffer until the GPU is done processing the commands
+    // that reference it.  So each frame needs their own buffers.
+    std::unique_ptr<UploadBuffer<PassConstants>> PassCB = nullptr;
+
+    // Fence value to mark commands up to this fence point.  This lets us
+    // check if these frame resources are still in use by the GPU.
+    std::uint64_t Fence = 0;
+};
+
+enum ROOT_ARG
+{
+    ROOT_ARG_OBJECT_CBV = 0,
+    ROOT_ARG_PASS_CBV,
+    ROOT_ARG_COUNT
+};
+
+enum class RenderLayer : int
+{
+    Opaque = 0,
+    Debug,
+    Sky,
+    Count
+};
+
+// Lightweight structure stores parameters to draw a shape.  This will
+// vary from app-to-app.
+struct RenderItem
+{
+    RenderItem() = default;
+    RenderItem(const RenderItem& rhs) = delete;
+
+    // World matrix of the shape that describes the object's local space
+    // relative to the world space, which defines the position, orientation,
+    // and scale of the object in the world.
+    DirectX::XMFLOAT4X4 World = MathHelper::Identity4x4;
+
+    DirectX::XMFLOAT4X4 TexTransform = MathHelper::Identity4x4;
+
+    // Per object constant data.
+    ObjectConstants ObjectCB;
+
+    // Handle to per-object memory in linear allocator.
+    DirectX::GraphicsResource MemHandleToObjectCB;
+
+    Material* Mat = nullptr;
+    MeshGeometry* Geo = nullptr;
+
+    // Primitive topology.
+    D3D::D3D_PRIMITIVE_TOPOLOGY PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+
+    // DrawIndexedInstanced parameters.
+    Win32::UINT IndexCount = 0;
+    Win32::UINT StartIndexLocation = 0;
+    int BaseVertexLocation = 0;
+};
+
+export class ShapesApp : public D3DApp
+{
+public:
+    ShapesApp(Win32::HINSTANCE hInstance)
+        : D3DApp(hInstance)
+    { }
+
+    ~ShapesApp()
+    {
+        if (md3dDevice != nullptr)
+            FlushCommandQueue();
+    }
+
+	auto Initialize() -> bool override
+    {
+        if (not D3DApp::Initialize())
+            return false;
+
+        // We will upload on the direct queue for the book samples, but 
+        // copy queue would be better for real game.
+        mUploadBatch->Begin(D3D12_COMMAND_LIST_TYPE_DIRECT);
+
+        auto shapeGeo = BuildShapeGeometry(md3dDevice.Get(), *mUploadBatch.get());
+        if (shapeGeo != nullptr)
+            mGeometries[shapeGeo->Name] = std::move(shapeGeo);
+
+        // Kick off upload work asyncronously.
+        auto result = std::future<void>{mUploadBatch->End(mCommandQueue.Get())};
+
+        // Other init work...
+        BuildRootSignature();
+        BuildCbvSrvUavDescriptorHeap();
+        BuildShadersAndInputLayout();
+        BuildRenderItems();
+        BuildFrameResources();
+        BuildPSOs();
+
+        // Block until the upload work is complete.
+        result.wait();
+
+        return true;
+    }
+
+private:
+    void CreateRtvAndDsvDescriptorHeaps()override
+    {
+        mRtvHeap.Init(md3dDevice.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, SwapChainBufferCount);
+        mDsvHeap.Init(md3dDevice.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV, SwapChainBufferCount);
+    }
+
+    void OnResize()override
+    {
+        D3DApp::OnResize();
+
+        // The window resized, so update the aspect ratio and recompute the projection matrix.
+        auto P = DirectX::XMMATRIX{DirectX::XMMatrixPerspectiveFovLH(0.25f * MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f)};
+        DirectX::XMStoreFloat4x4(&mProj, P);
+    }
+
+    void Update(const GameTimer& gt)override
+    {
+        OnKeyboardInput(gt);
+        UpdateCamera(gt);
+
+        // Cycle through the circular frame resource array.
+        mCurrFrameResourceIndex = (mCurrFrameResourceIndex + 1) % gNumFrameResources;
+        mCurrFrameResource = mFrameResources[mCurrFrameResourceIndex].get();
+
+        // Has the GPU finished processing the commands of the current frame resource?
+        // If not, wait until the GPU has completed commands up to this fence point.
+        if (mCurrFrameResource->Fence != 0 && mFence->GetCompletedValue() < mCurrFrameResource->Fence)
+        {
+            auto event = Event{};
+
+            ThrowIfFailed(mFence->SetEventOnCompletion(
+                mCurrFrameResource->Fence,
+                event.Get()));
+            event.Wait();
+        }
+
+        UpdatePerObjectCB(gt);
+        UpdateMainPassCB(gt);
+    }
+
+    void Draw(const GameTimer& gt)override
+    {
+        CbvSrvUavHeap& cbvSrvUavHeap = CbvSrvUavHeap::Get();
+
+        UpdateImgui(gt);
+
+        auto cmdListAlloc = mCurrFrameResource->CmdListAlloc;
+
+        // Reuse the memory associated with command recording.
+        // We can only reset when the associated command lists have finished execution on the GPU.
+        ThrowIfFailed(cmdListAlloc->Reset());
+
+        // A command list can be reset after it has been added to the command queue via ExecuteCommandList.
+        // Reusing the command list reuses memory.
+        ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), mPSOs["opaque"].Get()));
+
+        ID3D12DescriptorHeap* descriptorHeaps[] = { cbvSrvUavHeap.GetD3dHeap() };
+        mCommandList->SetDescriptorHeaps(1, descriptorHeaps);
+
+        mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
+
+        mCommandList->RSSetViewports(1, &mScreenViewport);
+        mCommandList->RSSetScissorRects(1, &mScissorRect);
+
+        // Indicate a state transition on the resource usage.
+        auto transition = D3D12::CD3DX12_RESOURCE_BARRIER::Transition(
+            CurrentBackBuffer(),
+            D3D12_RESOURCE_STATE_PRESENT,
+            D3D12_RESOURCE_STATE_RENDER_TARGET);
+        mCommandList->ResourceBarrier(1, &transition);
+
+        // Clear the back buffer and depth buffer.
+        mCommandList->ClearRenderTargetView(CurrentBackBufferView(), DirectX::Colors::LightSteelBlue, 0, nullptr);
+        mCommandList->ClearDepthStencilView(
+            DepthStencilView(), 
+            D3D12::D3D12_CLEAR_FLAGS{ D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL },
+            1.0f, 0, 0, nullptr);
+
+        // Specify the buffers we are going to render to.
+        auto cbbv = CurrentBackBufferView();
+        auto dsv = DepthStencilView();
+        mCommandList->OMSetRenderTargets(1, &cbbv, true, &dsv);
+
+        auto passCB = static_cast<D3D12::ID3D12Resource*>(mCurrFrameResource->PassCB->Resource());
+        mCommandList->SetGraphicsRootConstantBufferView(
+            ROOT_ARG_PASS_CBV, passCB->GetGPUVirtualAddress());
+
+        mCommandList->SetPipelineState(
+            mDrawWireframe ?
+            mPSOs["opaque_wireframe"].Get() :
+            mPSOs["opaque"].Get());
+        DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Opaque]);
+
+        // Draw imgui UI.
+        ImGui::ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), mCommandList.Get());
+
+        // Indicate a state transition on the resource usage.
+        transition = CD3DX12_RESOURCE_BARRIER::Transition(
+            CurrentBackBuffer(),
+            D3D12_RESOURCE_STATE_RENDER_TARGET,
+            D3D12_RESOURCE_STATE_PRESENT);
+        mCommandList->ResourceBarrier(1, &transition);
+
+        // Done recording commands.
+        ThrowIfFailed(mCommandList->Close());
+
+        mLinearAllocator->Commit(mCommandQueue.Get());
+
+        // Add the command list to the queue for execution.
+        auto cmdsLists = std::array<ID3D12CommandList*, 1>{ mCommandList.Get() };
+        mCommandQueue->ExecuteCommandLists(static_cast<UINT>(cmdsLists.size()), cmdsLists.data());
+
+        // Swap the back and front buffers
+        auto presentParams = DXGI::DXGI_PRESENT_PARAMETERS{ 0 };
+        ThrowIfFailed(mSwapChain->Present1(0, 0, &presentParams));
+        mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
+
+        // Advance the fence value to mark commands up to this fence point.
+        mCurrFrameResource->Fence = ++mCurrentFence;
+
+        // Add an instruction to the command queue to set a new fence point. 
+        // Because we are on the GPU timeline, the new fence point won't be 
+        // set until the GPU finishes processing all the commands prior to this Signal().
+        mCommandQueue->Signal(mFence.Get(), mCurrentFence);
+    }
+
+    void UpdateImgui(const GameTimer& gt)override
+    {
+        D3DApp::UpdateImgui(gt);
+
+        //
+        // Define a panel to render GUI elements.
+        // 
+        ImGui::Begin("Options");
+
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
+        ImGui::Checkbox("Wireframe", &mDrawWireframe);
+
+        auto gfxMemStats = DirectX::GraphicsMemory::Get(md3dDevice.Get()).GetStatistics();
+
+        if (ImGui::CollapsingHeader("VideoMemoryInfo"))
+        {
+            static auto vidMemPollTime = 0.0f;
+            vidMemPollTime += gt.DeltaTime();
+
+            static auto videoMemInfo = DXGI::DXGI_QUERY_VIDEO_MEMORY_INFO{};
+            if (vidMemPollTime >= 1.0f) // poll every second
+            {
+                mDefaultAdapter->QueryVideoMemoryInfo(
+                    0, // assume single GPU
+                    DXGI::DXGI_MEMORY_SEGMENT_GROUP::DXGI_MEMORY_SEGMENT_GROUP_LOCAL, // interested in local GPU memory, not shared
+                    &videoMemInfo);
+
+                vidMemPollTime -= 1.0f;
+            }
+
+            ImGui::Text("Budget (bytes): %u", videoMemInfo.Budget);
+            ImGui::Text("CurrentUsage (bytes): %u", videoMemInfo.CurrentUsage);
+            ImGui::Text("AvailableForReservation (bytes): %u", videoMemInfo.AvailableForReservation);
+            ImGui::Text("CurrentReservation (bytes): %u", videoMemInfo.CurrentReservation);
+
+        }
+        if (ImGui::CollapsingHeader("GraphicsMemoryStatistics"))
+        {
+            ImGui::Text("Bytes of memory in-flight: %u", gfxMemStats.committedMemory);
+            ImGui::Text("Total bytes used: %u", gfxMemStats.totalMemory);
+            ImGui::Text("Total page count: %u", gfxMemStats.totalPages);
+        }
+
+        ImGui::End();
+
+        ImGui::Render();
+    }
+
+    void OnMouseDown(Win32::WPARAM btnState, int x, int y)override
+    {
+        if (ImGuiIO& io = ImGui::GetIO(); !io.WantCaptureMouse)
+        {
+            mLastMousePos.x = x;
+            mLastMousePos.y = y;
+            Win32::SetCapture(mhMainWnd);
+        }
+    }
+
+    void OnMouseUp(Win32::WPARAM btnState, int x, int y)override
+    {
+        if (ImGuiIO& io = ImGui::GetIO(); !io.WantCaptureMouse)
+            Win32::ReleaseCapture();
+    }
+
+    void OnMouseMove(Win32::WPARAM btnState, int x, int y)override
+    {
+        ImGuiIO& io = ImGui::GetIO();
+        if (io.WantCaptureMouse)
+            return;
+        if ((btnState & Win32::MK::LButton) != 0)
+        {
+            // Make each pixel correspond to a quarter of a degree.
+            float dx = DirectX::XMConvertToRadians(0.25f * static_cast<float>(x - mLastMousePos.x));
+            float dy = DirectX::XMConvertToRadians(0.25f * static_cast<float>(y - mLastMousePos.y));
+
+            // Update angles based on input to orbit camera around box.
+            mTheta += dx;
+            mPhi += dy;
+
+            // Restrict the angle mPhi.
+            mPhi = std::clamp(mPhi, 0.1f, MathHelper::Pi - 0.1f);
+        }
+        else if ((btnState & Win32::MK::RButton) != 0)
+        {
+            // Make each pixel correspond to 0.005 unit in the scene.
+            float dx = 0.005f * static_cast<float>(x - mLastMousePos.x);
+            float dy = 0.005f * static_cast<float>(y - mLastMousePos.y);
+
+            // Update the camera radius based on input.
+            mRadius += dx - dy;
+
+            // Restrict the radius.
+            mRadius = std::clamp(mRadius, 5.0f, 25.0f);
+        }
+        mLastMousePos.x = x;
+        mLastMousePos.y = y;
+    }
+
+    void OnKeyboardInput(const GameTimer& gt)
+    {}
+
+    void UpdateCamera(const GameTimer& gt)
+    {
+        // Convert Spherical to Cartesian coordinates.
+        mEyePos.x = mRadius * std::sinf(mPhi) * std::cosf(mTheta);
+        mEyePos.z = mRadius * std::sinf(mPhi) * std::sinf(mTheta);
+        mEyePos.y = mRadius * std::cosf(mPhi);
+
+        // Build the view matrix.
+        auto pos = DirectX::XMVECTOR{DirectX::XMVectorSet(mEyePos.x, mEyePos.y, mEyePos.z, 1.0f)};
+        auto target = DirectX::XMVECTOR{DirectX::XMVectorZero()};
+        auto up = DirectX::XMVECTOR{DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)};
+        auto view = DirectX::XMMATRIX{DirectX::XMMatrixLookAtLH(pos, target, up)};
+        DirectX::XMStoreFloat4x4(&mView, view);
+    }
+
+    void BuildCbvSrvUavDescriptorHeap()
+    {
+        auto& cbvSrvUavHeap = CbvSrvUavHeap::Get();
+        cbvSrvUavHeap.Init(md3dDevice.Get(), CBV_SRV_UAV_HEAP_CAPACITY);
+        InitImgui(cbvSrvUavHeap);
+    }
+
+    void UpdatePerObjectCB(const GameTimer& gt)
+    {
+        // Update per object constants once per frame so the data can be shared across different render passes.
+        for (auto& ri : mAllRitems)
+        {
+            DirectX::XMStoreFloat4x4(
+                &ri->ObjectCB.World,
+                DirectX::XMMatrixTranspose(DirectX::XMLoadFloat4x4(&ri->World)));
+            // Need to hold handle until we submit work to GPU.
+            ri->MemHandleToObjectCB = mLinearAllocator->AllocateConstant(ri->ObjectCB);
+        }
+    }
+
+    void UpdateMainPassCB(const GameTimer& gt)
+    {
+        auto view = DirectX::XMMATRIX{DirectX::XMLoadFloat4x4(&mView)};
+        auto proj = DirectX::XMMATRIX{DirectX::XMLoadFloat4x4(&mProj)};
+        auto viewProj = DirectX::XMMatrixMultiply(view, proj);
+
+        DirectX::XMStoreFloat4x4(&mMainPassCB.ViewProj, DirectX::XMMatrixTranspose(viewProj));
+
+        auto currPassCB = mCurrFrameResource->PassCB.get();
+        currPassCB->CopyData(0, mMainPassCB);
+    }
+
+    void BuildRootSignature()
+    {
+        // Root parameter can be a table, root descriptor or root constants.
+		auto gfxRootParameters = std::array<D3D12::CD3DX12_ROOT_PARAMETER, ROOT_ARG_COUNT>{};
+
+        // Perfomance TIP: Order from most frequent to least frequent.
+        gfxRootParameters[ROOT_ARG_OBJECT_CBV].InitAsConstantBufferView(0);
+        gfxRootParameters[ROOT_ARG_PASS_CBV].InitAsConstantBufferView(1);
+
+        // A root signature is an array of root parameters.
+        auto rootSigDesc = D3D12::CD3DX12_ROOT_SIGNATURE_DESC(
+            ROOT_ARG_COUNT,
+            gfxRootParameters.data(),
+            0, 
+            nullptr,
+            D3D12::D3D12_ROOT_SIGNATURE_FLAGS::D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+
+        // create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
+        auto serializedRootSig = Microsoft::WRL::ComPtr<D3D::ID3DBlob>{};
+        auto errorBlob = Microsoft::WRL::ComPtr<D3D::ID3DBlob>{};
+        auto hr = D3D12::D3D12SerializeRootSignature(
+            &rootSigDesc,
+            D3D::D3D_ROOT_SIGNATURE_VERSION::D3D_ROOT_SIGNATURE_VERSION_1,
+            serializedRootSig.GetAddressOf(),
+            errorBlob.GetAddressOf());
+        if (errorBlob != nullptr)
+            Win32::OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+        ThrowIfFailed(hr);
+
+        ThrowIfFailed(md3dDevice->CreateRootSignature(
+            0,
+            serializedRootSig->GetBufferPointer(),
+            serializedRootSig->GetBufferSize(),
+            __uuidof(D3D12::ID3D12RootSignature),
+            &mRootSignature));
+    }
+
+    void BuildShadersAndInputLayout()
+    {
+        if constexpr (IsDebugBuild)
+        {
+            mShaders["standardVS"] = d3dUtil::CompileShader(L"Shaders\\BasicColor.hlsl", { L"-E", L"VS", L"-T", L"vs_6_6", DXC::ArgDebug, DXC::ArgSkipOptimizations });
+            mShaders["opaquePS"] = d3dUtil::CompileShader(L"Shaders\\BasicColor.hlsl", { L"-E", L"PS", L"-T", L"ps_6_6", DXC::ArgDebug, DXC::ArgSkipOptimizations });
+        }
+        else
+        {
+            mShaders["standardVS"] = d3dUtil::CompileShader(L"Shaders\\BasicColor.hlsl", { L"-E", L"VS", L"-T", L"vs_6_6" });
+            mShaders["opaquePS"] = d3dUtil::CompileShader(L"Shaders\\BasicColor.hlsl", { L"-E", L"PS", L"-T", L"ps_6_6" });
+        }
+        mInputLayout = {
+            { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+            { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+        };
+    }
+
+    void BuildPSOs()
+    {
+        auto basePsoDesc = d3dUtil::InitDefaultPso(
+            mBackBufferFormat,
+            mDepthStencilFormat,
+            mInputLayout,
+            mRootSignature.Get(),
+            mShaders["standardVS"].Get(),
+            mShaders["opaquePS"].Get());
+
+        ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(
+            &basePsoDesc,
+			__uuidof(D3D12::ID3D12PipelineState), 
+            &mPSOs["opaque"]));
+
+        auto wireframePsoDesc = D3D12::D3D12_GRAPHICS_PIPELINE_STATE_DESC{ basePsoDesc };
+        wireframePsoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
+
+        ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(
+            &wireframePsoDesc,
+			__uuidof(D3D12::ID3D12PipelineState), 
+            &mPSOs["opaque_wireframe"]));
+    }
+
+    void BuildFrameResources()
+    {
+        constexpr auto passCount = 1u;
+        for (int i = 0; i < gNumFrameResources; ++i)
+            mFrameResources.push_back(std::make_unique<FrameResource>(md3dDevice.Get(), passCount));
+    }
+
+    void AddRenderItem(RenderLayer layer, const DirectX::XMFLOAT4X4& world, MeshGeometry* geo, SubmeshGeometry& drawArgs)
+    {
+        auto ritem = std::make_unique<RenderItem>();
+        ritem->World = world;
+        ritem->TexTransform = MathHelper::Identity4x4;
+        ritem->Mat = nullptr;
+        ritem->Geo = geo;
+        ritem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+        ritem->IndexCount = drawArgs.IndexCount;
+        ritem->StartIndexLocation = drawArgs.StartIndexLocation;
+        ritem->BaseVertexLocation = drawArgs.BaseVertexLocation;
+
+        mRitemLayer[(int)layer].push_back(ritem.get());
+        mAllRitems.push_back(std::move(ritem));
+    }
+
+    void BuildRenderItems()
+    {
+        auto worldTransform = DirectX::XMFLOAT4X4{};
+
+        DirectX::XMStoreFloat4x4(&worldTransform, DirectX::XMMatrixScaling(2.0f, 1.0f, 2.0f) * DirectX::XMMatrixTranslation(0.0f, 0.5f, 0.0f));
+        AddRenderItem(RenderLayer::Opaque, worldTransform, mGeometries["shapeGeo"].get(), mGeometries["shapeGeo"]->DrawArgs["box"]);
+
+        worldTransform = MathHelper::Identity4x4;
+        AddRenderItem(RenderLayer::Opaque, worldTransform, mGeometries["shapeGeo"].get(), mGeometries["shapeGeo"]->DrawArgs["grid"]);
+
+        for (int i = 0; i < 5; ++i)
+        {
+            DirectX::XMStoreFloat4x4(&worldTransform, DirectX::XMMatrixTranslation(-5.0f, 1.5f, -10.0f + i * 5.0f));
+            AddRenderItem(RenderLayer::Opaque, worldTransform, mGeometries["shapeGeo"].get(), mGeometries["shapeGeo"]->DrawArgs["cylinder"]);
+
+            DirectX::XMStoreFloat4x4(&worldTransform, DirectX::XMMatrixTranslation(+5.0f, 1.5f, -10.0f + i * 5.0f));
+            AddRenderItem(RenderLayer::Opaque, worldTransform, mGeometries["shapeGeo"].get(), mGeometries["shapeGeo"]->DrawArgs["cylinder"]);
+
+            DirectX::XMStoreFloat4x4(&worldTransform, DirectX::XMMatrixTranslation(-5.0f, 3.5f, -10.0f + i * 5.0f));
+            AddRenderItem(RenderLayer::Opaque, worldTransform, mGeometries["shapeGeo"].get(), mGeometries["shapeGeo"]->DrawArgs["sphere"]);
+
+            DirectX::XMStoreFloat4x4(&worldTransform, DirectX::XMMatrixTranslation(+5.0f, 3.5f, -10.0f + i * 5.0f));
+            AddRenderItem(RenderLayer::Opaque, worldTransform, mGeometries["shapeGeo"].get(), mGeometries["shapeGeo"]->DrawArgs["sphere"]);
+        }
+    }
+
+    void DrawRenderItems(D3D12::ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& ritems)
+    {
+        for (auto i = 0ull; i < ritems.size(); ++i)
+        {
+            auto ri = ritems[i];
+
+            auto vbv = ri->Geo->VertexBufferView();
+            auto ibv = ri->Geo->IndexBufferView();
+            cmdList->IASetVertexBuffers(0, 1, &vbv);
+            cmdList->IASetIndexBuffer(&ibv);
+            cmdList->IASetPrimitiveTopology(ri->PrimitiveType);
+
+            cmdList->SetGraphicsRootConstantBufferView(ROOT_ARG_OBJECT_CBV, ri->MemHandleToObjectCB.GpuAddress());
+
+            cmdList->DrawIndexedInstanced(ri->IndexCount, 1, ri->StartIndexLocation, ri->BaseVertexLocation, 0);
+        }
+    }
+
+    auto BuildShapeGeometry(
+        D3D12::ID3D12Device* device,
+        DirectX::ResourceUploadBatch& uploadBatch
+    ) -> std::unique_ptr<MeshGeometry>
+    {
+        //
+        // We are concatenating all the geometry into one big vertex/index buffer.  So
+        // define the regions in the buffer each submesh covers.
+        auto meshGen = MeshGen{};
+        auto compositeMesh = MeshGenData{};
+        MeshGenData box = meshGen.CreateBox(1.0f, 1.0f, 1.0f, 3);
+        SubmeshGeometry boxSubmesh = compositeMesh.AppendSubmesh(box);
+        MeshGenData grid = meshGen.CreateGrid(20.0f, 30.0f, 60, 40);
+        SubmeshGeometry gridSubmesh = compositeMesh.AppendSubmesh(grid);
+        MeshGenData sphere = meshGen.CreateSphere(0.5f, 20, 20);
+        SubmeshGeometry sphereSubmesh = compositeMesh.AppendSubmesh(sphere);
+        MeshGenData cylinder = meshGen.CreateCylinder(0.5f, 0.3f, 3.0f, 20, 20);
+        SubmeshGeometry cylinderSubmesh = compositeMesh.AppendSubmesh(cylinder);
+        MeshGenData quad = meshGen.CreateQuad(0.0f, 0.0f, 1.0f, 1.0f, 0.0f);
+        SubmeshGeometry quadSubmesh = compositeMesh.AppendSubmesh(quad);
+
+        auto color = DirectX::XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
+
+        // Extract the vertex elements we are interested into our vertex buffer. 
+        auto vertices = std::vector<ColorVertex>(compositeMesh.Vertices.size());
+        for (size_t i = 0; i < compositeMesh.Vertices.size(); ++i)
+        {
+            vertices[i].Pos = compositeMesh.Vertices[i].Position;
+            vertices[i].Color = color;
+        }
+
+        const auto indexCount = static_cast<UINT>(compositeMesh.Indices32.size());
+
+        constexpr auto indexElementByteSize = sizeof(uint16_t);
+        auto vbByteSize = static_cast<UINT>(vertices.size()) * sizeof(ColorVertex);
+        auto ibByteSize = indexCount * indexElementByteSize;
+
+        const auto* indexData = reinterpret_cast<Win32::byte*>(compositeMesh.GetIndices16().data());
+
+        auto geo = std::make_unique<MeshGeometry>();
+        geo->Name = "shapeGeo";
+
+        geo->VertexBufferCPU.resize(vbByteSize);
+        std::memcpy(geo->VertexBufferCPU.data(), vertices.data(), vbByteSize);
+
+        geo->IndexBufferCPU.resize(ibByteSize);
+        std::memcpy(geo->IndexBufferCPU.data(), indexData, ibByteSize);
+
+        CreateStaticBuffer(
+            device, uploadBatch,
+            vertices.data(), vertices.size(), sizeof(ColorVertex),
+            D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+            &geo->VertexBufferGPU);
+
+        CreateStaticBuffer(
+            device, uploadBatch,
+            indexData, indexCount, indexElementByteSize,
+            D3D12_RESOURCE_STATE_INDEX_BUFFER, &geo->IndexBufferGPU);
+
+        geo->VertexByteStride = sizeof(ColorVertex);
+        geo->VertexBufferByteSize = vbByteSize;
+        geo->IndexFormat = DXGI_FORMAT_R16_UINT;
+        geo->IndexBufferByteSize = ibByteSize;
+
+        geo->DrawArgs["box"] = boxSubmesh;
+        geo->DrawArgs["grid"] = gridSubmesh;
+        geo->DrawArgs["sphere"] = sphereSubmesh;
+        geo->DrawArgs["cylinder"] = cylinderSubmesh;
+        geo->DrawArgs["quad"] = quadSubmesh;
+
+        return geo;
+    }
+
+private:
+    std::vector<std::unique_ptr<FrameResource>> mFrameResources;
+    FrameResource* mCurrFrameResource = nullptr;
+    int mCurrFrameResourceIndex = 0;
+
+    Microsoft::WRL::ComPtr<D3D12::ID3D12RootSignature> mRootSignature;
+
+    std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> mGeometries;
+    std::unordered_map<std::string, Microsoft::WRL::ComPtr<DXC::IDxcBlob>> mShaders;
+    std::unordered_map<std::string, Microsoft::WRL::ComPtr<D3D12::ID3D12PipelineState>> mPSOs;
+
+    std::vector<D3D12::D3D12_INPUT_ELEMENT_DESC> mInputLayout;
+
+    // List of all the render items.
+    std::vector<std::unique_ptr<RenderItem>> mAllRitems;
+
+    // Render items divided by PSO.
+    std::vector<RenderItem*> mRitemLayer[(int)RenderLayer::Count];
+
+    PassConstants mMainPassCB;
+
+    DirectX::XMFLOAT4X4 mView = MathHelper::Identity4x4;
+    DirectX::XMFLOAT4X4 mProj = MathHelper::Identity4x4;
+
+    DirectX::XMFLOAT3 mEyePos = { 0.0f, 0.0f, 0.0f };
+    float mTheta = 1.5f * DirectX::Pi;
+    float mPhi = 0.35f * DirectX::Pi;
+    float mRadius = 20.0f;
+
+    Win32::POINT mLastMousePos;
+
+    bool mDrawWireframe = true;
+};

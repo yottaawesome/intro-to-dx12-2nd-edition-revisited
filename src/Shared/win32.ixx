@@ -300,7 +300,8 @@ export namespace D3D
 {
 	using 
 		::ID3DBlob,
-		::D3D_ROOT_SIGNATURE_VERSION
+		::D3D_ROOT_SIGNATURE_VERSION,
+		::D3D_PRIMITIVE_TOPOLOGY
 		;
 }
 
@@ -324,7 +325,6 @@ export namespace D3D12
 		::D3D12_SHADER_RESOURCE_VIEW_DESC,
 		::D3D12_DESCRIPTOR_HEAP_FLAGS,
 		::D3D12_ROOT_PARAMETER_TYPE,
-		::D3D_PRIMITIVE_TOPOLOGY,
 		::D3D12_DESCRIPTOR_HEAP_DESC,
 		::D3D12_INPUT_CLASSIFICATION,
 		::D3D12_ROOT_SIGNATURE_FLAGS,
@@ -446,6 +446,9 @@ export namespace DirectX
 		::DirectX::BoundingFrustum,
 		::DirectX::GraphicsMemory,
 		::DirectX::BoundingBox,
+		::DirectX::GraphicsResource,
+		::DirectX::XMMatrixScaling,
+		::DirectX::XMMatrixRotationX,
 		::DirectX::XMMatrixTranslation,
 		::DirectX::XMMatrixPerspectiveFovLH,
 		::DirectX::XMMatrixLookAtLH,

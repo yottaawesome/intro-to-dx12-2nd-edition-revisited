@@ -177,7 +177,7 @@ private:
 		auto ibv = mBoxGeo->IndexBufferView();
         mCommandList->IASetVertexBuffers(0, 1, &vbv);
         mCommandList->IASetIndexBuffer(&ibv);
-        mCommandList->IASetPrimitiveTopology(D3D12::D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        mCommandList->IASetPrimitiveTopology(D3D::D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
         mCommandList->DrawIndexedInstanced(
             mBoxGeo->DrawArgs["box"].IndexCount,
