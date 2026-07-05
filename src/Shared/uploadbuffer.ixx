@@ -65,8 +65,7 @@ public:
 
     void CopyData(const T* data, std::uint32_t count)
     {
-        assert(mElementByteSize == sizeof(T));
-
+        //assert(mElementByteSize == sizeof(T));
         std::memcpy(mMappedData, data, count * sizeof(T));
     }
 

@@ -41,6 +41,7 @@ export namespace ImGui
 		::ImGui::CreateContext,
         ::ImGui::StyleColorsDark,
 		::ImGui::GetCurrentContext,
+		::ImGui::SliderFloat,
 		::ImGui::NewFrame,
 		::ImGui::Begin,
 		::ImGui::End,

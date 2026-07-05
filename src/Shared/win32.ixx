@@ -416,6 +416,7 @@ export namespace DirectX
 	// using produces a warning
 	constexpr auto Pi = DirectX::XM_PI;
 	constexpr auto TwoPi = DirectX::XM_2PI;
+	constexpr auto PiOverTwo = DirectX::XM_PIDIV2;
 
 	namespace Colors
 	{
