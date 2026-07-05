@@ -19,7 +19,7 @@ The effort is currently in progress. The following projects have been converted 
 
 ## Building and running
 
-Microsoft Visual Studio 2026 with the _Desktop development with C++_ and _Game development with C++_ workloads is required. Prior to running, make sure to set the `Working Directory` setting `$(ProjectDir)\..` to allow the relevant resource files (like shaders) to be found. It goes without saying that you must have a GPU with DirectX 12 support to actually run the samples.
+Microsoft Visual Studio 2026 with the _Desktop development with C++_ and _Game development with C++_ workloads is required. Prior to running, make sure to set the `Working Directory` setting to `$(ProjectDir)\..` to allow the relevant resource files (like shaders) to be found. It goes without saying that you must have a GPU with DirectX 12 support to actually run the samples.
 
 ## Running summary of changes
 
