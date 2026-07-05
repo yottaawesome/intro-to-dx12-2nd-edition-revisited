@@ -266,18 +266,15 @@ private:
     void OnMouseDown(Win32::WPARAM btnState, int x, int y)override
     {
         auto& io = ImGui::GetIO();
-        if (!io.WantCaptureMouse)
-        {
-            mLastMousePos.x = x;
-            mLastMousePos.y = y;
-
-            Win32::SetCapture(mhMainWnd);
-        }
+        if (io.WantCaptureMouse)
+            return;
+        mLastMousePos.x = x;
+        mLastMousePos.y = y;
+        Win32::SetCapture(mhMainWnd);
     }
     void OnMouseUp(WPARAM btnState, int x, int y)override
     {
-        auto& io = ImGui::GetIO();
-        if (!io.WantCaptureMouse)
+        if (auto& io = ImGui::GetIO(); not io.WantCaptureMouse)
             Win32::ReleaseCapture();
     }
     void OnMouseMove(Win32::WPARAM btnState, int x, int y)override
@@ -348,35 +345,23 @@ private:
         constexpr auto passCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(PassConstants));
 
         // In this demo we only have one constant buffer element per upload buffer, 
-        // but a buffer could store an array of constant buffers. So, in general, we need to 
-        // offset to the ith constant buffer when creating a view to it.
+        // but a buffer could store an array of constant buffers. So, in general, 
+        // we need to offset to the ith constant buffer when creating a view to it.
         constexpr auto cbObjElementOffset = 0;
         auto objCBAddress = D3D12::D3D12_GPU_VIRTUAL_ADDRESS{
-            mObjectCB->Resource()->GetGPUVirtualAddress() +
-            cbObjElementOffset * objCBByteSize
-        };
+            mObjectCB->Resource()->GetGPUVirtualAddress() + cbObjElementOffset * objCBByteSize};
+        auto cbvObj = D3D12::D3D12_CONSTANT_BUFFER_VIEW_DESC{
+            .BufferLocation = objCBAddress,
+            .SizeInBytes = objCBByteSize};
+        md3dDevice->CreateConstantBufferView(&cbvObj, cbvSrvUavHeap.CpuHandle(mBoxCBHeapIndex));
 
         constexpr auto cbPassElementOffset = 0;
         auto passCBAddress = D3D12::D3D12_GPU_VIRTUAL_ADDRESS{
-            mPassCB->Resource()->GetGPUVirtualAddress() +
-            cbPassElementOffset * passCBByteSize
-        };
-
-        auto cbvObj = D3D12::D3D12_CONSTANT_BUFFER_VIEW_DESC{
-            .BufferLocation = objCBAddress,
-            .SizeInBytes = objCBByteSize
-        };
-        md3dDevice->CreateConstantBufferView(
-            &cbvObj,
-            cbvSrvUavHeap.CpuHandle(mBoxCBHeapIndex));
-
+            mPassCB->Resource()->GetGPUVirtualAddress() + cbPassElementOffset * passCBByteSize};
         auto cbvPassDesc = D3D12::D3D12_CONSTANT_BUFFER_VIEW_DESC{
             .BufferLocation = passCBAddress,
-            .SizeInBytes = passCBByteSize
-        };
-        md3dDevice->CreateConstantBufferView(
-            &cbvPassDesc,
-            cbvSrvUavHeap.CpuHandle(mPassCBHeapIndex));
+            .SizeInBytes = passCBByteSize};
+        md3dDevice->CreateConstantBufferView(&cbvPassDesc, cbvSrvUavHeap.CpuHandle(mPassCBHeapIndex));
     }
     void BuildRootSignature()
     {
