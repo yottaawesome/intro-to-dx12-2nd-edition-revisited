@@ -4,6 +4,7 @@ module;
 
 #include <Windows.h>
 #include <WindowsX.h>
+#include <ppl.h>
 #include <comdef.h>
 #include <dxgi1_6.h>
 #include <d3d12.h>
@@ -506,4 +507,11 @@ export namespace DirectX
 			::DirectX::PackedVector::XMCOLOR
 			;
 	}
+}
+
+// https://learn.microsoft.com/en-us/cpp/parallel/concrt/overview-of-the-concurrency-runtime?view=msvc-170
+export namespace Concurrency
+{
+	using 
+		::concurrency::parallel_for;
 }
