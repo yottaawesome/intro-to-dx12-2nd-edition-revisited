@@ -148,7 +148,7 @@ export
         // #define DXC_ARG_PACK_MATRIX_COLUMN_MAJOR L"-Zpc"
         static auto CompileShader(
             const std::wstring& filename, 
-            std::vector<Win32::LPCWSTR>& compileArgs
+            const std::vector<Win32::LPCWSTR>& compileArgs
         ) -> Microsoft::WRL::ComPtr<DXC::IDxcBlob>
         {
             if (!std::filesystem::exists(filename))
@@ -190,7 +190,7 @@ export
             auto hr = Win32::HRESULT{
                 compiler->Compile(
                     &sourceBuffer,               // source code
-                    compileArgs.data(),          // arguments
+                    const_cast<Win32::LPCWSTR*>(compileArgs.data()),          // arguments
                     static_cast<Win32::UINT>(compileArgs.size()),    // argument count
                     defaultIncludeHandler.Get(), // include handler
                     __uuidof(DXC::IDxcResult),

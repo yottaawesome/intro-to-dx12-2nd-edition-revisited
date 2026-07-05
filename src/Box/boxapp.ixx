@@ -191,8 +191,10 @@ private:
         ImGui::ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), mCommandList.Get());
 
         // Indicate a state transition on the resource usage.
-        transition = D3D12::CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
-            D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+        transition = D3D12::CD3DX12_RESOURCE_BARRIER::Transition(
+            CurrentBackBuffer(),
+            D3D12_RESOURCE_STATE_RENDER_TARGET, 
+            D3D12_RESOURCE_STATE_PRESENT);
         mCommandList->ResourceBarrier(1, &transition);
 
         // Done recording commands.
@@ -263,7 +265,7 @@ private:
 
     void OnMouseDown(Win32::WPARAM btnState, int x, int y)override
     {
-        ImGui::ImGuiIO& io = ImGui::GetIO();
+        auto& io = ImGui::GetIO();
         if (!io.WantCaptureMouse)
         {
             mLastMousePos.x = x;
@@ -274,13 +276,13 @@ private:
     }
     void OnMouseUp(WPARAM btnState, int x, int y)override
     {
-        ImGui::ImGuiIO& io = ImGui::GetIO();
+        auto& io = ImGui::GetIO();
         if (!io.WantCaptureMouse)
             Win32::ReleaseCapture();
     }
     void OnMouseMove(Win32::WPARAM btnState, int x, int y)override
     {
-        ImGui::ImGuiIO& io = ImGui::GetIO();
+        auto& io = ImGui::GetIO();
         if (io.WantCaptureMouse)
             return;
 
@@ -385,19 +387,19 @@ private:
         // thought of as defining the function signature.  
 
         // Root parameter can be a table, root descriptor or root constants.
-        D3D12::CD3DX12_ROOT_PARAMETER slotRootParameter[ROOT_ARG_COUNT] = {};
+		auto slotRootParameter = std::array<D3D12::CD3DX12_ROOT_PARAMETER, ROOT_ARG_COUNT>{};
 
         // Create a table for per-object constants. Arguments would need to be
         // set once per object.
-        D3D12::CD3DX12_DESCRIPTOR_RANGE objectCbvTable;
-        std::uint32_t numDescriptors = 1;
-        std::uint32_t baseRegister = 0;
+        auto objectCbvTable = D3D12::CD3DX12_DESCRIPTOR_RANGE{};
+        auto numDescriptors = 1u;
+        auto baseRegister = 0u;
         objectCbvTable.Init(D3D12::D3D12_DESCRIPTOR_RANGE_TYPE::D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
             numDescriptors, baseRegister);
 
         // Create a table for per-pass constants. Arguments would need to be
         // set once per pass.
-        D3D12::CD3DX12_DESCRIPTOR_RANGE passCbvTable;
+        auto passCbvTable = D3D12::CD3DX12_DESCRIPTOR_RANGE{};
         baseRegister = 1;
         passCbvTable.Init(D3D12::D3D12_DESCRIPTOR_RANGE_TYPE::D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
             numDescriptors, baseRegister);
@@ -406,25 +408,23 @@ private:
         slotRootParameter[ROOT_ARG_PASS_CBV].InitAsDescriptorTable(1, &passCbvTable);
 
         // A root signature is an array of root parameters.
-        D3D12::CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(
+        auto rootSigDesc = D3D12::CD3DX12_ROOT_SIGNATURE_DESC{
             ROOT_ARG_COUNT,
-            slotRootParameter,
+            slotRootParameter.data(),
             0, nullptr,
-            D3D12::D3D12_ROOT_SIGNATURE_FLAGS::D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+            D3D12::D3D12_ROOT_SIGNATURE_FLAGS::D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT};
 
         // create a root signature
-        Microsoft::WRL::ComPtr<D3D::ID3DBlob> serializedRootSig = nullptr;
-        Microsoft::WRL::ComPtr<D3D::ID3DBlob> errorBlob = nullptr;
-        Win32::HRESULT hr = D3D12::D3D12SerializeRootSignature(
+        auto serializedRootSig = Microsoft::WRL::ComPtr<D3D::ID3DBlob>{};
+        auto errorBlob = Microsoft::WRL::ComPtr<D3D::ID3DBlob>{};
+        auto hr = D3D12::D3D12SerializeRootSignature(
             &rootSigDesc,
             D3D::D3D_ROOT_SIGNATURE_VERSION::D3D_ROOT_SIGNATURE_VERSION_1,
             serializedRootSig.GetAddressOf(),
             errorBlob.GetAddressOf());
 
         if (errorBlob != nullptr)
-        {
             Win32::OutputDebugStringA((char*)errorBlob->GetBufferPointer());
-        }
         ThrowIfFailed(hr);
 
         ThrowIfFailed(md3dDevice->CreateRootSignature(
@@ -435,20 +435,18 @@ private:
     }
     void BuildShadersAndInputLayout()
     {
-#if defined(DEBUG) || defined(_DEBUG)  
-#define COMMA_DEBUG_ARGS ,DXC::ArgDebug, DXC::ArgSkipOptimizations
-#else
-#define COMMA_DEBUG_ARGS
-#endif
-
-        auto vsArgs = std::vector<Win32::LPCWSTR>{ L"-E", L"VS", L"-T", L"vs_6_6" COMMA_DEBUG_ARGS };
-        auto psArgs = std::vector<Win32::LPCWSTR>{ L"-E", L"PS", L"-T", L"ps_6_6" COMMA_DEBUG_ARGS };
-
-        mvsByteCode = d3dUtil::CompileShader(L"Shaders\\BasicColor.hlsl", vsArgs);
-        mpsByteCode = d3dUtil::CompileShader(L"Shaders\\BasicColor.hlsl", psArgs);
-
-        mInputLayout =
+		if constexpr (IsDebugBuild)
+		{
+            mvsByteCode = d3dUtil::CompileShader(L"Shaders\\BasicColor.hlsl", { L"-E", L"VS", L"-T", L"vs_6_6", DXC::ArgDebug, DXC::ArgSkipOptimizations });
+            mpsByteCode = d3dUtil::CompileShader(L"Shaders\\BasicColor.hlsl", { L"-E", L"PS", L"-T", L"ps_6_6", DXC::ArgDebug, DXC::ArgSkipOptimizations });
+		}
+        else
         {
+            mvsByteCode = d3dUtil::CompileShader(L"Shaders\\BasicColor.hlsl", { L"-E", L"VS", L"-T", L"vs_6_6" });
+            mpsByteCode = d3dUtil::CompileShader(L"Shaders\\BasicColor.hlsl", { L"-E", L"PS", L"-T", L"ps_6_6" });
+        }
+
+        mInputLayout = {
             { "POSITION", 0, DXGI::DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12::D3D12_INPUT_CLASSIFICATION::D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
             { "COLOR", 0, DXGI::DXGI_FORMAT::DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12::D3D12_INPUT_CLASSIFICATION::D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
         };
@@ -466,8 +464,7 @@ private:
             ColorVertex({ DirectX::XMFLOAT3(+1.0f, -1.0f, +1.0f), DirectX::XMFLOAT4(DirectX::Colors::Magenta) })
         };
 
-        std::array<std::uint16_t, 36> indices =
-        {
+        auto indices = std::array<std::uint16_t, 36>{
             // front face
             0, 1, 2,
             0, 2, 3,
@@ -493,8 +490,8 @@ private:
             4, 3, 7
         };
 
-        const Win32::UINT vbByteSize = (Win32::UINT)vertices.size() * sizeof(ColorVertex);
-        const Win32::UINT ibByteSize = (Win32::UINT)indices.size() * sizeof(uint16_t);
+        const auto vbByteSize = static_cast<Win32::UINT>(vertices.size() * sizeof(ColorVertex));
+        const auto ibByteSize = static_cast<Win32::UINT>(indices.size() * sizeof(uint16_t));
 
         mBoxGeo = std::make_unique<MeshGeometry>();
         mBoxGeo->Name = "boxGeo";
@@ -522,17 +519,18 @@ private:
         mBoxGeo->IndexFormat = DXGI_FORMAT_R16_UINT;
         mBoxGeo->IndexBufferByteSize = ibByteSize;
 
-        SubmeshGeometry submesh;
-        submesh.IndexCount = (UINT)indices.size();
-        submesh.StartIndexLocation = 0;
-        submesh.BaseVertexLocation = 0;
-        submesh.VertexCount = 8;
+        auto submesh = SubmeshGeometry{
+            .IndexCount = static_cast<UINT>(indices.size()),
+            .StartIndexLocation = 0,
+            .BaseVertexLocation = 0,
+            .VertexCount = 8
+        };
 
         // Box that tightly contains all the geometry. This 
         // is used in later chapters of the book.
-        submesh.Bounds = DirectX::BoundingBox(
+        submesh.Bounds = DirectX::BoundingBox{
             DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f), // center
-            DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f));// extents
+            DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f)};// extents
 
         mBoxGeo->DrawArgs["box"] = submesh;
     }

@@ -326,7 +326,7 @@ public:
 
     void BuildCbvSrvUavDescriptorHeap()
     {
-        CbvSrvUavHeap& cbvSrvUavHeap = CbvSrvUavHeap::Get();
+        auto& cbvSrvUavHeap = CbvSrvUavHeap::Get();
         cbvSrvUavHeap.Init(md3dDevice.Get(), CBV_SRV_UAV_HEAP_CAPACITY);
 
         InitImgui(cbvSrvUavHeap);
@@ -334,14 +334,13 @@ public:
 
     void BuildConstantBuffers()
     {
-        CbvSrvUavHeap& cbvSrvUavHeap = CbvSrvUavHeap::Get();
+        auto& cbvSrvUavHeap = CbvSrvUavHeap::Get();
 
         const auto isConstantBuffer = true;
 
         //
         // CB per object
         //
-
         mObjectCB = std::make_unique<UploadBuffer<ObjectConstants>>(
             md3dDevice.Get(),
             BOX_COUNT,
@@ -445,20 +444,18 @@ public:
 
     void BuildShadersAndInputLayout()
     {
-#if defined(DEBUG) || defined(_DEBUG)  
-#define COMMA_DEBUG_ARGS ,DXC::ArgDebug, DXC::ArgSkipOptimizations
-#else
-#define COMMA_DEBUG_ARGS
-#endif
-
-        auto vsArgs = std::vector<LPCWSTR>{ L"-E", L"VS", L"-T", L"vs_6_6" COMMA_DEBUG_ARGS };
-        auto psArgs = std::vector<LPCWSTR>{ L"-E", L"PS", L"-T", L"ps_6_6" COMMA_DEBUG_ARGS };
-
-        mvsByteCode = d3dUtil::CompileShader(L"Shaders\\BasicColor.hlsl", vsArgs);
-        mpsByteCode = d3dUtil::CompileShader(L"Shaders\\BasicColor.hlsl", psArgs);
-
-        mInputLayout =
+        if constexpr (IsDebugBuild)
         {
+            mvsByteCode = d3dUtil::CompileShader(L"Shaders\\BasicColor.hlsl", { L"-E", L"VS", L"-T", L"vs_6_6", DXC::ArgDebug, DXC::ArgSkipOptimizations });
+            mpsByteCode = d3dUtil::CompileShader(L"Shaders\\BasicColor.hlsl", { L"-E", L"PS", L"-T", L"ps_6_6", DXC::ArgDebug, DXC::ArgSkipOptimizations });
+        }
+        else
+        {
+            mvsByteCode = d3dUtil::CompileShader(L"Shaders\\BasicColor.hlsl", { L"-E", L"VS", L"-T", L"vs_6_6" });
+            mpsByteCode = d3dUtil::CompileShader(L"Shaders\\BasicColor.hlsl", { L"-E", L"PS", L"-T", L"ps_6_6" });
+        }
+
+        mInputLayout = {
             { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
             { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
         };
