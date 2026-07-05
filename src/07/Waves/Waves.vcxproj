@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>18.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{0ce0cef8-2729-498f-ac85-a194d60a5b8f}</ProjectGuid>
-    <RootNamespace>BoxGrid</RootNamespace>
+    <ProjectGuid>{dc7ffbce-5c71-4874-8f39-3af5317cea63}</ProjectGuid>
+    <RootNamespace>Waves</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -152,15 +152,15 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="boxgridapp.ixx" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="waves.ixx" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="vcpkg.json" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Shared\Shared.vcxproj">
+    <ProjectReference Include="..\..\Shared\Shared.vcxproj">
       <Project>{71a3731d-95eb-49ec-b69f-e0b5e166115b}</Project>
     </ProjectReference>
   </ItemGroup>
