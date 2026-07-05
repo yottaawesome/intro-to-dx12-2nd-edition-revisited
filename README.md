@@ -11,11 +11,13 @@ I began this effort with the original book, but have since moved on to the secon
 The effort is currently in progress. The following projects have been converted and are functional.
 
 * `Common` code moved to static library `Shared`;
-* XMVECTOR;
-* XMMATRIX;
-* InitDirect3D;
-* Box;
-* BoxGrid.
+* 01/XMVECTOR;
+* 02/XMMATRIX;
+* 04/InitDirect3D;
+* 06/Box;
+* 06/BoxGrid;
+* 07/Shapes;
+* 07/Waves.
 
 ## Building and running
 
@@ -37,6 +39,7 @@ Microsoft Visual Studio 2026 with the _Desktop development with C++_ and _Game d
 * Function signatures are being updated to use trailing return type syntax, which are visually easier to navigate in classes with many methods.
 * Various class-level `static` member variables have been made `inline`, simplifying their initialisation.
 * Variable declarations are being ported to Almost Always Auto (AAA) idiom with braced or designated initialisation. AAA is easier to visually navigate, while braced initialisation guarantees left-to-right evaluation order and catches otherwise invisible narrowing conversions. Designated initialisation is much cleaner for aggregate types.
+* `MeshGen::CreateBox()` has been updated to use `std::begin()` and `std::end()` in the `assign()` calls. The previous code did a direct index past the end of the range, which interestingly triggered a debug check, even though it's technically safe.
 * Replacement of certain raw arrays with `std::array`, which also removes the need for the non-standard `_countof()` extension.
 * The use of `!` is being with replaced with the more obvious `not`.
 * Use of certain macros and preprocessor checks such as `#if defined(DEBUG)` have been replaced with `if constexpr(...)` checks, which are far less uglier.
