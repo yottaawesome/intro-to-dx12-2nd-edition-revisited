@@ -687,16 +687,15 @@ private:
 			mShaders["standardVS"].Get(),
 			mShaders["opaquePS"].Get());
 
-		ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(
-			&basePsoDesc,
-			__uuidof(D3D12::ID3D12PipelineState), &mPSOs["opaque"]));
+		auto hr = md3dDevice->CreateGraphicsPipelineState(&basePsoDesc, __uuidof(D3D12::ID3D12PipelineState), &mPSOs["opaque"]);
+		if (Win32::Failed(hr))
+			throw DxException{ hr };
 
 		auto wireframePsoDesc = D3D12::D3D12_GRAPHICS_PIPELINE_STATE_DESC{basePsoDesc};
 		wireframePsoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
-
-		ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(
-			&wireframePsoDesc,
-			__uuidof(D3D12::ID3D12PipelineState), &mPSOs["opaque_wireframe"]));
+		hr = md3dDevice->CreateGraphicsPipelineState(&wireframePsoDesc, __uuidof(D3D12::ID3D12PipelineState), &mPSOs["opaque_wireframe"]);
+		if (Win32::Failed(hr))
+			throw DxException{ hr };
 	}
 
 	void BuildFrameResources()
