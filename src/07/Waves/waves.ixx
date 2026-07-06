@@ -43,9 +43,10 @@ public:
 
 	FrameResource(D3D12::ID3D12Device* device, Win32::UINT passCount, Win32::UINT waveVertCount)
 	{
-		ThrowIfFailed(device->CreateCommandAllocator(
-			D3D12_COMMAND_LIST_TYPE_DIRECT,
-			__uuidof(D3D12::ID3D12CommandAllocator), &CmdListAlloc));
+		auto hr = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, __uuidof(D3D12::ID3D12CommandAllocator), &CmdListAlloc);
+		if (Win32::Failed(hr))
+			throw DxException{ hr };
+
 		PassCB = std::make_unique<UploadBuffer<PassConstants>>(device, passCount, true);
 		WavesVB = std::make_unique<UploadBuffer<ColorVertex>>(device, waveVertCount, false);
 	}
@@ -353,7 +354,8 @@ private:
 		if (mCurrFrameResource->Fence != 0 && mFence->GetCompletedValue() < mCurrFrameResource->Fence)
 		{
 			auto event = Event{};
-			ThrowIfFailed(mFence->SetEventOnCompletion(mCurrFrameResource->Fence, event.Get()));
+			if (auto hr = mFence->SetEventOnCompletion(mCurrFrameResource->Fence, event.Get()); Win32::Failed(hr))
+				throw DxException{ hr };
 			event.Wait();
 		}
 
@@ -372,11 +374,14 @@ private:
 
 		// Reuse the memory associated with command recording.
 		// We can only reset when the associated command lists have finished execution on the GPU.
-		ThrowIfFailed(cmdListAlloc->Reset());
+		
+		if (auto hr = cmdListAlloc->Reset(); Win32::Failed(hr))
+			throw DxException{ hr };
 
 		// A command list can be reset after it has been added to the command queue via ExecuteCommandList.
 		// Reusing the command list reuses memory.
-		ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), mPSOs["opaque"].Get()));
+		if (auto hr = mCommandList->Reset(cmdListAlloc.Get(), mPSOs["opaque"].Get()); Win32::Failed(hr))
+			throw DxException{ hr };
 
 		auto descriptorHeaps = std::array{ cbvSrvUavHeap.GetD3dHeap() };
 		mCommandList->SetDescriptorHeaps(static_cast<UINT>(descriptorHeaps.size()), descriptorHeaps.data());
@@ -418,7 +423,8 @@ private:
 		mCommandList->ResourceBarrier(1, &transition);
 
 		// Done recording commands.
-		ThrowIfFailed(mCommandList->Close());
+		if (auto hr = mCommandList->Close(); Win32::Failed(hr))
+			throw DxException{ hr };
 
 		mLinearAllocator->Commit(mCommandQueue.Get());
 
@@ -428,7 +434,9 @@ private:
 
 		// Swap the back and front buffers
 		auto presentParams = DXGI::DXGI_PRESENT_PARAMETERS{ 0 };
-		ThrowIfFailed(mSwapChain->Present1(0, 0, &presentParams));
+		
+		if (auto hr = mSwapChain->Present1(0, 0, &presentParams); Win32::Failed(hr))
+			throw DxException{ hr };
 		mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
 
 		// Advance the fence value to mark commands up to this fence point.
@@ -649,13 +657,17 @@ private:
 
 		if (errorBlob)
 			Win32::OutputDebugStringA((char*)errorBlob->GetBufferPointer());
-		ThrowIfFailed(hr);
+		if (Win32::Failed(hr))
+			throw DxException{ hr };
 
-		ThrowIfFailed(md3dDevice->CreateRootSignature(
+		hr = md3dDevice->CreateRootSignature(
 			0,
 			serializedRootSig->GetBufferPointer(),
 			serializedRootSig->GetBufferSize(),
-			__uuidof(D3D12::ID3D12RootSignature), &mRootSignature));
+			__uuidof(D3D12::ID3D12RootSignature), 
+			&mRootSignature);
+		if (Win32::Failed(hr))
+			throw DxException{ hr };
 	}
 
 	void BuildShadersAndInputLayout()
