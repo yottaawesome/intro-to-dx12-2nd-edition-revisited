@@ -11,7 +11,7 @@ I began this effort with the original book, but have since moved on to the secon
 The effort is currently in progress. The following projects have been converted and are functional.
 
 * `Common` code moved to static library `Shared`;
-* 01/XMVECTOR;
+* [01/XMVECTOR](./src/01/XMVECTOR);
 * 02/XMMATRIX;
 * 04/InitDirect3D;
 * 06/Box;
