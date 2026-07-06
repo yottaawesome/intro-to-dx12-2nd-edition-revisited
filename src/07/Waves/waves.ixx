@@ -142,30 +142,12 @@ public:
 	Waves(const Waves& rhs) = delete;
 	Waves& operator=(const Waves& rhs) = delete;
 
-	constexpr auto RowCount()const -> int
-	{
-		return mNumRows;
-	}
-	constexpr auto ColumnCount()const -> int
-	{
-		return mNumCols;
-	}
-	constexpr auto VertexCount()const -> int
-	{
-		return mVertexCount;
-	}
-	constexpr auto TriangleCount()const -> int
-	{
-		return mTriangleCount;
-	}
-	constexpr auto Width()const -> float
-	{
-		return mNumCols * mSpatialStep;
-	}
-	constexpr auto Depth()const-> float
-	{
-		return mNumRows * mSpatialStep;
-	}
+	constexpr auto RowCount()const noexcept -> int { return mNumRows; }
+	constexpr auto ColumnCount()const noexcept -> int { return mNumCols; }
+	constexpr auto VertexCount()const noexcept -> int { return mVertexCount; }
+	constexpr auto TriangleCount()const noexcept -> int { return mTriangleCount; }
+	constexpr auto Width()const noexcept -> float { return mNumCols * mSpatialStep; }
+	constexpr auto Depth()const noexcept -> float { return mNumRows * mSpatialStep; }
 
 	// Returns the solution at the ith grid point.
 	constexpr auto Position(int i)const -> const DirectX::XMFLOAT3& { return mCurrSolution[i]; }
@@ -304,13 +286,13 @@ public:
 	WavesApp& operator=(const WavesApp& rhs) = delete;
 	~WavesApp()
 	{
-		if (md3dDevice != nullptr)
+		if (md3dDevice)
 			FlushCommandQueue();
 	}
 
 	auto Initialize() -> bool override
 	{
-		if (!D3DApp::Initialize())
+		if (not D3DApp::Initialize())
 			return false;
 
 		mWaves = std::make_unique<Waves>(128, 128, 1.0f, 0.016f, mWaveSpeed, mWaveDamping);
@@ -319,22 +301,13 @@ public:
 		// copy queue would be better for real game.
 		mUploadBatch->Begin(D3D12_COMMAND_LIST_TYPE_DIRECT);
 
-		std::unique_ptr<MeshGeometry> landGeo = BuildLandGeometry(
-			md3dDevice.Get(), *mUploadBatch.get());
-		if (landGeo != nullptr)
-		{
-			mGeometries[landGeo->Name] = std::move(landGeo);
-		}
-
-		std::unique_ptr<MeshGeometry> waveGeo = BuildWaveGeometry(
-			md3dDevice.Get(), *mUploadBatch.get());
-		if (waveGeo != nullptr)
-		{
-			mGeometries[waveGeo->Name] = std::move(waveGeo);
-		}
+		auto landGeo = std::unique_ptr<MeshGeometry>{ BuildLandGeometry(md3dDevice.Get(), *mUploadBatch.get()) };
+		mGeometries[landGeo->Name] = std::move(landGeo);
+		auto waveGeo = std::unique_ptr<MeshGeometry>{ BuildWaveGeometry(md3dDevice.Get(), *mUploadBatch.get()) };
+		mGeometries[waveGeo->Name] = std::move(waveGeo);
 
 		// Kick off upload work asyncronously.
-		std::future<void> result = mUploadBatch->End(mCommandQueue.Get());
+		auto result = std::future<void>{mUploadBatch->End(mCommandQueue.Get())};
 
 		// Other init work...
 		BuildRootSignature();
@@ -362,9 +335,10 @@ private:
 		D3DApp::OnResize();
 
 		// The window resized, so update the aspect ratio and recompute the projection matrix.
-		DirectX::XMMATRIX P = DirectX::XMMatrixPerspectiveFovLH(0.25f * MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
+		auto P = DirectX::XMMATRIX{DirectX::XMMatrixPerspectiveFovLH(0.25f * MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f)};
 		DirectX::XMStoreFloat4x4(&mProj, P);
 	}
+
 	void Update(const GameTimer& gt)override
 	{
 		OnKeyboardInput(gt);
@@ -387,9 +361,10 @@ private:
 		UpdateMainPassCB(gt);
 		UpdateWaves(gt);
 	}
+
 	void Draw(const GameTimer& gt)override
 	{
-		CbvSrvUavHeap& cbvSrvUavHeap = CbvSrvUavHeap::Get();
+		auto& cbvSrvUavHeap = CbvSrvUavHeap::Get();
 
 		UpdateImgui(gt);
 
@@ -403,8 +378,8 @@ private:
 		// Reusing the command list reuses memory.
 		ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), mPSOs["opaque"].Get()));
 
-		D3D12::ID3D12DescriptorHeap* descriptorHeaps[] = { cbvSrvUavHeap.GetD3dHeap() };
-		mCommandList->SetDescriptorHeaps(1, descriptorHeaps);
+		auto descriptorHeaps = std::array{ cbvSrvUavHeap.GetD3dHeap() };
+		mCommandList->SetDescriptorHeaps(static_cast<UINT>(descriptorHeaps.size()), descriptorHeaps.data());
 
 		mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
@@ -431,10 +406,7 @@ private:
 		auto passCB = mCurrFrameResource->PassCB->Resource();
 		mCommandList->SetGraphicsRootConstantBufferView(ROOT_ARG_PASS_CBV, passCB->GetGPUVirtualAddress());
 
-		mCommandList->SetPipelineState(
-			mDrawWireframe ?
-			mPSOs["opaque_wireframe"].Get() :
-			mPSOs["opaque"].Get());
+		mCommandList->SetPipelineState(mDrawWireframe ? mPSOs["opaque_wireframe"].Get() : mPSOs["opaque"].Get());
 		DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Opaque]);
 
 		// Draw imgui UI.
@@ -451,11 +423,11 @@ private:
 		mLinearAllocator->Commit(mCommandQueue.Get());
 
 		// Add the command list to the queue for execution.
-		D3D12::ID3D12CommandList* cmdsLists[] = { mCommandList.Get() };
-		mCommandQueue->ExecuteCommandLists(1, cmdsLists);
+		auto cmdsLists = std::array<D3D12::ID3D12CommandList*, 1>{ mCommandList.Get() };
+		mCommandQueue->ExecuteCommandLists(static_cast<UINT>(cmdsLists.size()), cmdsLists.data());
 
 		// Swap the back and front buffers
-		DXGI::DXGI_PRESENT_PARAMETERS presentParams = { 0 };
+		auto presentParams = DXGI::DXGI_PRESENT_PARAMETERS{ 0 };
 		ThrowIfFailed(mSwapChain->Present1(0, 0, &presentParams));
 		mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
 
@@ -521,64 +493,57 @@ private:
 	}
 	void OnMouseDown(WPARAM btnState, int x, int y)override
 	{
-		ImGuiIO& io = ImGui::GetIO();
-
-		if (!io.WantCaptureMouse)
+		if (auto& io = ImGui::GetIO(); not io.WantCaptureMouse)
 		{
 			mLastMousePos.x = x;
 			mLastMousePos.y = y;
-
 			Win32::SetCapture(mhMainWnd);
 		}
 	}
 
 	void OnMouseUp(WPARAM btnState, int x, int y)override
 	{
-		ImGuiIO& io = ImGui::GetIO();
-
-		if (!io.WantCaptureMouse)
-		{
+		if (auto& io = ImGui::GetIO(); not io.WantCaptureMouse)
 			Win32::ReleaseCapture();
-		}
 	}
 	void OnMouseMove(Win32::WPARAM btnState, int x, int y)override
 	{
-		ImGui::ImGuiIO& io = ImGui::GetIO();
+		auto& io = ImGui::GetIO();
+		if (io.WantCaptureMouse)
+			return;
 
-		if (!io.WantCaptureMouse)
+		if ((btnState & Win32::MK::LButton) != 0)
 		{
-			if ((btnState & Win32::MK::LButton) != 0)
-			{
-				// Make each pixel correspond to a quarter of a degree.
-				float dx = DirectX::XMConvertToRadians(0.25f * static_cast<float>(x - mLastMousePos.x));
-				float dy = DirectX::XMConvertToRadians(0.25f * static_cast<float>(y - mLastMousePos.y));
+			// Make each pixel correspond to a quarter of a degree.
+			auto dx = DirectX::XMConvertToRadians(0.25f * static_cast<float>(x - mLastMousePos.x));
+			auto dy = DirectX::XMConvertToRadians(0.25f * static_cast<float>(y - mLastMousePos.y));
 
-				// Update angles based on input to orbit camera around box.
-				mTheta += dx;
-				mPhi += dy;
+			// Update angles based on input to orbit camera around box.
+			mTheta += dx;
+			mPhi += dy;
 
-				// Restrict the angle mPhi.
-				mPhi = std::clamp(mPhi, 0.1f, MathHelper::Pi - 0.1f);
-			}
-			else if ((btnState & Win32::MK::RButton) != 0)
-			{
-				// Make each pixel correspond to 0.005 unit in the scene.
-				float dx = 0.05f * static_cast<float>(x - mLastMousePos.x);
-				float dy = 0.05f * static_cast<float>(y - mLastMousePos.y);
-
-				// Update the camera radius based on input.
-				mRadius += dx - dy;
-
-				// Restrict the radius.
-				mRadius = std::clamp(mRadius, 5.0f, 150.0f);
-			}
-
-			mLastMousePos.x = x;
-			mLastMousePos.y = y;
+			// Restrict the angle mPhi.
+			mPhi = std::clamp(mPhi, 0.1f, MathHelper::Pi - 0.1f);
 		}
+		else if ((btnState & Win32::MK::RButton) != 0)
+		{
+			// Make each pixel correspond to 0.005 unit in the scene.
+			auto dx = 0.05f * static_cast<float>(x - mLastMousePos.x);
+			auto dy = 0.05f * static_cast<float>(y - mLastMousePos.y);
+
+			// Update the camera radius based on input.
+			mRadius += dx - dy;
+
+			// Restrict the radius.
+			mRadius = std::clamp(mRadius, 5.0f, 150.0f);
+		}
+
+		mLastMousePos.x = x;
+		mLastMousePos.y = y;
 	}
-	void OnKeyboardInput(const GameTimer& gt)
-	{}
+	
+	void OnKeyboardInput(const GameTimer& gt) {}
+
 	void UpdateCamera(const GameTimer& gt)
 	{
 		// Convert Spherical to Cartesian coordinates.
@@ -587,11 +552,11 @@ private:
 		mEyePos.y = mRadius * std::cosf(mPhi);
 
 		// Build the view matrix.
-		DirectX::XMVECTOR pos = DirectX::XMVectorSet(mEyePos.x, mEyePos.y, mEyePos.z, 1.0f);
-		DirectX::XMVECTOR target = DirectX::XMVectorZero();
-		DirectX::XMVECTOR up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+		auto pos = DirectX::XMVECTOR{DirectX::XMVectorSet(mEyePos.x, mEyePos.y, mEyePos.z, 1.0f)};
+		auto target = DirectX::XMVECTOR{DirectX::XMVectorZero()};
+		auto up = DirectX::XMVECTOR{DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)};
 
-		DirectX::XMMATRIX view = DirectX::XMMatrixLookAtLH(pos, target, up);
+		auto view = DirectX::XMMATRIX{DirectX::XMMatrixLookAtLH(pos, target, up)};
 		DirectX::XMStoreFloat4x4(&mView, view);
 	}
 	void UpdatePerObjectCB(const GameTimer& gt)
@@ -609,29 +574,26 @@ private:
 	}
 	void UpdateMainPassCB(const GameTimer& gt)
 	{
-		DirectX::XMMATRIX view = DirectX::XMLoadFloat4x4(&mView);
-		DirectX::XMMATRIX proj = DirectX::XMLoadFloat4x4(&mProj);
-
-		DirectX::XMMATRIX viewProj = DirectX::XMMatrixMultiply(view, proj);
+		auto view = DirectX::XMMATRIX{DirectX::XMLoadFloat4x4(&mView)};
+		auto proj = DirectX::XMMATRIX{DirectX::XMLoadFloat4x4(&mProj)};
+		auto viewProj = DirectX::XMMatrixMultiply(view, proj);
 
 		DirectX::XMStoreFloat4x4(&mMainPassCB.ViewProj, DirectX::XMMatrixTranspose(viewProj));
 
 		auto currPassCB = mCurrFrameResource->PassCB.get();
 		currPassCB->CopyData(0, mMainPassCB);
 	}
+
 	void UpdateWaves(const GameTimer& gt)
 	{
 		// Every quarter second, generate a random wave.
-		static float t_base = 0.0f;
+		static auto t_base = 0.0f;
 		if ((mTimer.TotalTime() - t_base) >= 0.25f)
 		{
 			t_base += 0.25f;
-
-			int i = MathHelper::Rand(4, mWaves->RowCount() - 5);
-			int j = MathHelper::Rand(4, mWaves->ColumnCount() - 5);
-
-			float r = mWaveScale * MathHelper::RandF(0.3f, 0.6f);
-
+			auto i = MathHelper::Rand(4, mWaves->RowCount() - 5);
+			auto j = MathHelper::Rand(4, mWaves->ColumnCount() - 5);
+			auto r = mWaveScale * MathHelper::RandF(0.3f, 0.6f);
 			mWaves->Disturb(i, j, r);
 		}
 
@@ -640,11 +602,11 @@ private:
 
 		// Update the wave vertex buffer with the new solution.
 		auto currWavesVB = mCurrFrameResource->WavesVB.get();
-		std::vector<ColorVertex> verts(mWaves->VertexCount());
+		auto verts = std::vector<ColorVertex>(mWaves->VertexCount());
 		for (int i = 0; i < mWaves->VertexCount(); ++i)
 		{
 			verts[i].Pos = mWaves->Position(i);
-			verts[i].Color = DirectX::XMFLOAT4(DirectX::Colors::Blue);
+			verts[i].Color = DirectX::XMFLOAT4{DirectX::Colors::Blue};
 		}
 		currWavesVB->CopyData(verts.data(), static_cast<UINT>(verts.size()));
 
@@ -654,40 +616,39 @@ private:
 
 	void BuildCbvSrvUavDescriptorHeap()
 	{
-		CbvSrvUavHeap& cbvSrvUavHeap = CbvSrvUavHeap::Get();
+		auto& cbvSrvUavHeap = CbvSrvUavHeap::Get();
 		cbvSrvUavHeap.Init(md3dDevice.Get(), CBV_SRV_UAV_HEAP_CAPACITY);
-
 		InitImgui(cbvSrvUavHeap);
 	}
+
 	void BuildRootSignature()
 	{
 		// Root parameter can be a table, root descriptor or root constants.
-		D3D12::CD3DX12_ROOT_PARAMETER gfxRootParameters[ROOT_ARG_COUNT];
+		auto gfxRootParameters = std::array<D3D12::CD3DX12_ROOT_PARAMETER, ROOT_ARG_COUNT>{};
 
 		// Perfomance TIP: Order from most frequent to least frequent.
 		gfxRootParameters[ROOT_ARG_OBJECT_CBV].InitAsConstantBufferView(0);
 		gfxRootParameters[ROOT_ARG_PASS_CBV].InitAsConstantBufferView(1);
 
 		// A root signature is an array of root parameters.
-		D3D12::CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(
+		auto rootSigDesc = D3D12::CD3DX12_ROOT_SIGNATURE_DESC{
 			ROOT_ARG_COUNT,
-			gfxRootParameters,
-			0, nullptr,
-			D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+			gfxRootParameters.data(),
+			0, 
+			nullptr,
+			D3D12::D3D12_ROOT_SIGNATURE_FLAGS::D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT};
 
 		// create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
-		Microsoft::WRL::ComPtr<D3D::ID3DBlob> serializedRootSig = nullptr;
-		Microsoft::WRL::ComPtr<D3D::ID3DBlob> errorBlob = nullptr;
+		auto serializedRootSig = Microsoft::WRL::ComPtr<D3D::ID3DBlob>{};
+		auto errorBlob = Microsoft::WRL::ComPtr<D3D::ID3DBlob>{};
 		auto hr = D3D12::D3D12SerializeRootSignature(
 			&rootSigDesc,
-			D3D_ROOT_SIGNATURE_VERSION_1,
+			D3D::D3D_ROOT_SIGNATURE_VERSION::D3D_ROOT_SIGNATURE_VERSION_1,
 			serializedRootSig.GetAddressOf(),
 			errorBlob.GetAddressOf());
 
-		if (errorBlob != nullptr)
-		{
+		if (errorBlob)
 			Win32::OutputDebugStringA((char*)errorBlob->GetBufferPointer());
-		}
 		ThrowIfFailed(hr);
 
 		ThrowIfFailed(md3dDevice->CreateRootSignature(
@@ -699,17 +660,16 @@ private:
 
 	void BuildShadersAndInputLayout()
 	{
-#if defined(DEBUG) || defined(_DEBUG)  
-#define COMMA_DEBUG_ARGS ,DXC::ArgDebug, DXC::ArgSkipOptimizations
-#else
-#define COMMA_DEBUG_ARGS
-#endif
-
-		auto vsArgs = std::vector<Win32::LPCWSTR>{ L"-E", L"VS", L"-T", L"vs_6_6" COMMA_DEBUG_ARGS };
-		auto psArgs = std::vector<Win32::LPCWSTR>{ L"-E", L"PS", L"-T", L"ps_6_6" COMMA_DEBUG_ARGS };
-
-		mShaders["standardVS"] = d3dUtil::CompileShader(L"Shaders\\BasicColor.hlsl", vsArgs);
-		mShaders["opaquePS"] = d3dUtil::CompileShader(L"Shaders\\BasicColor.hlsl", psArgs);
+		if constexpr (IsDebugBuild)
+		{
+			mShaders["standardVS"] = d3dUtil::CompileShader(L"Shaders\\BasicColor.hlsl", { L"-E", L"VS", L"-T", L"vs_6_6",DXC::ArgDebug, DXC::ArgSkipOptimizations });
+			mShaders["opaquePS"] = d3dUtil::CompileShader(L"Shaders\\BasicColor.hlsl", { L"-E", L"PS", L"-T", L"ps_6_6",DXC::ArgDebug, DXC::ArgSkipOptimizations });
+		}
+		else
+		{
+			mShaders["standardVS"] = d3dUtil::CompileShader(L"Shaders\\BasicColor.hlsl", { L"-E", L"VS", L"-T", L"vs_6_6" });
+			mShaders["opaquePS"] = d3dUtil::CompileShader(L"Shaders\\BasicColor.hlsl", { L"-E", L"PS", L"-T", L"ps_6_6" });
+		}
 
 		mInputLayout = {
 			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -731,7 +691,7 @@ private:
 			&basePsoDesc,
 			__uuidof(D3D12::ID3D12PipelineState), &mPSOs["opaque"]));
 
-		D3D12::D3D12_GRAPHICS_PIPELINE_STATE_DESC wireframePsoDesc = basePsoDesc;
+		auto wireframePsoDesc = D3D12::D3D12_GRAPHICS_PIPELINE_STATE_DESC{basePsoDesc};
 		wireframePsoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
 
 		ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(
@@ -743,11 +703,7 @@ private:
 	{
 		constexpr auto passCount = 1u;
 		for (int i = 0; i < gNumFrameResources; ++i)
-		{
-			mFrameResources.push_back(
-				std::make_unique<FrameResource>(md3dDevice.Get(),
-					passCount, mWaves->VertexCount()));
-		}
+			mFrameResources.push_back(std::make_unique<FrameResource>(md3dDevice.Get(), passCount, mWaves->VertexCount()));
 	}
 
 	void AddRenderItem(RenderLayer layer, const DirectX::XMFLOAT4X4& world, MeshGeometry* geo, SubmeshGeometry& drawArgs)
@@ -765,73 +721,66 @@ private:
 		mRitemLayer[(int)layer].push_back(ritem.get());
 		mAllRitems.push_back(std::move(ritem));
 	}
+
 	void BuildRenderItems()
 	{
-		DirectX::XMFLOAT4X4 worldTransform = MathHelper::Identity4x4;
-
+		auto worldTransform = MathHelper::Identity4x4;
 		AddRenderItem(RenderLayer::Opaque, worldTransform, mGeometries["waterGeo"].get(), mGeometries["waterGeo"]->DrawArgs["grid"]);
 		mWavesRitem = mAllRitems.back().get();
-
 		AddRenderItem(RenderLayer::Opaque, worldTransform, mGeometries["landGeo"].get(), mGeometries["landGeo"]->DrawArgs["grid"]);
 	}
+
 	void DrawRenderItems(D3D12::ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& ritems)
 	{
-		for (size_t i = 0; i < ritems.size(); ++i)
+		for (auto i = 0ull; i < ritems.size(); ++i)
 		{
 			auto ri = ritems[i];
-
 			auto vbv = ri->Geo->VertexBufferView();
 			auto ibv = ri->Geo->IndexBufferView();
 			cmdList->IASetVertexBuffers(0, 1, &vbv);
 			cmdList->IASetIndexBuffer(&ibv);
 			cmdList->IASetPrimitiveTopology(ri->PrimitiveType);
-
 			cmdList->SetGraphicsRootConstantBufferView(ROOT_ARG_OBJECT_CBV, ri->MemHandleToObjectCB.GpuAddress());
-
 			cmdList->DrawIndexedInstanced(ri->IndexCount, 1, ri->StartIndexLocation, ri->BaseVertexLocation, 0);
 		}
 	}
 	
-	auto BuildShapeGeometry(
-		D3D12::ID3D12Device* device,
-		DirectX::ResourceUploadBatch& uploadBatch
-	) -> std::unique_ptr<MeshGeometry>
+	auto BuildShapeGeometry(D3D12::ID3D12Device* device, DirectX::ResourceUploadBatch& uploadBatch) -> std::unique_ptr<MeshGeometry>
 	{
-		MeshGen meshGen;
-		MeshGenData box = meshGen.CreateBox(1.0f, 1.0f, 1.0f, 3);
-		MeshGenData grid = meshGen.CreateGrid(20.0f, 30.0f, 60, 40);
-		MeshGenData sphere = meshGen.CreateSphere(0.5f, 20, 20);
-		MeshGenData cylinder = meshGen.CreateCylinder(0.5f, 0.3f, 3.0f, 20, 20);
-		MeshGenData quad = meshGen.CreateQuad(0.0f, 0.0f, 1.0f, 1.0f, 0.0f);
+		auto meshGen = MeshGen{};
+		auto box = MeshGenData{ meshGen.CreateBox(1.0f, 1.0f, 1.0f, 3) };
+		auto grid = MeshGenData{ meshGen.CreateGrid(20.0f, 30.0f, 60, 40) };
+		auto sphere = MeshGenData{ meshGen.CreateSphere(0.5f, 20, 20) };
+		auto cylinder = MeshGenData{ meshGen.CreateCylinder(0.5f, 0.3f, 3.0f, 20, 20) };
+		auto quad = MeshGenData{ meshGen.CreateQuad(0.0f, 0.0f, 1.0f, 1.0f, 0.0f) };
 
 		//
 		// We are concatenating all the geometry into one big vertex/index buffer.  So
 		// define the regions in the buffer each submesh covers.
 		//
-		MeshGenData compositeMesh;
-		SubmeshGeometry boxSubmesh = compositeMesh.AppendSubmesh(box);
-		SubmeshGeometry gridSubmesh = compositeMesh.AppendSubmesh(grid);
-		SubmeshGeometry sphereSubmesh = compositeMesh.AppendSubmesh(sphere);
-		SubmeshGeometry cylinderSubmesh = compositeMesh.AppendSubmesh(cylinder);
-		SubmeshGeometry quadSubmesh = compositeMesh.AppendSubmesh(quad);
+		auto compositeMesh = MeshGenData{};
+		auto boxSubmesh = SubmeshGeometry{ compositeMesh.AppendSubmesh(box) };
+		auto gridSubmesh = SubmeshGeometry{ compositeMesh.AppendSubmesh(grid) };
+		auto sphereSubmesh = SubmeshGeometry{ compositeMesh.AppendSubmesh(sphere) };
+		auto cylinderSubmesh = SubmeshGeometry{ compositeMesh.AppendSubmesh(cylinder) };
+		auto quadSubmesh = SubmeshGeometry{ compositeMesh.AppendSubmesh(quad) };
 
-		DirectX::XMFLOAT4 color = DirectX::XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
+		auto color = DirectX::XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
 
 		// Extract the vertex elements we are interested into our vertex buffer. 
-		std::vector<ColorVertex> vertices(compositeMesh.Vertices.size());
-		for (size_t i = 0; i < compositeMesh.Vertices.size(); ++i)
+		auto vertices = std::vector<ColorVertex>(compositeMesh.Vertices.size());
+		for (auto i = 0ull; i < compositeMesh.Vertices.size(); ++i)
 		{
 			vertices[i].Pos = compositeMesh.Vertices[i].Position;
 			vertices[i].Color = color;
 		}
 
-		const uint32_t indexCount = (UINT)compositeMesh.Indices32.size();
+		constexpr auto indexElementByteSize = sizeof(uint16_t);
+		const auto indexCount = static_cast<UINT>(compositeMesh.Indices32.size());
+		const auto vbByteSize = static_cast<UINT>(vertices.size() * sizeof(ColorVertex));
+		const auto ibByteSize = static_cast<UINT>(indexCount * indexElementByteSize);
 
-		const UINT indexElementByteSize = sizeof(uint16_t);
-		const UINT vbByteSize = (UINT)vertices.size() * sizeof(ColorVertex);
-		const UINT ibByteSize = indexCount * indexElementByteSize;
-
-		const Win32::byte* indexData = reinterpret_cast<Win32::byte*>(compositeMesh.GetIndices16().data());
+		auto indexData = reinterpret_cast<Win32::byte*>(compositeMesh.GetIndices16().data());
 
 		auto geo = std::make_unique<MeshGeometry>();
 		geo->Name = "shapeGeo";
@@ -864,13 +813,10 @@ private:
 		return geo;
 	}
 
-	auto BuildLandGeometry(
-		D3D12::ID3D12Device* device,
-		DirectX::ResourceUploadBatch& uploadBatch
-	) -> std::unique_ptr<MeshGeometry>
+	auto BuildLandGeometry(D3D12::ID3D12Device* device, DirectX::ResourceUploadBatch& uploadBatch) -> std::unique_ptr<MeshGeometry>
 	{
-		MeshGen meshGen;
-		MeshGenData grid = meshGen.CreateGrid(160.0f, 160.0f, 50, 50);
+		auto meshGen = MeshGen{};
+		auto grid = MeshGenData{ meshGen.CreateGrid(160.0f, 160.0f, 50, 50) };
 
 		//
 		// Extract the vertex elements we are interested and apply the height function to
@@ -878,8 +824,8 @@ private:
 		// sandy looking beaches, grassy low hills, and snow mountain peaks.
 		//
 
-		std::vector<ColorVertex> vertices(grid.Vertices.size());
-		for (size_t i = 0; i < grid.Vertices.size(); ++i)
+		auto vertices = std::vector<ColorVertex>(grid.Vertices.size());
+		for (auto i = 0ull; i < grid.Vertices.size(); ++i)
 		{
 			auto& p = grid.Vertices[i].Position;
 			vertices[i].Pos = p;
@@ -913,12 +859,12 @@ private:
 			}
 		}
 
-		const uint32_t indexCount = (UINT)grid.Indices32.size();
-		const UINT indexElementByteSize = sizeof(uint16_t);
-		const UINT vbByteSize = (UINT)vertices.size() * sizeof(ColorVertex);
-		const UINT ibByteSize = indexCount * indexElementByteSize;
+		const auto indexCount = static_cast<UINT>(grid.Indices32.size());
+		constexpr auto indexElementByteSize = sizeof(uint16_t);
+		const auto vbByteSize = static_cast<UINT>(vertices.size() * sizeof(ColorVertex));
+		const auto ibByteSize = static_cast<UINT>(indexCount * indexElementByteSize);
 
-		std::vector<std::uint16_t> indices = grid.GetIndices16();
+		auto indices = std::vector<std::uint16_t>{grid.GetIndices16()};
 
 		auto geo = std::make_unique<MeshGeometry>();
 		geo->Name = "landGeo";
@@ -946,8 +892,8 @@ private:
 		geo->IndexFormat = DXGI_FORMAT_R16_UINT;
 		geo->IndexBufferByteSize = ibByteSize;
 
-		SubmeshGeometry submesh;
-		submesh.IndexCount = (UINT)indices.size();
+		auto submesh = SubmeshGeometry{};
+		submesh.IndexCount = static_cast<UINT>(indices.size());
 		submesh.StartIndexLocation = 0;
 		submesh.BaseVertexLocation = 0;
 		submesh.VertexCount = static_cast<UINT>(vertices.size());
@@ -956,21 +902,18 @@ private:
 		return geo;
 	}
 
-	auto BuildWaveGeometry(
-		ID3D12Device* device,
-		DirectX::ResourceUploadBatch& uploadBatch
-	) -> std::unique_ptr<MeshGeometry>
+	auto BuildWaveGeometry(ID3D12Device* device, DirectX::ResourceUploadBatch& uploadBatch) -> std::unique_ptr<MeshGeometry>
 	{
-		std::vector<std::uint32_t> indices(3 * mWaves->TriangleCount()); // 3 indices per face
+		auto indices = std::vector<std::uint32_t>(3 * mWaves->TriangleCount()); // 3 indices per face
 		//assert(mWaves->VertexCount() < 0x0000ffff);
 
 		// Iterate over each quad.
-		int m = mWaves->RowCount();
-		int n = mWaves->ColumnCount();
-		int k = 0;
-		for (int i = 0; i < m - 1; ++i)
+		auto m = mWaves->RowCount();
+		auto n = mWaves->ColumnCount();
+		auto k = 0;
+		for (auto i = 0; i < m - 1; ++i)
 		{
-			for (int j = 0; j < n - 1; ++j)
+			for (auto j = 0; j < n - 1; ++j)
 			{
 				indices[k] = i * n + j;
 				indices[k + 1] = i * n + j + 1;
@@ -984,8 +927,8 @@ private:
 			}
 		}
 
-		UINT vbByteSize = mWaves->VertexCount() * sizeof(ColorVertex);
-		UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint32_t);
+		auto vbByteSize = static_cast<UINT>(mWaves->VertexCount() * sizeof(ColorVertex));
+		auto ibByteSize = static_cast<UINT>(indices.size() * sizeof(std::uint32_t));
 
 		auto geo = std::make_unique<MeshGeometry>();
 		geo->Name = "waterGeo";
@@ -1008,8 +951,8 @@ private:
 		geo->IndexFormat = DXGI_FORMAT_R32_UINT;
 		geo->IndexBufferByteSize = ibByteSize;
 
-		SubmeshGeometry submesh;
-		submesh.IndexCount = (UINT)indices.size();
+		auto submesh = SubmeshGeometry{};
+		submesh.IndexCount = static_cast<UINT>(indices.size());
 		submesh.StartIndexLocation = 0;
 		submesh.BaseVertexLocation = 0;
 
@@ -1026,23 +969,23 @@ private:
 	auto GetHillsNormal(float x, float z)const -> DirectX::XMFLOAT3
 	{
 		// n = (-df/dx, 1, -df/dz)
-		DirectX::XMFLOAT3 n(
+		auto n = DirectX::XMFLOAT3{
 			-0.03f * z * cosf(0.1f * x) - 0.3f * cosf(0.1f * z),
 			1.0f,
-			-0.3f * sinf(0.1f * x) + 0.03f * x * sinf(0.1f * z));
+			-0.3f * sinf(0.1f * x) + 0.03f * x * sinf(0.1f * z)};
 
-		DirectX::XMVECTOR unitNormal = DirectX::XMVector3Normalize(DirectX::XMLoadFloat3(&n));
+		auto unitNormal = DirectX::XMVECTOR{ DirectX::XMVector3Normalize(DirectX::XMLoadFloat3(&n)) };
 		DirectX::XMStoreFloat3(&n, unitNormal);
 
 		return n;
 	}
-private:
 
+private:
 	std::vector<std::unique_ptr<FrameResource>> mFrameResources;
 	FrameResource* mCurrFrameResource = nullptr;
 	int mCurrFrameResourceIndex = 0;
 
-	Microsoft::WRL::ComPtr<D3D12::ID3D12RootSignature> mRootSignature = nullptr;
+	Microsoft::WRL::ComPtr<D3D12::ID3D12RootSignature> mRootSignature;
 
 	std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> mGeometries;
 	std::unordered_map<std::string, Microsoft::WRL::ComPtr<DXC::IDxcBlob>> mShaders;
@@ -1069,7 +1012,7 @@ private:
 	float mPhi = DirectX::PiOverTwo - 0.1f;
 	float mRadius = 50.0f;
 
-	Win32::POINT mLastMousePos;
+	Win32::POINT mLastMousePos{};
 
 	bool mDrawWireframe = true;
 	float mWaveScale = 1.0f;

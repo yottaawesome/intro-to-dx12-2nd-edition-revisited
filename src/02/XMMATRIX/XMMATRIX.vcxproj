@@ -154,7 +154,7 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Shared\Shared.vcxproj">
+    <ProjectReference Include="..\..\Shared\Shared.vcxproj">
       <Project>{71a3731d-95eb-49ec-b69f-e0b5e166115b}</Project>
     </ProjectReference>
   </ItemGroup>
