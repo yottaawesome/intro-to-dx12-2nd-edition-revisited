@@ -158,6 +158,9 @@
       <Project>{71a3731d-95eb-49ec-b69f-e0b5e166115b}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Direct3D.D3D12" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
