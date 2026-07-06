@@ -293,7 +293,7 @@ export
             return psoDesc;
         }
 
-        auto CreateRandomTexture(
+        static auto CreateRandomTexture(
             D3D12::ID3D12Device* device, 
             DirectX::ResourceUploadBatch& resourceUpload,
             size_t width, 
@@ -332,10 +332,10 @@ export
             return randomTex;
         }
 
-        auto BuildShapeGeometry(
+        static auto BuildShapeGeometry(
             ID3D12Device* device, 
             DirectX::ResourceUploadBatch& uploadBatch, 
-            bool useIndex32
+            bool useIndex32 = false
         ) -> std::unique_ptr<MeshGeometry>
         {
             MeshGen meshGen;
@@ -407,7 +407,7 @@ export
             return geo;
         }
 
-        auto BuildSkullGeometry(
+        static auto BuildSkullGeometry(
             ID3D12Device* device, 
             DirectX::ResourceUploadBatch& uploadBatch
         ) -> std::unique_ptr<MeshGeometry>
@@ -544,12 +544,12 @@ export
         }
 
         //loadm3d.h <- SkinnedData.h
-        auto LoadSimpleModelGeometry(
+        static auto LoadSimpleModelGeometry(
             ID3D12Device* device,
             DirectX::ResourceUploadBatch& uploadBatch,
             const std::string& filename,
             const std::string& geoName,
-            bool useIndex32
+            bool useIndex32 = false
         ) -> std::unique_ptr<MeshGeometry>
         {
             std::vector<M3DLoader::Vertex> m3dVertices;
@@ -646,7 +646,7 @@ export
             return geo;
         }
 
-        auto CalcGaussWeights(float sigma) -> std::vector<float>
+        static auto CalcGaussWeights(float sigma) -> std::vector<float>
         {
             float twoSigma2 = 2.0f * sigma * sigma;
 

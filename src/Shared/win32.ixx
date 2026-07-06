@@ -429,7 +429,10 @@ export namespace DirectX
 			::DirectX::Colors::Blue,
 			::DirectX::Colors::Magenta,
 			::DirectX::Colors::Yellow,
-			::DirectX::Colors::Cyan
+			::DirectX::Colors::Cyan,
+			::DirectX::Colors::LightGray,
+			::DirectX::Colors::ForestGreen,
+			::DirectX::Colors::SteelBlue
 			;
 	}
 
