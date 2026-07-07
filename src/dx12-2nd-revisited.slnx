@@ -24,6 +24,11 @@
     <Project Path="08/LitShapes/LitShapes.vcxproj" Id="1409380d-f311-4aa2-b3f6-f6121d697286" />
     <Project Path="08/LitWaves/LitWaves.vcxproj" Id="b9400550-d544-4272-a5ad-450b690c576f" />
   </Folder>
+  <Folder Name="/09/">
+    <Project Path="09/Crate/Crate.vcxproj" Id="23c54a47-c3c4-4e97-b6be-56a2b9143de2" />
+    <Project Path="09/TexturedShapes/TexturedShapes.vcxproj" Id="b0cdd49b-5010-49c3-b2c8-959bd7fc0ee2" />
+    <Project Path="09/TexWaves/TexWaves.vcxproj" Id="5d7fe72f-24d2-4ca5-bf4b-4d46ee287cf8" />
+  </Folder>
   <Folder Name="/Common/">
     <Project Path="Shared/Shared.vcxproj" Id="71a3731d-95eb-49ec-b69f-e0b5e166115b" />
   </Folder>

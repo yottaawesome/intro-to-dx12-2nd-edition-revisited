@@ -5,6 +5,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageVersion Include="Microsoft.Direct3D.D3D12" Version="1.619.3" />
+    <PackageVersion Include="Microsoft.Direct3D.D3D12" Version="1.619.4" />
   </ItemGroup>
 </Project>
