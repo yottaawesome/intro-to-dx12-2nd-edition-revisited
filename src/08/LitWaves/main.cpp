@@ -1,5 +1,6 @@
 import std;
 import shared;
+import litwaves;
 
 // Required exports for DX12-Agility SDK
 // https://devblogs.microsoft.com/directx/gettingstarted-dx12agility/
@@ -14,5 +15,10 @@ extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = ".\\D3D12\\
 
 auto wWinMain(Win32::HINSTANCE hInstance, Win32::HINSTANCE, Win32::LPWSTR, int) -> int
 {
-    return 0;
+	if constexpr (IsDebugBuild)
+		Win32::_CrtSetDbgFlag(Win32::CrtAllocMemDf | Win32::CrtLeakCheckDf);
+	auto theApp = LitWavesApp{ hInstance };
+	if (not theApp.Initialize())
+		return 0;
+	return theApp.Run();
 }
