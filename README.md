@@ -18,6 +18,7 @@ The effort is currently in progress. The following projects have been converted 
 * [06/BoxGrid](./src/06/BoxGrid)
 * [07/Shapes](./src/07/Shapes)
 * [07/Waves](./src/07/Waves)
+* [08/LitShapes](./src/08/LitShapes)
 * [08/LitWaves](./src/08/LitWaves)
 
 ## Building and running
