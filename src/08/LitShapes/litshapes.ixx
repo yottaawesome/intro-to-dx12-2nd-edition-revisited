@@ -113,17 +113,11 @@ public:
         // copy queue would be better for real game.
         mUploadBatch->Begin(D3D12_COMMAND_LIST_TYPE_DIRECT);
 
-        std::unique_ptr<MeshGeometry> shapeGeo = d3dUtil::BuildShapeGeometry(md3dDevice.Get(), *mUploadBatch.get());
-        if (shapeGeo != nullptr)
-        {
-            mGeometries[shapeGeo->Name] = std::move(shapeGeo);
-        }
+        auto shapeGeo = d3dUtil::BuildShapeGeometry(md3dDevice.Get(), *mUploadBatch.get());
+        mGeometries[shapeGeo->Name] = std::move(shapeGeo);
 
-        std::unique_ptr<MeshGeometry> skullGeo = d3dUtil::BuildSkullGeometry(md3dDevice.Get(), *mUploadBatch.get());
-        if (skullGeo != nullptr)
-        {
-            mGeometries[skullGeo->Name] = std::move(skullGeo);
-        }
+        auto skullGeo = d3dUtil::BuildSkullGeometry(md3dDevice.Get(), *mUploadBatch.get());
+        mGeometries[skullGeo->Name] = std::move(skullGeo);
 
         // Kick off upload work asyncronously.
         std::future<void> result = mUploadBatch->End(mCommandQueue.Get());
@@ -155,7 +149,7 @@ private:
         D3DApp::OnResize();
 
         // The window resized, so update the aspect ratio and recompute the projection matrix.
-        DirectX::XMMATRIX P = DirectX::XMMatrixPerspectiveFovLH(0.25f * MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
+        auto P = DirectX::XMMATRIX{DirectX::XMMatrixPerspectiveFovLH(0.25f * MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f)};
         DirectX::XMStoreFloat4x4(&mProj, P);
     }
 
@@ -182,7 +176,7 @@ private:
         //
         mLightRotationAngle += 0.1f * gt.DeltaTime();
 
-        DirectX::XMMATRIX R = DirectX::XMMatrixRotationY(mLightRotationAngle);
+        auto R = DirectX::XMMATRIX{DirectX::XMMatrixRotationY(mLightRotationAngle)};
         for (int i = 0; i < 3; ++i)
         {
             DirectX::XMVECTOR lightDir = DirectX::XMLoadFloat3(&mBaseLightDirections[i]);
@@ -198,7 +192,7 @@ private:
 
     void Draw(const GameTimer& gt)override
     {
-        CbvSrvUavHeap& cbvSrvUavHeap = CbvSrvUavHeap::Get();
+        auto& cbvSrvUavHeap = CbvSrvUavHeap::Get();
 
         UpdateImgui(gt);
 
@@ -212,8 +206,8 @@ private:
         // Reusing the command list reuses memory.
         ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), mPSOs["opaque"].Get()));
 
-        ID3D12DescriptorHeap* descriptorHeaps[] = { cbvSrvUavHeap.GetD3dHeap() };
-        mCommandList->SetDescriptorHeaps(1, descriptorHeaps);
+        auto descriptorHeaps = std::array<ID3D12DescriptorHeap*, 1>{ cbvSrvUavHeap.GetD3dHeap() };
+        mCommandList->SetDescriptorHeaps(static_cast<UINT>(descriptorHeaps.size()), descriptorHeaps.data());
 
         mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
@@ -262,11 +256,11 @@ private:
         mLinearAllocator->Commit(mCommandQueue.Get());
 
         // Add the command list to the queue for execution.
-        ID3D12CommandList* cmdsLists[] = { mCommandList.Get() };
-        mCommandQueue->ExecuteCommandLists(1, cmdsLists);
+        auto cmdsLists = std::array<ID3D12CommandList*, 1>{ mCommandList.Get() };
+        mCommandQueue->ExecuteCommandLists(static_cast<UINT>(cmdsLists.size()), cmdsLists.data());
 
         // Swap the back and front buffers
-        DXGI::DXGI_PRESENT_PARAMETERS presentParams = { 0 };
+        auto presentParams = DXGI::DXGI_PRESENT_PARAMETERS{ 0 };
         ThrowIfFailed(mSwapChain->Present1(0, 0, &presentParams));
         mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
 
@@ -390,11 +384,11 @@ private:
         mEyePos.y = mRadius * cosf(mPhi);
 
         // Build the view matrix.
-        DirectX::XMVECTOR pos = DirectX::XMVectorSet(mEyePos.x, mEyePos.y, mEyePos.z, 1.0f);
-        DirectX::XMVECTOR target = DirectX::XMVectorZero();
-        DirectX::XMVECTOR up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+        auto pos = DirectX::XMVECTOR{ DirectX::XMVectorSet(mEyePos.x, mEyePos.y, mEyePos.z, 1.0f) };
+        auto target = DirectX::XMVECTOR{ DirectX::XMVectorZero() };
+        auto up = DirectX::XMVECTOR{ DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f) };
 
-        DirectX::XMMATRIX view = DirectX::XMMatrixLookAtLH(pos, target, up);
+        auto view = DirectX::XMMATRIX{DirectX::XMMatrixLookAtLH(pos, target, up)};
         DirectX::XMStoreFloat4x4(&mView, view);
     }
 
@@ -422,12 +416,13 @@ private:
             Material* mat = e.second.get();
             if (mat->NumFramesDirty > 0)
             {
-                DirectX::XMMATRIX matTransform = DirectX::XMLoadFloat4x4(&mat->MatTransform);
+                auto matTransform = DirectX::XMMATRIX{ DirectX::XMLoadFloat4x4(&mat->MatTransform) };
 
-                MaterialData matData;
-                matData.DiffuseAlbedo = mat->DiffuseAlbedo;
-                matData.FresnelR0 = mat->FresnelR0;
-                matData.Roughness = mat->Roughness;
+                auto matData = MaterialData{
+					.DiffuseAlbedo = mat->DiffuseAlbedo,
+					.FresnelR0 = mat->FresnelR0,
+					.Roughness = mat->Roughness,
+                };
 
                 currMaterialBuffer->CopyData(mat->MatIndex, matData);
 
@@ -442,16 +437,16 @@ private:
         mMainPassCB = {};
         //ZeroMemory(&mMainPassCB, sizeof(mMainPassCB));
 
-        DirectX::XMMATRIX view = XMLoadFloat4x4(&mView);
-        DirectX::XMMATRIX proj = XMLoadFloat4x4(&mProj);
+        auto view = DirectX::XMMATRIX{ XMLoadFloat4x4(&mView) };
+        auto proj = DirectX::XMMATRIX{ XMLoadFloat4x4(&mProj) };
 
-        DirectX::XMMATRIX viewProj = XMMatrixMultiply(view, proj);
-        auto detView = XMMatrixDeterminant(view);
-        auto detProj = XMMatrixDeterminant(proj);
-        DirectX::XMMATRIX invView = XMMatrixInverse(&detView, view);
-        DirectX::XMMATRIX invProj = XMMatrixInverse(&detProj, proj);
-        auto detViewProj = XMMatrixDeterminant(viewProj);
-        DirectX::XMMATRIX invViewProj = XMMatrixInverse(&detViewProj, viewProj);
+        auto viewProj = DirectX::XMMATRIX{ DirectX::XMMatrixMultiply(view, proj) };
+        auto detView = DirectX::XMVECTOR{ DirectX::XMMatrixDeterminant(view) };
+        auto detProj = DirectX::XMVECTOR{ DirectX::XMMatrixDeterminant(proj) };
+        auto invView = DirectX::XMMATRIX{ DirectX::XMMatrixInverse(&detView, view) };
+        auto invProj = DirectX::XMMATRIX{ DirectX::XMMatrixInverse(&detProj, proj) };
+        auto detViewProj = DirectX::XMVECTOR{ DirectX::XMMatrixDeterminant(viewProj) };
+        auto invViewProj = DirectX::XMMATRIX{ DirectX::XMMatrixInverse(&detViewProj, viewProj)};
 
         DirectX::XMStoreFloat4x4(&mMainPassCB.gView, DirectX::XMMatrixTranspose(view));
         DirectX::XMStoreFloat4x4(&mMainPassCB.gInvView, DirectX::XMMatrixTranspose(invView));
@@ -460,8 +455,8 @@ private:
         DirectX::XMStoreFloat4x4(&mMainPassCB.gViewProj, DirectX::XMMatrixTranspose(viewProj));
         DirectX::XMStoreFloat4x4(&mMainPassCB.gInvViewProj, DirectX::XMMatrixTranspose(invViewProj));
         mMainPassCB.gEyePosW = mEyePos;
-        mMainPassCB.gRenderTargetSize = DirectX::XMFLOAT2((float)mClientWidth, (float)mClientHeight);
-        mMainPassCB.gInvRenderTargetSize = DirectX::XMFLOAT2(1.0f / mClientWidth, 1.0f / mClientHeight);
+        mMainPassCB.gRenderTargetSize = DirectX::XMFLOAT2{(float)mClientWidth, (float)mClientHeight};
+        mMainPassCB.gInvRenderTargetSize = DirectX::XMFLOAT2{1.0f / mClientWidth, 1.0f / mClientHeight};
         mMainPassCB.gNearZ = 1.0f;
         mMainPassCB.gFarZ = 1000.0f;
         mMainPassCB.gTotalTime = gt.TotalTime();
@@ -493,7 +488,7 @@ private:
     void BuildRootSignature()
     {
         // Root parameter can be a table, root descriptor or root constants.
-        D3D12::CD3DX12_ROOT_PARAMETER gfxRootParameters[GFX_ROOT_ARG_COUNT];
+        auto gfxRootParameters = std::array<D3D12::CD3DX12_ROOT_PARAMETER, GFX_ROOT_ARG_COUNT>{};
 
         // Perfomance TIP: Order from most frequent to least frequent.
         gfxRootParameters[GFX_ROOT_ARG_OBJECT_CBV].InitAsConstantBufferView(0);
@@ -501,11 +496,11 @@ private:
         gfxRootParameters[GFX_ROOT_ARG_MATERIAL_SRV].InitAsShaderResourceView(0);
 
         // A root signature is an array of root parameters.
-        D3D12::CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(
+        auto rootSigDesc = D3D12::CD3DX12_ROOT_SIGNATURE_DESC{
             GFX_ROOT_ARG_COUNT,
-            gfxRootParameters,
+            gfxRootParameters.data(),
             0, nullptr,
-            D3D12::D3D12_ROOT_SIGNATURE_FLAGS::D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+            D3D12::D3D12_ROOT_SIGNATURE_FLAGS::D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT};
 
         // create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
         auto serializedRootSig = Microsoft::WRL::ComPtr<D3D::ID3DBlob>{};
@@ -527,26 +522,25 @@ private:
     }
     void BuildShadersAndInputLayout()
     {
-#if defined(DEBUG) || defined(_DEBUG)  
-#define COMMA_DEBUG_ARGS ,DXC::ArgDebug, DXC::ArgSkipOptimizations
-#else
-#define COMMA_DEBUG_ARGS
-#endif
-
-        auto vsArgs = std::vector<LPCWSTR>{ L"-E", L"VS", L"-T", L"vs_6_6" COMMA_DEBUG_ARGS };
-        auto psArgs = std::vector<LPCWSTR>{ L"-E", L"PS", L"-T", L"ps_6_6" COMMA_DEBUG_ARGS };
-
-        mShaders["standardVS"] = d3dUtil::CompileShader(L"Shaders\\BasicLit.hlsl", vsArgs);
-        mShaders["opaquePS"] = d3dUtil::CompileShader(L"Shaders\\BasicLit.hlsl", psArgs);
-
-        mInputLayout =
+        if constexpr (IsDebugBuild)
         {
+            mShaders["standardVS"] = d3dUtil::CompileShader(L"Shaders\\BasicLit.hlsl", { L"-E", L"VS", L"-T", L"vs_6_6", DXC::ArgDebug, DXC::ArgSkipOptimizations });
+            mShaders["opaquePS"] = d3dUtil::CompileShader(L"Shaders\\BasicLit.hlsl", { L"-E", L"PS", L"-T", L"ps_6_6", DXC::ArgDebug, DXC::ArgSkipOptimizations });
+        }
+        else
+        {
+            mShaders["standardVS"] = d3dUtil::CompileShader(L"Shaders\\BasicLit.hlsl", { L"-E", L"VS", L"-T", L"vs_6_6" });
+            mShaders["opaquePS"] = d3dUtil::CompileShader(L"Shaders\\BasicLit.hlsl", { L"-E", L"PS", L"-T", L"ps_6_6" });
+        }
+
+        mInputLayout = {
             { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
             { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
             { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
             { "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 32, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
         };
     }
+
     void BuildPSOs()
     {
         auto basePsoDesc = d3dUtil::InitDefaultPso(
@@ -566,14 +560,14 @@ private:
         if (auto hr = md3dDevice->CreateGraphicsPipelineState(&wireframePsoDesc, __uuidof(D3D12::ID3D12PipelineState), &mPSOs["opaque_wireframe"]); Win32::Failed(hr))
             throw DxException{ hr };
     }
+
     void BuildFrameResources()
     {
         constexpr auto passCount = 1u;
         for (auto i = 0; i < gNumFrameResources; ++i)
-        {
             mFrameResources.push_back(std::make_unique<FrameResource>(md3dDevice.Get(), passCount, static_cast<UINT>(mMaterials.size())));
-        }
     }
+
     void BuildMaterials()
     {
         int matIndex = 0;
