@@ -22,6 +22,7 @@
   </Folder>
   <Folder Name="/08/">
     <Project Path="08/LitShapes/LitShapes.vcxproj" Id="1409380d-f311-4aa2-b3f6-f6121d697286" />
+    <Project Path="08/LitWaves/LitWaves.vcxproj" Id="b9400550-d544-4272-a5ad-450b690c576f" />
   </Folder>
   <Folder Name="/Common/">
     <Project Path="Shared/Shared.vcxproj" Id="71a3731d-95eb-49ec-b69f-e0b5e166115b" />
