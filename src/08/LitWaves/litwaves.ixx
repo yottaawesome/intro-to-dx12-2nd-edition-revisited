@@ -131,13 +131,13 @@ public:
 	}
 
 	// Returns the solution at the ith grid point.
-	const DirectX::XMFLOAT3& Position(int i)const { return mCurrSolution[i]; }
+	auto Position(int i)const -> const DirectX::XMFLOAT3& { return mCurrSolution[i]; }
 
 	// Returns the solution normal at the ith grid point.
-	const DirectX::XMFLOAT3& Normal(int i)const { return mNormals[i]; }
+	auto Normal(int i)const -> const DirectX::XMFLOAT3& { return mNormals[i]; }
 
 	// Returns the unit tangent vector at the ith grid point in the local x-axis direction.
-	const DirectX::XMFLOAT3& TangentX(int i)const { return mTangentX[i]; }
+	auto TangentX(int i)const -> const DirectX::XMFLOAT3& { return mTangentX[i]; }
 
 	void SetConstants(float speed, float damping)
 	{
