@@ -98,9 +98,9 @@ public:
             FlushCommandQueue();
     }
 
-    bool Initialize()override
+    auto Initialize() -> bool override
     {
-        if (!D3DApp::Initialize())
+        if (not D3DApp::Initialize())
             return false;
 
         // We will upload on the direct queue for the book samples, but 
@@ -109,14 +109,11 @@ public:
 
         LoadTextures();
 
-        std::unique_ptr<MeshGeometry> shapeGeo = BuildShapeGeometry(md3dDevice.Get(), *mUploadBatch.get());
-        if (shapeGeo != nullptr)
-        {
-            mGeometries[shapeGeo->Name] = std::move(shapeGeo);
-        }
+        auto shapeGeo = std::unique_ptr<MeshGeometry>{BuildShapeGeometry(md3dDevice.Get(), *mUploadBatch.get())};
+        mGeometries[shapeGeo->Name] = std::move(shapeGeo);
 
         // Kick off upload work asyncronously.
-        std::future<void> result = mUploadBatch->End(mCommandQueue.Get());
+        auto result = std::future<void>{mUploadBatch->End(mCommandQueue.Get())};
 
         // Other init work...
         BuildRootSignature();
@@ -144,7 +141,7 @@ private:
         D3DApp::OnResize();
 
         // The window resized, so update the aspect ratio and recompute the projection matrix.
-        DirectX::XMMATRIX P = DirectX::XMMatrixPerspectiveFovLH(0.25f * MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
+        auto P = DirectX::XMMATRIX{DirectX::XMMatrixPerspectiveFovLH(0.25f * MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f)};
         DirectX::XMStoreFloat4x4(&mProj, P);
     }
     void Update(const GameTimer& gt)override
@@ -167,14 +164,12 @@ private:
 
         //
         // Animate the lights.
-        //
-
         mLightRotationAngle += 0.1f * gt.DeltaTime();
 
-        DirectX::XMMATRIX R = DirectX::XMMatrixRotationY(mLightRotationAngle);
+        auto R = DirectX::XMMATRIX{DirectX::XMMatrixRotationY(mLightRotationAngle)};
         for (int i = 0; i < 3; ++i)
         {
-            DirectX::XMVECTOR lightDir = DirectX::XMLoadFloat3(&mBaseLightDirections[i]);
+            auto lightDir = DirectX::XMVECTOR{ DirectX::XMLoadFloat3(&mBaseLightDirections[i]) };
             lightDir = DirectX::XMVector3TransformNormal(lightDir, R);
             DirectX::XMStoreFloat3(&mRotatedLightDirections[i], lightDir);
         }
@@ -184,10 +179,11 @@ private:
         UpdateMaterialBuffer(gt);
         UpdateMainPassCB(gt);
     }
+
     void Draw(const GameTimer& gt)override
     {
-        CbvSrvUavHeap& cbvSrvUavHeap = CbvSrvUavHeap::Get();
-        SamplerHeap& samHeap = SamplerHeap::Get();
+        auto& cbvSrvUavHeap = CbvSrvUavHeap::Get();
+        auto& samHeap = SamplerHeap::Get();
 
         UpdateImgui(gt);
 
@@ -201,8 +197,8 @@ private:
         // Reusing the command list reuses memory.
         ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), mPSOs["opaque"].Get()));
 
-        D3D12::ID3D12DescriptorHeap* descriptorHeaps[] = { cbvSrvUavHeap.GetD3dHeap(), samHeap.GetD3dHeap() };
-        mCommandList->SetDescriptorHeaps(1, descriptorHeaps);
+        auto descriptorHeaps = std::array{ cbvSrvUavHeap.GetD3dHeap(), samHeap.GetD3dHeap() };
+        mCommandList->SetDescriptorHeaps(static_cast<UINT>(descriptorHeaps.size()), descriptorHeaps.data());
 
         mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
@@ -215,13 +211,21 @@ private:
         mCommandList->RSSetScissorRects(1, &mScissorRect);
 
         // Indicate a state transition on the resource usage.
-        auto transition = D3D12::CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
-            D3D12::D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_PRESENT, D3D12::D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_RENDER_TARGET);
+        auto transition = D3D12::CD3DX12_RESOURCE_BARRIER::Transition(
+            CurrentBackBuffer(),
+            D3D12::D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_PRESENT, 
+            D3D12::D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_RENDER_TARGET);
         mCommandList->ResourceBarrier(1, &transition);
 
         // Clear the back buffer and depth buffer.
         mCommandList->ClearRenderTargetView(CurrentBackBufferView(), DirectX::Colors::LightSteelBlue, 0, nullptr);
-        mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12::D3D12_CLEAR_FLAGS{ D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL }, 1.0f, 0, 0, nullptr);
+        mCommandList->ClearDepthStencilView(
+            DepthStencilView(), 
+            D3D12::D3D12_CLEAR_FLAGS{ D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL }, 
+            1.0f,
+            0, 
+            0, 
+            nullptr);
 
         // Specify the buffers we are going to render to.
         auto cbbv = CurrentBackBufferView();
@@ -241,8 +245,10 @@ private:
         ImGui::ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), mCommandList.Get());
 
         // Indicate a state transition on the resource usage.
-        transition = D3D12::CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
-            D3D12::D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12::D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_PRESENT);
+        transition = D3D12::CD3DX12_RESOURCE_BARRIER::Transition(
+            CurrentBackBuffer(),
+            D3D12::D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_RENDER_TARGET, 
+            D3D12::D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_PRESENT);
         mCommandList->ResourceBarrier(1, &transition);
 
         // Done recording commands.
@@ -251,8 +257,8 @@ private:
         mLinearAllocator->Commit(mCommandQueue.Get());
 
         // Add the command list to the queue for execution.
-        D3D12::ID3D12CommandList* cmdsLists[] = { mCommandList.Get() };
-        mCommandQueue->ExecuteCommandLists(1, cmdsLists);
+        auto cmdsLists = std::array{ static_cast<D3D12::ID3D12CommandList*>(mCommandList.Get()) };
+        mCommandQueue->ExecuteCommandLists(static_cast<UINT>(cmdsLists.size()), cmdsLists.data());
 
         // Swap the back and front buffers
         DXGI::DXGI_PRESENT_PARAMETERS presentParams = { 0 };
@@ -285,10 +291,10 @@ private:
 
         if (ImGui::CollapsingHeader("VideoMemoryInfo"))
         {
-            static float vidMemPollTime = 0.0f;
+            static auto vidMemPollTime = 0.0f;
             vidMemPollTime += gt.DeltaTime();
 
-            static DXGI::DXGI_QUERY_VIDEO_MEMORY_INFO videoMemInfo;
+            static auto videoMemInfo = DXGI::DXGI_QUERY_VIDEO_MEMORY_INFO{};
             if (vidMemPollTime >= 1.0f) // poll every second
             {
                 mDefaultAdapter->QueryVideoMemoryInfo(
@@ -313,65 +319,54 @@ private:
         }
 
         ImGui::End();
-
         ImGui::Render();
     }
-    void OnMouseDown(WPARAM btnState, int x, int y)override
+    void OnMouseDown(Win32::WPARAM btnState, int x, int y)override
     {
-        auto& io = ImGui::GetIO();
-
-        if (!io.WantCaptureMouse)
+        if (auto& io = ImGui::GetIO(); !io.WantCaptureMouse)
         {
             mLastMousePos.x = x;
             mLastMousePos.y = y;
-
             Win32::SetCapture(mhMainWnd);
         }
     }
-    void OnMouseUp(WPARAM btnState, int x, int y)override
+    void OnMouseUp(Win32::WPARAM btnState, int x, int y)override
     {
-        auto& io = ImGui::GetIO();
-
-        if (!io.WantCaptureMouse)
-        {
+        if (auto& io = ImGui::GetIO(); !io.WantCaptureMouse)
             Win32::ReleaseCapture();
-        }
     }
-    void OnMouseMove(WPARAM btnState, int x, int y)override
+    void OnMouseMove(Win32::WPARAM btnState, int x, int y)override
     {
         auto& io = ImGui::GetIO();
-
-        if (!io.WantCaptureMouse)
+        if (io.WantCaptureMouse)
+            return;
+        if ((btnState & Win32::MK::LButton) != 0)
         {
-            if ((btnState & Win32::MK::LButton) != 0)
-            {
-                // Make each pixel correspond to a quarter of a degree.
-                float dx = DirectX::XMConvertToRadians(0.25f * static_cast<float>(x - mLastMousePos.x));
-                float dy = DirectX::XMConvertToRadians(0.25f * static_cast<float>(y - mLastMousePos.y));
+            // Make each pixel correspond to a quarter of a degree.
+            float dx = DirectX::XMConvertToRadians(0.25f * static_cast<float>(x - mLastMousePos.x));
+            float dy = DirectX::XMConvertToRadians(0.25f * static_cast<float>(y - mLastMousePos.y));
 
-                // Update angles based on input to orbit camera around box.
-                mTheta += dx;
-                mPhi += dy;
+            // Update angles based on input to orbit camera around box.
+            mTheta += dx;
+            mPhi += dy;
 
-                // Restrict the angle mPhi.
-                mPhi = std::clamp(mPhi, 0.1f, MathHelper::Pi - 0.1f);
-            }
-            else if ((btnState & Win32::MK::RButton) != 0)
-            {
-                // Make each pixel correspond to 0.005 unit in the scene.
-                float dx = 0.005f * static_cast<float>(x - mLastMousePos.x);
-                float dy = 0.005f * static_cast<float>(y - mLastMousePos.y);
-
-                // Update the camera radius based on input.
-                mRadius += dx - dy;
-
-                // Restrict the radius.
-                mRadius = std::clamp(mRadius, 3.0f, 25.0f);
-            }
-
-            mLastMousePos.x = x;
-            mLastMousePos.y = y;
+            // Restrict the angle mPhi.
+            mPhi = std::clamp(mPhi, 0.1f, MathHelper::Pi - 0.1f);
         }
+        else if ((btnState & Win32::MK::RButton) != 0)
+        {
+            // Make each pixel correspond to 0.005 unit in the scene.
+            float dx = 0.005f * static_cast<float>(x - mLastMousePos.x);
+            float dy = 0.005f * static_cast<float>(y - mLastMousePos.y);
+
+            // Update the camera radius based on input.
+            mRadius += dx - dy;
+
+            // Restrict the radius.
+            mRadius = std::clamp(mRadius, 3.0f, 25.0f);
+        }
+        mLastMousePos.x = x;
+        mLastMousePos.y = y;
     }
 
     void OnKeyboardInput(const GameTimer& gt) {}
@@ -384,11 +379,10 @@ private:
         mEyePos.y = mRadius * std::cosf(mPhi);
 
         // Build the view matrix.
-        DirectX::XMVECTOR pos = DirectX::XMVectorSet(mEyePos.x, mEyePos.y, mEyePos.z, 1.0f);
-        DirectX::XMVECTOR target = DirectX::XMVectorZero();
-        DirectX::XMVECTOR up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-
-        DirectX::XMMATRIX view = DirectX::XMMatrixLookAtLH(pos, target, up);
+        auto pos = DirectX::XMVECTOR{DirectX::XMVectorSet(mEyePos.x, mEyePos.y, mEyePos.z, 1.0f)};
+        auto target = DirectX::XMVECTOR{DirectX::XMVectorZero()};
+        auto up = DirectX::XMVECTOR{DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)};
+        auto view = DirectX::XMMATRIX{DirectX::XMMatrixLookAtLH(pos, target, up)};
         DirectX::XMStoreFloat4x4(&mView, view);
     }
     void UpdatePerObjectCB(const GameTimer& gt)
@@ -406,48 +400,46 @@ private:
     }
     void UpdateMaterialBuffer(const GameTimer& gt)
     {
-        MaterialLib& matLib = MaterialLib::GetLib();
+        auto& matLib = MaterialLib::GetLib();
 
         auto currMaterialBuffer = mCurrFrameResource->MaterialBuffer.get();
         for (auto& e : matLib.GetCollection())
         {
             // Only update the buffer data if the data has changed.  If the buffer
             // data changes, it needs to be updated for each FrameResource.
-            Material* mat = e.second.get();
-            if (mat->NumFramesDirty > 0)
-            {
-                DirectX::XMMATRIX matTransform = DirectX::XMLoadFloat4x4(&mat->MatTransform);
+            auto mat = static_cast<Material*>(e.second.get());
+            if (mat->NumFramesDirty < 1)
+                continue;
 
-                MaterialData matData;
-                matData.DiffuseAlbedo = mat->DiffuseAlbedo;
-                matData.FresnelR0 = mat->FresnelR0;
-                matData.Roughness = mat->Roughness;
-                DirectX::XMStoreFloat4x4(&matData.MatTransform, DirectX::XMMatrixTranspose(matTransform));
-                matData.DiffuseMapIndex = mat->AlbedoBindlessIndex;
-                matData.NormalMapIndex = mat->NormalBindlessIndex;
-                matData.GlossHeightAoMapIndex = mat->GlossHeightAoBindlessIndex;
-
-                currMaterialBuffer->CopyData(mat->MatIndex, matData);
-
-                // Next FrameResource need to be updated too.
-                mat->NumFramesDirty--;
-            }
+            auto matData = MaterialData{
+                .DiffuseAlbedo = mat->DiffuseAlbedo,
+                .FresnelR0 = mat->FresnelR0,
+                .Roughness = mat->Roughness,
+                .DiffuseMapIndex = static_cast<uint32_t>(mat->AlbedoBindlessIndex),
+                .NormalMapIndex = static_cast<uint32_t>(mat->NormalBindlessIndex),
+                .GlossHeightAoMapIndex = static_cast<uint32_t>(mat->GlossHeightAoBindlessIndex),
+            };
+            auto matTransform = DirectX::XMMATRIX{ DirectX::XMLoadFloat4x4(&mat->MatTransform) };
+            DirectX::XMStoreFloat4x4(&matData.MatTransform, DirectX::XMMatrixTranspose(matTransform));
+            currMaterialBuffer->CopyData(mat->MatIndex, matData);
+            // Next FrameResource need to be updated too.
+            mat->NumFramesDirty--;
         }
     }
     void UpdateMainPassCB(const GameTimer& gt)
     {
 		mMainPassCB = {};
 
-        DirectX::XMMATRIX view = DirectX::XMLoadFloat4x4(&mView);
-        DirectX::XMMATRIX proj = DirectX::XMLoadFloat4x4(&mProj);
+        auto view = DirectX::XMMATRIX{DirectX::XMLoadFloat4x4(&mView)};
+        auto proj = DirectX::XMMATRIX{DirectX::XMLoadFloat4x4(&mProj)};
 
-        DirectX::XMMATRIX viewProj = DirectX::XMMatrixMultiply(view, proj);
-        auto detView = DirectX::XMMatrixDeterminant(view);
-        auto detProj = DirectX::XMMatrixDeterminant(proj);
-        auto detViewProj = DirectX::XMMatrixDeterminant(viewProj);
-        DirectX::XMMATRIX invView = DirectX::XMMatrixInverse(&detView, view);
-        DirectX::XMMATRIX invProj = DirectX::XMMatrixInverse(&detProj, proj);
-        DirectX::XMMATRIX invViewProj = DirectX::XMMatrixInverse(&detViewProj, viewProj);
+        auto viewProj = DirectX::XMMATRIX{ DirectX::XMMatrixMultiply(view, proj) };
+        auto detView = DirectX::XMVECTOR{ DirectX::XMMatrixDeterminant(view) };
+        auto detProj = DirectX::XMVECTOR{ DirectX::XMMatrixDeterminant(proj) };
+        auto detViewProj = DirectX::XMVECTOR{ DirectX::XMMatrixDeterminant(viewProj) };
+        auto invView = DirectX::XMMATRIX{ DirectX::XMMatrixInverse(&detView, view) };
+        auto invProj = DirectX::XMMATRIX{ DirectX::XMMatrixInverse(&detProj, proj) };
+        auto invViewProj = DirectX::XMMATRIX{ DirectX::XMMatrixInverse(&detViewProj, viewProj) };
 
         DirectX::XMStoreFloat4x4(&mMainPassCB.gView, DirectX::XMMatrixTranspose(view));
         DirectX::XMStoreFloat4x4(&mMainPassCB.gInvView, DirectX::XMMatrixTranspose(invView));
@@ -481,7 +473,7 @@ private:
 
     void LoadTextures()
     {
-        TextureLib& texLib = TextureLib::GetLib();
+        auto& texLib = TextureLib::GetLib();
         texLib.Init(md3dDevice.Get(), *mUploadBatch.get());
     }
     void BuildCbvSrvUavDescriptorHeap()
@@ -491,28 +483,24 @@ private:
 
         InitImgui(cbvSrvUavHeap);
 
-        TextureLib& texLib = TextureLib::GetLib();
+        auto& texLib = TextureLib::GetLib();
         for (auto& it : texLib.GetCollection())
         {
             Texture* tex = it.second.get();
             tex->BindlessIndex = cbvSrvUavHeap.NextFreeIndex();
 
-            D3D12::CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor = cbvSrvUavHeap.CpuHandle(tex->BindlessIndex);
-            D3D12::ID3D12Resource* texResource = tex->Resource.Get();
+            auto hDescriptor = D3D12::CD3DX12_CPU_DESCRIPTOR_HANDLE{cbvSrvUavHeap.CpuHandle(tex->BindlessIndex)};
+            auto texResource = static_cast<D3D12::ID3D12Resource*>(tex->Resource.Get());
             if (tex->IsCubeMap)
-            {
                 CreateSrvCube(md3dDevice.Get(), texResource, texResource->GetDesc().Format, texResource->GetDesc().MipLevels, hDescriptor);
-            }
             else
-            {
                 CreateSrv2d(md3dDevice.Get(), texResource, texResource->GetDesc().Format, texResource->GetDesc().MipLevels, hDescriptor);
-            }
         }
     }
     void BuildRootSignature()
     {
         // Root parameter can be a table, root descriptor or root constants.
-        D3D12::CD3DX12_ROOT_PARAMETER gfxRootParameters[GFX_ROOT_ARG::GFX_ROOT_ARG_COUNT];
+        auto gfxRootParameters = std::array<D3D12::CD3DX12_ROOT_PARAMETER, GFX_ROOT_ARG::GFX_ROOT_ARG_COUNT>{};
 
         // Perfomance TIP: Order from most frequent to least frequent.
         gfxRootParameters[GFX_ROOT_ARG::GFX_ROOT_ARG_OBJECT_CBV].InitAsConstantBufferView(0);
@@ -522,7 +510,7 @@ private:
         // A root signature is an array of root parameters.
         auto rootSigDesc = D3D12::CD3DX12_ROOT_SIGNATURE_DESC{
             GFX_ROOT_ARG::GFX_ROOT_ARG_COUNT,
-            gfxRootParameters,
+            gfxRootParameters.data(),
             0, 
             nullptr,
             D3D12::D3D12_ROOT_SIGNATURE_FLAGS{
@@ -552,20 +540,18 @@ private:
     }
     void BuildShadersAndInputLayout()
     {
-#if defined(DEBUG) || defined(_DEBUG)  
-#define COMMA_DEBUG_ARGS ,DXC::ArgDebug, DXC::ArgSkipOptimizations
-#else
-#define COMMA_DEBUG_ARGS
-#endif
-
-        auto vsArgs = std::vector<Win32::LPCWSTR>{ L"-E", L"VS", L"-T", L"vs_6_6" COMMA_DEBUG_ARGS };
-        auto psArgs = std::vector<Win32::LPCWSTR>{ L"-E", L"PS", L"-T", L"ps_6_6" COMMA_DEBUG_ARGS };
-
-        mShaders["standardVS"] = d3dUtil::CompileShader(L"Shaders\\BasicTex.hlsl", vsArgs);
-        mShaders["opaquePS"] = d3dUtil::CompileShader(L"Shaders\\BasicTex.hlsl", psArgs);
-
-        mInputLayout =
+        if constexpr (IsDebugBuild)
         {
+            mShaders["standardVS"] = d3dUtil::CompileShader(L"Shaders\\BasicTex.hlsl", {L"-E", L"VS", L"-T", L"vs_6_6", DXC::ArgDebug, DXC::ArgSkipOptimizations});
+            mShaders["opaquePS"] = d3dUtil::CompileShader(L"Shaders\\BasicTex.hlsl", {L"-E", L"PS", L"-T", L"ps_6_6", DXC::ArgDebug, DXC::ArgSkipOptimizations});
+        }
+        else
+        {
+            mShaders["standardVS"] = d3dUtil::CompileShader(L"Shaders\\BasicTex.hlsl", {L"-E", L"VS", L"-T", L"vs_6_6"});
+            mShaders["opaquePS"] = d3dUtil::CompileShader(L"Shaders\\BasicTex.hlsl", {L"-E", L"PS", L"-T", L"ps_6_6"});
+        }
+
+        mInputLayout = {
             { "POSITION", 0, DXGI::DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12::D3D12_INPUT_CLASSIFICATION::D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
             { "NORMAL", 0, DXGI::DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12::D3D12_INPUT_CLASSIFICATION::D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
             { "TEXCOORD", 0, DXGI::DXGI_FORMAT::DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D12::D3D12_INPUT_CLASSIFICATION::D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -593,27 +579,28 @@ private:
             &wireframePsoDesc,
             __uuidof(D3D12::ID3D12PipelineState), &mPSOs["opaque_wireframe"]));
     }
+
     void BuildFrameResources()
     {
-        MaterialLib& matLib = MaterialLib::GetLib();
-
-        constexpr UINT passCount = 1;
+        auto& matLib = MaterialLib::GetLib();
+        constexpr auto passCount = 1u;
         for (int i = 0; i < gNumFrameResources; ++i)
-        {
-            mFrameResources.push_back(
-                std::make_unique<FrameResource>(md3dDevice.Get(),
-                    passCount, matLib.GetMaterialCount()));
-        }
+            mFrameResources.push_back(std::make_unique<FrameResource>(md3dDevice.Get(), passCount, matLib.GetMaterialCount()));
     }
+
     void BuildMaterials()
     {
         MaterialLib::GetLib().Init(md3dDevice.Get());
     }
 
     void AddRenderItem(
-        RenderLayer layer, const DirectX::XMFLOAT4X4& world,
-        const DirectX::XMFLOAT4X4& texTransform, Material* mat,
-        MeshGeometry* geo, SubmeshGeometry& drawArgs)
+        RenderLayer layer, 
+        const DirectX::XMFLOAT4X4& world,
+        const DirectX::XMFLOAT4X4& texTransform, 
+        Material* mat,
+        MeshGeometry* geo, 
+        SubmeshGeometry& drawArgs
+    )
     {
         auto ritem = std::make_unique<RenderItem>();
         ritem->World = world;
@@ -628,12 +615,13 @@ private:
         mRitemLayer[(int)layer].push_back(ritem.get());
         mAllRitems.push_back(std::move(ritem));
     }
+
     void BuildRenderItems()
     {
-        MaterialLib& matLib = MaterialLib::GetLib();
+        auto& matLib = MaterialLib::GetLib();
 
-        DirectX::XMFLOAT4X4 worldTransform;
-        DirectX::XMFLOAT4X4 texTransform;
+        auto worldTransform = DirectX::XMFLOAT4X4{};
+        auto texTransform = DirectX::XMFLOAT4X4{};
 
         DirectX::XMStoreFloat4x4(&worldTransform, DirectX::XMMatrixScaling(2.0f, 2.0f, 2.0f) * DirectX::XMMatrixTranslation(0.0f, 0.0f, 0.0f));
         DirectX::XMStoreFloat4x4(&texTransform, DirectX::XMMatrixScaling(1.0f, 1.0f, 1.0f));
@@ -641,38 +629,35 @@ private:
     }
     void DrawRenderItems(D3D12::ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& ritems)
     {
-        CbvSrvUavHeap& cbvSrvUavHeap = CbvSrvUavHeap::Get();
+        auto& cbvSrvUavHeap = CbvSrvUavHeap::Get();
 
         for (size_t i = 0; i < ritems.size(); ++i)
         {
             auto ri = ritems[i];
-
             auto vbv = ri->Geo->VertexBufferView();
             auto ibv = ri->Geo->IndexBufferView();
             cmdList->IASetVertexBuffers(0, 1, &vbv);
             cmdList->IASetIndexBuffer(&ibv);
             cmdList->IASetPrimitiveTopology(ri->PrimitiveType);
-
             cmdList->SetGraphicsRootConstantBufferView(GFX_ROOT_ARG_OBJECT_CBV, ri->MemHandleToObjectCB.GpuAddress());
-
             cmdList->DrawIndexedInstanced(ri->IndexCount, 1, ri->StartIndexLocation, ri->BaseVertexLocation, 0);
         }
     }
 
     auto BuildShapeGeometry(D3D12::ID3D12Device* device, DirectX::ResourceUploadBatch& uploadBatch) -> std::unique_ptr<MeshGeometry>
     {
-        MeshGen meshGen;
-        MeshGenData box = meshGen.CreateBox(1.0f, 1.0f, 1.0f, 3);
+        auto meshGen = MeshGen{};
+        auto box = MeshGenData{meshGen.CreateBox(1.0f, 1.0f, 1.0f, 3)};
 
         //
         // We are concatenating all the geometry into one big vertex/index buffer.  So
         // define the regions in the buffer each submesh covers.
         //
-        MeshGenData compositeMesh;
-        SubmeshGeometry boxSubmesh = compositeMesh.AppendSubmesh(box);
+        auto compositeMesh = MeshGenData{};
+        auto boxSubmesh = SubmeshGeometry{compositeMesh.AppendSubmesh(box)};
 
         // Extract the vertex elements we are interested into our vertex buffer. 
-        std::vector<ModelVertex> vertices(compositeMesh.Vertices.size());
+        auto vertices = std::vector<ModelVertex>(compositeMesh.Vertices.size());
         for (size_t i = 0; i < compositeMesh.Vertices.size(); ++i)
         {
             vertices[i].Pos = compositeMesh.Vertices[i].Position;
@@ -681,13 +666,12 @@ private:
             vertices[i].TexC = compositeMesh.Vertices[i].TexC;
         }
 
-        const uint32_t indexCount = (UINT)compositeMesh.Indices32.size();
-
+        const auto indexCount = static_cast<uint32_t>(compositeMesh.Indices32.size());
         constexpr auto indexElementByteSize = Win32::UINT{ sizeof(uint16_t) };
         const auto vbByteSize = static_cast<Win32::UINT>(vertices.size() * sizeof(ModelVertex));
         const auto ibByteSize = Win32::UINT{ indexCount * indexElementByteSize };
 
-        const Win32::byte* indexData = reinterpret_cast<Win32::byte*>(compositeMesh.GetIndices16().data());
+        const auto indexData = reinterpret_cast<const Win32::byte*>(compositeMesh.GetIndices16().data());
 
         auto geo = std::make_unique<MeshGeometry>();
         geo->Name = "shapeGeo";
@@ -715,8 +699,8 @@ private:
 
         return geo;
     }
-private:
 
+private:
     std::vector<std::unique_ptr<FrameResource>> mFrameResources;
     FrameResource* mCurrFrameResource = nullptr;
     int mCurrFrameResourceIndex = 0;
@@ -747,9 +731,9 @@ private:
 
     float mLightRotationAngle = 0.0f;
     DirectX::XMFLOAT3 mBaseLightDirections[3] = {
-        DirectX::XMFLOAT3(0.57735f, -0.57735f, 0.57735f),
-        DirectX::XMFLOAT3(-0.57735f, -0.57735f, 0.57735f),
-        DirectX::XMFLOAT3(0.0f, -0.707f, -0.707f)
+        DirectX::XMFLOAT3{0.57735f, -0.57735f, 0.57735f},
+        DirectX::XMFLOAT3{-0.57735f, -0.57735f, 0.57735f},
+        DirectX::XMFLOAT3{0.0f, -0.707f, -0.707f}
     };
     DirectX::XMFLOAT3 mRotatedLightDirections[3];
 
