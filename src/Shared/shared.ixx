@@ -16,3 +16,6 @@ export import :uploadbuffer;
 export import :imgui;
 export import :build;
 export import :event;
+export import :sharedtypes;
+export import :texturelib;
+export import :materiallib;

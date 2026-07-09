@@ -63,9 +63,17 @@
     <ClCompile Include="event.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="sharedtypes.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="materiallib.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="texturelib.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="vcpkg.json" />
-    <None Include="packages.config" />
   </ItemGroup>
 </Project>

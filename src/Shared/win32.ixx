@@ -16,6 +16,7 @@ module;
 #include <DirectXTK12/ResourceUploadBatch.h>
 #include <directxtk12/SimpleMath.h>
 #include <directxtk12/BufferHelpers.h>
+#include <directxtk12/DDSTextureLoader.h>
 #include <DirectXCollision.h>
 #include <DirectXColors.h>
 
@@ -283,11 +284,6 @@ export namespace DXGI
 		::IDXGIAdapter,
 		::IDXGIFactory4,
 		::DXGI_QUERY_VIDEO_MEMORY_INFO,
-		::ID3D12Device5,
-		::ID3D12Fence,
-		::ID3D12CommandQueue,
-		::ID3D12CommandAllocator,
-		::ID3D12GraphicsCommandList6,
 		::DXGI_FORMAT,
 		::DXGI_SAMPLE_DESC,
 		::DXGI_SWAP_CHAIN_DESC,
@@ -330,6 +326,8 @@ export namespace D3D12
 		::D3D12_INPUT_CLASSIFICATION,
 		::D3D12_ROOT_SIGNATURE_FLAGS,
 		::D3D12_DESCRIPTOR_RANGE_TYPE,
+		::D3D12_FILL_MODE,
+		::D3D12_CULL_MODE,
 		::CD3DX12_ROOT_PARAMETER,
 		::CD3DX12_DESCRIPTOR_RANGE,
 		::CD3DX12_ROOT_SIGNATURE_DESC,
@@ -394,6 +392,11 @@ export namespace D3D12
 		::ID3D12GraphicsCommandList,
 		::ID3D12GraphicsCommandList6,
 		::D3D12_PRIMITIVE_TOPOLOGY_TYPE,
+		::ID3D12Device5,
+		::ID3D12Fence,
+		::ID3D12CommandQueue,
+		::ID3D12CommandAllocator,
+		::ID3D12GraphicsCommandList6,
 		::D3D12SerializeRootSignature,
 		::D3D12GetDebugInterface,
 		::D3D12CreateDevice
@@ -435,7 +438,7 @@ export namespace DirectX
 			::DirectX::Colors::SteelBlue
 			;
 	}
-
+	
 	using
 		::DirectX::GraphicsMemoryStatistics,
 		::DirectX::ResourceUploadBatch,
@@ -452,7 +455,9 @@ export namespace DirectX
 		::DirectX::GraphicsMemory,
 		::DirectX::BoundingBox,
 		::DirectX::GraphicsResource,
+		::DirectX::DDS_LOADER_FLAGS,
 		::DirectX::XMMatrixScaling,
+		::DirectX::CreateDDSTextureFromFileEx,
 		::DirectX::XMMatrixRotationX,
 		::DirectX::XMMatrixTranslation,
 		::DirectX::XMMatrixPerspectiveFovLH,
@@ -490,6 +495,10 @@ export namespace DirectX
 		::DirectX::XMConvertToRadians,
 		::DirectX::XMConvertToDegrees,
 		::DirectX::XMMatrixDeterminant,
+		::DirectX::XMVector3TransformNormal,
+		::DirectX::XMMatrixRotationY,
+		::DirectX::XMMatrixRotationX,
+		::DirectX::XMMatrixRotationZ,
 		::DirectX::XMMatrixInverse
 		;
 

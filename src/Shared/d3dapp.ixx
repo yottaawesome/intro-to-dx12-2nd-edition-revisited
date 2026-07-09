@@ -800,7 +800,7 @@ protected:
 	Microsoft::WRL::ComPtr<DXGI::IDXGIFactory6> mdxgiFactory;
 	Microsoft::WRL::ComPtr<DXGI::IDXGISwapChain4> mSwapChain;
 	Microsoft::WRL::ComPtr<DXGI::IDXGIAdapter4> mDefaultAdapter;
-	Microsoft::WRL::ComPtr<DXGI::ID3D12Device5> md3dDevice;
+	Microsoft::WRL::ComPtr<D3D12::ID3D12Device5> md3dDevice;
 
 	Microsoft::WRL::ComPtr<D3D12::ID3D12Fence> mFence;
 	std::uint64_t mCurrentFence = 0;
