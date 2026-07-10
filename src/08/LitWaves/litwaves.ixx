@@ -614,8 +614,12 @@ private:
 		// Update per object constants once per frame so the data can be shared across different render passes.
 		for (auto& ri : mAllRitems)
 		{
-			XMStoreFloat4x4(&ri->ObjectConstants.gWorld, XMMatrixTranspose(XMLoadFloat4x4(&ri->World)));
-			XMStoreFloat4x4(&ri->ObjectConstants.gTexTransform, XMMatrixTranspose(XMLoadFloat4x4(&ri->TexTransform)));
+			DirectX::XMStoreFloat4x4(
+				&ri->ObjectConstants.gWorld, 
+				DirectX::XMMatrixTranspose(DirectX::XMLoadFloat4x4(&ri->World)));
+			DirectX::XMStoreFloat4x4(
+				&ri->ObjectConstants.gTexTransform, 
+				DirectX::XMMatrixTranspose(DirectX::XMLoadFloat4x4(&ri->TexTransform)));
 			ri->ObjectConstants.gMaterialIndex = ri->Mat->MatIndex;
 
 			// Need to hold handle until we submit work to GPU.
