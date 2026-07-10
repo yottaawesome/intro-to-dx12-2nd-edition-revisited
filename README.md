@@ -20,6 +20,7 @@ The effort is currently in progress. The following projects have been converted 
 * [07/Waves](./src/07/Waves)
 * [08/LitShapes](./src/08/LitShapes)
 * [08/LitWaves](./src/08/LitWaves)
+* [09/Crate](./src/09/Crate)
 
 ## Building and running
 
