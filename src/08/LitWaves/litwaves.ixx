@@ -1,12 +1,8 @@
-module;
-
-#include "../../Shaders/SharedTypes.h"
-
 export module litwaves;
 import std;
 import shared;
 
-constexpr Win32::UINT CBV_SRV_UAV_HEAP_CAPACITY = 16384;
+constexpr auto CBV_SRV_UAV_HEAP_CAPACITY = 16384u;
 
 //
 // Define named offsets to root parameters in root signature for readability.
@@ -24,8 +20,6 @@ enum GFX_ROOT_ARG
 // for a frame.  
 struct FrameResource
 {
-public:
-
 	FrameResource(D3D12::ID3D12Device* device, Win32::UINT passCount, Win32::UINT materialCount, Win32::UINT waveVertCount)
 	{
 		ThrowIfFailed(device->CreateCommandAllocator(
@@ -221,8 +215,8 @@ public:
 	void Disturb(int i, int j, float magnitude)
 	{
 		// Don't disturb boundaries.
-		assert(i > 1 && i < mNumRows - 2);
-		assert(j > 1 && j < mNumCols - 2);
+		//assert(i > 1 && i < mNumRows - 2);
+		//assert(j > 1 && j < mNumCols - 2);
 
 		float halfMag = 0.5f * magnitude;
 
@@ -603,16 +597,15 @@ private:
 	void UpdateCamera(const GameTimer& gt)
 	{
 		// Convert Spherical to Cartesian coordinates.
-		mEyePos.x = mRadius * sinf(mPhi) * cosf(mTheta);
-		mEyePos.z = mRadius * sinf(mPhi) * sinf(mTheta);
-		mEyePos.y = mRadius * cosf(mPhi);
+		mEyePos.x = mRadius * std::sinf(mPhi) * std::cosf(mTheta);
+		mEyePos.z = mRadius * std::sinf(mPhi) * std::sinf(mTheta);
+		mEyePos.y = mRadius * std::cosf(mPhi);
 
 		// Build the view matrix.
-		DirectX::XMVECTOR pos = DirectX::XMVectorSet(mEyePos.x, mEyePos.y, mEyePos.z, 1.0f);
-		DirectX::XMVECTOR target = DirectX::XMVectorZero();
-		DirectX::XMVECTOR up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-
-		DirectX::XMMATRIX view = DirectX::XMMatrixLookAtLH(pos, target, up);
+		auto pos = DirectX::XMVECTOR{ DirectX::XMVectorSet(mEyePos.x, mEyePos.y, mEyePos.z, 1.0f) };
+		auto target = DirectX::XMVECTOR{DirectX::XMVectorZero()};
+		auto up = DirectX::XMVECTOR{DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)};
+		auto view = DirectX::XMMATRIX{DirectX::XMMatrixLookAtLH(pos, target, up)};
 		DirectX::XMStoreFloat4x4(&mView, view);
 	}
 
@@ -637,21 +630,19 @@ private:
 		{
 			// Only update the buffer data if the data has changed.  If the buffer
 			// data changes, it needs to be updated for each FrameResource.
-			Material* mat = e.second.get();
-			if (mat->NumFramesDirty > 0)
-			{
-				DirectX::XMMATRIX matTransform = DirectX::XMLoadFloat4x4(&mat->MatTransform);
+			auto mat = static_cast<Material*>(e.second.get());
+			if (mat->NumFramesDirty < 1)
+				continue;
+			auto matTransform = DirectX::XMMATRIX{DirectX::XMLoadFloat4x4(&mat->MatTransform)};
+			auto matData = MaterialData{
+				.DiffuseAlbedo = mat->DiffuseAlbedo,
+				.FresnelR0 = mat->FresnelR0,
+				.Roughness = mat->Roughness
+			};
+			currMaterialBuffer->CopyData(mat->MatIndex, matData);
 
-				MaterialData matData;
-				matData.DiffuseAlbedo = mat->DiffuseAlbedo;
-				matData.FresnelR0 = mat->FresnelR0;
-				matData.Roughness = mat->Roughness;
-
-				currMaterialBuffer->CopyData(mat->MatIndex, matData);
-
-				// Next FrameResource need to be updated too.
-				mat->NumFramesDirty--;
-			}
+			// Next FrameResource need to be updated too.
+			mat->NumFramesDirty--;
 		}
 	}
 
@@ -1114,8 +1105,8 @@ private:
 	DirectX::XMFLOAT4X4 mProj = MathHelper::Identity4x4;
 
 	DirectX::XMFLOAT3 mEyePos = { 0.0f, 0.0f, 0.0f };
-	float mTheta = 1.5f * DirectX::XM_PI;
-	float mPhi = DirectX::XM_PIDIV2 - 0.1f;
+	float mTheta = 1.5f * DirectX::Pi;
+	float mPhi = DirectX::PiOverTwo - 0.1f;
 	float mRadius = 50.0f;
 
 	float mLightRotationAngle = 0.0f;
