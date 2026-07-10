@@ -24,12 +24,16 @@ try
 		Win32::_CrtSetDbgFlag(Win32::CrtAllocMemDf | Win32::CrtLeakCheckDf);
 
     auto theApp = InitDirect3DApp{ hInstance };
-    if (not theApp.Initialize())
-        return 0;
+    theApp.Initialize();
     return theApp.Run();
 }
 catch (const DxException& e)
 {
     Win32::MessageBoxW(nullptr, e.ToString().c_str(), L"HR Failed", Win32::MbOk);
+    return 0;
+}
+catch (const std::exception& e)
+{
+    Win32::MessageBoxW(nullptr, AnsiToWString(e.what()).c_str(), L"Error", Win32::MbOk);
     return 0;
 }

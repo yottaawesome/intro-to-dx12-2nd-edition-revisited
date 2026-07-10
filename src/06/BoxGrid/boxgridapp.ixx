@@ -43,10 +43,9 @@ public:
             FlushCommandQueue();
     }
 
-	auto Initialize() -> bool override
+	void Initialize() override
     {
-        if (not D3DApp::Initialize())
-            return false;
+        D3DApp::Initialize();
 
         // We will upload on the direct queue for the book samples, but 
         // copy queue would be better for real game.
@@ -79,7 +78,6 @@ public:
 
         // Block until the upload work is complete.
         result.wait();
-        return true;
     }
 
     void CreateRtvAndDsvDescriptorHeaps()override

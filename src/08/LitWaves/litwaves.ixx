@@ -301,10 +301,9 @@ public:
 			FlushCommandQueue();
 	}
 
-	auto Initialize() -> bool override
+	void Initialize() override
 	{
-		if (!D3DApp::Initialize())
-			return false;
+		D3DApp::Initialize();
 
 		mWaves = std::make_unique<Waves>(128, 128, 1.0f, 0.016f, mWaveSpeed, mWaveDamping);
 
@@ -334,8 +333,6 @@ public:
 
 		// Block until the upload work is complete.
 		result.wait();
-
-		return true;
 	}
 
 private:

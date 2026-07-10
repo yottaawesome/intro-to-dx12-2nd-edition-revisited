@@ -26,12 +26,10 @@ public:
             FlushCommandQueue();
     }
 
-    auto Initialize() -> bool override
+    void Initialize() override
     {
-        if (not D3DApp::Initialize())
-            return false;
+        D3DApp::Initialize();
         BuildCbvSrvUavDescriptorHeap();
-        return true;
     }
 
 private:

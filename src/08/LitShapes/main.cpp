@@ -19,8 +19,7 @@ try
 	if constexpr (IsDebugBuild)
 		Win32::_CrtSetDbgFlag(Win32::CrtAllocMemDf | Win32::CrtLeakCheckDf);
 	auto theApp = LitShapesApp{ hInstance };
-	if (not theApp.Initialize())
-		return 0;
+	theApp.Initialize();
     return theApp.Run();
 }
 catch (const DxException& e)

@@ -135,21 +135,16 @@ public:
 		}
 	}
 
-	virtual auto Initialize() -> bool
+	virtual void Initialize()
 	{
-		if (not InitMainWindow())
-			return false;
-
-		if (not InitDirect3D())
-			return false;
+		InitMainWindow();
+		InitDirect3D();
 
 		mLinearAllocator = std::make_unique<DirectX::GraphicsMemory>(md3dDevice.Get());
 		mUploadBatch = std::make_unique<DirectX::ResourceUploadBatch>(md3dDevice.Get());
 
 		// Do the initial resize code.
 		OnResize();
-
-		return true;
 	}
 
 	virtual auto MsgProc(
@@ -401,8 +396,8 @@ protected:
 	// override to define GUI (call once per frame). Make sure to call base implementation first.
 	virtual void UpdateImgui(const GameTimer& gt)
 	{
-		ImGui_ImplDX12_NewFrame();
-		ImGui_ImplWin32_NewFrame();
+		ImGui::ImGui_ImplDX12_NewFrame();
+		ImGui::ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
 	}
 
@@ -412,32 +407,31 @@ protected:
 	virtual void OnMouseMove(WPARAM btnState, int x, int y) {}
 
 protected:
-
-	auto InitMainWindow() -> bool
+	void InitMainWindow()
 	{
-		auto wc = Win32::WNDCLASS{};
-		wc.style = Win32::CsHRedraw | Win32::CsVRedraw;
-		wc.lpfnWndProc = MainWndProc<D3DApp>;
-		wc.cbClsExtra = 0;
-		wc.cbWndExtra = 0;
-		wc.hInstance = mhAppInst;
-		wc.hIcon = Win32::LoadIconW(0, Win32::IdiApplication());
-		wc.hCursor = Win32::LoadCursorW(0, Win32::IdcArrow());
-		wc.hbrBackground = (Win32::HBRUSH)Win32::GetStockObject(Win32::NullBrush);
-		wc.lpszMenuName = 0;
-		wc.lpszClassName = L"MainWnd";
-
+		auto wc = Win32::WNDCLASS{
+			.style = Win32::CsHRedraw | Win32::CsVRedraw,
+			.lpfnWndProc = MainWndProc<D3DApp>,
+			.cbClsExtra = 0,
+			.cbWndExtra = 0,
+			.hInstance = mhAppInst,
+			.hIcon = Win32::LoadIconW(0, Win32::IdiApplication()),
+			.hCursor = Win32::LoadCursorW(0, Win32::IdcArrow()),
+			.hbrBackground = (Win32::HBRUSH)Win32::GetStockObject(Win32::NullBrush),
+			.lpszMenuName = 0,
+			.lpszClassName = L"MainWnd"
+		};
 		if (not Win32::RegisterClassW(&wc))
 		{
 			Win32::MessageBoxW(0, L"RegisterClass Failed.", 0, 0);
-			return false;
+			throw std::runtime_error{ std::format("RegisterClass Failed.") };
 		}
 
 		// Compute window rectangle dimensions based on requested client area dimensions.
 		auto R = Win32::RECT{ 0, 0, mClientWidth, mClientHeight };
 		Win32::AdjustWindowRect(&R, Win32::WsOverlappedWindow, false);
-		int width = R.right - R.left;
-		int height = R.bottom - R.top;
+		auto width = R.right - R.left;
+		auto height = R.bottom - R.top;
 
 		mhMainWnd = Win32::CreateWindowExW(
 			0,
@@ -456,16 +450,14 @@ protected:
 		if (!mhMainWnd)
 		{
 			Win32::MessageBoxW(0, L"CreateWindow Failed.", 0, 0);
-			return false;
+			throw std::runtime_error{ std::format("CreateWindow Failed.") };
 		}
 
 		Win32::ShowWindow(mhMainWnd, Win32::SwShow);
 		Win32::UpdateWindow(mhMainWnd);
-
-		return true;
 	}
 
-	auto InitDirect3D() -> bool
+	void InitDirect3D()
 	{
 		auto factoryFlags = 0u;
 		if constexpr (IsDebugBuild)
@@ -520,7 +512,7 @@ protected:
 		if (Win32::Failed(hardwareResult))
 		{
 			Win32::MessageBoxW(0, L"Could not find D3D_FEATURE_LEVEL_12_2 GPU", 0, 0);
-			return false;
+			throw std::runtime_error{std::format("Could not find D3D_FEATURE_LEVEL_12_2 GPU")};
 		}
 
 		// Get default adapter, so we can IDXGIAdapter3::QueryVideoMemoryInfo.
@@ -540,8 +532,6 @@ protected:
 		CreateRtvAndDsvDescriptorHeaps();
 
 		SamplerHeap::Get().Init(md3dDevice.Get());
-
-		return true;
 	}
 
 	void CreateCommandObjects()
