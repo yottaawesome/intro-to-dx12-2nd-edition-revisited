@@ -44,8 +44,10 @@ Microsoft Visual Studio 2026 with the _Desktop development with C++_ and _Game d
 * Variable declarations are being ported to Almost Always Auto (AAA) idiom with braced or designated initialisation. AAA is easier to visually navigate, while braced initialisation guarantees left-to-right evaluation order and catches otherwise invisible narrowing conversions. Designated initialisation is much cleaner for aggregate types.
 * `MeshGen::CreateBox()` has been updated to use `std::begin()` and `std::end()` in the `assign()` calls. The previous code did a direct index past the end of the range, which interestingly triggered a debug check, even though it's technically safe.
 * Replacement of certain raw arrays with `std::array`, which also removes the need for the non-standard `_countof()` extension.
+* `Texture::Info()` returned a reference to a temporary, which was undefined behaviour. This has been fixed.
 * The use of `!` is being with replaced with the more obvious `not`.
 * Use of certain macros and preprocessor checks such as `#if defined(DEBUG)` have been replaced with `if constexpr(...)` checks, which are far less uglier.
+* `DxException` has been cleaned up, with the reliance on macros for lines and file numbers replaced by the standard `std::source_location` object.
 * Use of `FLT_MAX` has been removed in favour of the standard `std::numeric_limits<float>::max()`.
 * `main()` code has been ported to function-try-block syntax.
 * General code cleanup. This includes removal of redundant conditionals, improvements to static initialisation, improvements to the `Random` class, and removal of declared but undefined functions that were found to not be used anywhere.
