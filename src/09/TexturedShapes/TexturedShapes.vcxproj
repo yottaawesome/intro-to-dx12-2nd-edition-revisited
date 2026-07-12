@@ -153,12 +153,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="texturedshapes.ixx" />
   </ItemGroup>
   <ItemGroup>
     <None Include="vcpkg.json" />
   </ItemGroup>
   <ItemGroup>
-	<PackageReference Include="Microsoft.Direct3D.D3D12" />
+    <PackageReference Include="Microsoft.Direct3D.D3D12" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Shared\Shared.vcxproj">
