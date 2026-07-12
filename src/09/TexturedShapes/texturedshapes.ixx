@@ -103,7 +103,7 @@ public:
             FlushCommandQueue();
     }
 
-    virtual void Initialize()override
+    void Initialize()override
     {
         D3DApp::Initialize();
 
