@@ -195,14 +195,14 @@ public:
             texMap->Name = texNames[i];
             texMap->Filename = texFilenames[i];
 
-            if (!std::filesystem::exists(texFilenames[i]))
+            if (not std::filesystem::exists(texFilenames[i]))
             {
-                std::wstring msg = texFilenames[i] + L" not found.";
+                auto msg = std::wstring{texFilenames[i] + L" not found."};
                 Win32::OutputDebugStringW(msg.c_str());
                 Win32::MessageBoxW(0, msg.c_str(), 0, 0);
             }
 
-            ThrowIfFailed(DirectX::CreateDDSTextureFromFileEx(
+            auto hr = DirectX::CreateDDSTextureFromFileEx(
                 device, uploadBatch,
                 texMap->Filename.c_str(), 
                 0, 
@@ -210,7 +210,9 @@ public:
                 DirectX::DDS_LOADER_FLAGS::DDS_LOADER_DEFAULT,
                 &texMap->Resource, 
                 nullptr, 
-                &texMap->IsCubeMap));
+                &texMap->IsCubeMap);
+			if (Win32::Failed(hr))
+				throw std::runtime_error{ std::format("CreateDDSTextureFromFileEx failed for {}", WStringToAnsi(texMap->Filename)) };
 
             mTextures[texMap->Name] = std::move(texMap);
         }

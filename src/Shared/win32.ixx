@@ -203,6 +203,7 @@ export namespace Win32
 	constexpr auto EventAllAccess = EVENT_ALL_ACCESS;
 	constexpr auto CpAcp = CP_ACP;
 	constexpr auto CpUtf8 = CP_UTF8;
+	constexpr auto WcNoBestFitChars = WC_NO_BEST_FIT_CHARS;
 	constexpr auto UIntMax = UINT_MAX;
 
 	enum WaitResult
