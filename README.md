@@ -39,6 +39,7 @@ Microsoft Visual Studio 2026 with the _Desktop development with C++_ and _Game d
 * Use of `constexpr` where applicable, such as the replacement of the `Identity4x4()` function with a simpler `constexpr` variable.
 * The DirectX Agility SDK has been updated to version 619.
 * `MathHelper`'s `Min()`, `Max()` and `Clamp()` functions have been replaced with `std::min()`, `std::max()` and `std::clamp()` respectively.
+* The `Waves` class was repeated across multiple demos. Rather than have copies of it in the different projects, I've consolidated it into Shared to reduce the noise.
 * Removal of macros like `CALLBACK` and `WINAPI`, these are ignored for x64 builds and add visual noise.
 * The original code used an obsolete version of `imgui`. Newer versions of `imgui` require the application to provide SRV allocation/deallocation functions; this is now done in the `D3DApp` superclass.
 * Multiprocessor compilation has been enabled in the project settings.
