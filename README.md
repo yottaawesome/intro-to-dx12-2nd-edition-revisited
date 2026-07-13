@@ -22,6 +22,7 @@ The effort is currently in progress. The following projects have been converted 
 * [08/LitWaves](./src/08/LitWaves)
 * [09/Crate](./src/09/Crate)
 * [09/TexturedShapes](./src/09/TexturedShapes)
+* [09/TexWaves](./src/09/TexWaves)
 
 ## Building and running
 
