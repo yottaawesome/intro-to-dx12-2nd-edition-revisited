@@ -152,10 +152,11 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="billboard.ixx" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-	<PackageReference Include="Microsoft.Direct3D.D3D12" />
+    <PackageReference Include="Microsoft.Direct3D.D3D12" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Shared\Shared.vcxproj">
