@@ -25,6 +25,7 @@ The effort is currently in progress. The following projects have been converted 
 * [09/TexWaves](./src/09/TexWaves)
 * [10/BlendDemo](./src/10/BlendDemo)
 * [11/Stenciling](./src/11/Stenciling)
+* [12/BillboardGS](./src/12/BillboardGS)
 
 ## Building and running
 
