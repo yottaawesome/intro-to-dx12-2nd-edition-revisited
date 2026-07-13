@@ -29,6 +29,9 @@
     <Project Path="09/TexturedShapes/TexturedShapes.vcxproj" Id="b0cdd49b-5010-49c3-b2c8-959bd7fc0ee2" />
     <Project Path="09/TexWaves/TexWaves.vcxproj" Id="5d7fe72f-24d2-4ca5-bf4b-4d46ee287cf8" />
   </Folder>
+  <Folder Name="/10/">
+    <Project Path="10/BlendDemo/BlendDemo.vcxproj" Id="6c9c5d36-f777-479b-8dcf-a2ea1e29bc06" />
+  </Folder>
   <Folder Name="/Common/">
     <Project Path="Shared/Shared.vcxproj" Id="71a3731d-95eb-49ec-b69f-e0b5e166115b" />
   </Folder>
