@@ -24,6 +24,7 @@ The effort is currently in progress. The following projects have been converted 
 * [09/TexturedShapes](./src/09/TexturedShapes)
 * [09/TexWaves](./src/09/TexWaves)
 * [10/BlendDemo](./src/10/BlendDemo)
+* [11/Stenciling](./src/11/Stenciling)
 
 ## Building and running
 
