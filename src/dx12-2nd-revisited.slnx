@@ -35,6 +35,9 @@
   <Folder Name="/11/">
     <Project Path="11/Stenciling/Stenciling.vcxproj" Id="cc9267ad-7df6-4ed7-bd13-8f80a528ebf1" />
   </Folder>
+  <Folder Name="/12/">
+    <Project Path="12/BillboardGS/BillboardGS.vcxproj" Id="e94cb326-3f24-4ec3-924b-fe8d48123342" />
+  </Folder>
   <Folder Name="/Common/">
     <Project Path="Shared/Shared.vcxproj" Id="71a3731d-95eb-49ec-b69f-e0b5e166115b" />
   </Folder>

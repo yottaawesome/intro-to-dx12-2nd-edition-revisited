@@ -72,6 +72,9 @@
     <ClCompile Include="texturelib.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="waves.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="vcpkg.json" />

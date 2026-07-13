@@ -19,3 +19,4 @@ export import :event;
 export import :sharedtypes;
 export import :texturelib;
 export import :materiallib;
+export import :waves;
