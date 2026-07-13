@@ -220,8 +220,6 @@ struct FrameResource
         MaterialBuffer = std::make_unique<UploadBuffer<MaterialData>>(device, materialCount, false);
         WavesVB = std::make_unique<UploadBuffer<ModelVertex>>(device, waveVertCount, false);
     }
-    FrameResource(const FrameResource& rhs) = delete;
-    FrameResource& operator=(const FrameResource& rhs) = delete;
 
     // We cannot reset the allocator until the GPU is done processing the commands.
     // So each frame needs their own allocator.

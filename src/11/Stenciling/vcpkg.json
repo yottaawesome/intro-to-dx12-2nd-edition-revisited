@@ -1,5 +1,5 @@
 {
-  "name": "stenciling",
+  "name": "blenddemo",
   "version": "1.0.0",
   "dependencies": [
     "directxtk12",
