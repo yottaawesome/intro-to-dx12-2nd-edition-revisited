@@ -313,6 +313,8 @@ export namespace D3D12
 	}
 
 	using
+		::D3D12_DEPTH_STENCIL_DESC,
+		::D3D12_DEPTH_STENCILOP_DESC,
 		::D3D12_COLOR_WRITE_ENABLE,
 		::D3D12_UNORDERED_ACCESS_VIEW_DESC,
 		::D3D12_RENDER_TARGET_VIEW_DESC,
@@ -459,6 +461,7 @@ export namespace DirectX
 		::DirectX::BoundingBox,
 		::DirectX::GraphicsResource,
 		::DirectX::DDS_LOADER_FLAGS,
+		::DirectX::XMMatrixShadow,
 		::DirectX::XMMatrixScaling,
 		::DirectX::CreateDDSTextureFromFileEx,
 		::DirectX::XMMatrixRotationX,
@@ -473,6 +476,7 @@ export namespace DirectX
 		::DirectX::XMStoreFloat3,
 		::DirectX::XMVectorMin,
 		::DirectX::XMVectorMax,
+		::DirectX::XMMatrixReflect,
 		::DirectX::XMStoreFloat3,
 		::DirectX::XMLoadFloat3,
 		::DirectX::XMLoadFloat4,
