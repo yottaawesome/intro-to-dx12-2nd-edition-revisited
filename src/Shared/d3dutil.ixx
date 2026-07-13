@@ -93,7 +93,7 @@ export
         return wstrTo;
     }
 
-    class DxException
+    class DxException : public std::runtime_error
     {
     public:
         DxException() = default;
@@ -101,7 +101,8 @@ export
             Win32::HRESULT hr,
             const std::source_location& location = std::source_location::current()
         ) : ErrorCode(hr),
-            Location(location)
+            Location(location),
+			std::runtime_error{ WStringToAnsi(ToString()) }
         {}
 
         auto ToString() const -> std::wstring
