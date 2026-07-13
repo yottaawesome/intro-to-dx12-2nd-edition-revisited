@@ -38,6 +38,11 @@
   <Folder Name="/12/">
     <Project Path="12/BillboardGS/BillboardGS.vcxproj" Id="e94cb326-3f24-4ec3-924b-fe8d48123342" />
   </Folder>
+  <Folder Name="/13/">
+    <Project Path="13/Blur/Blur.vcxproj" Id="81c2d240-246d-425c-aa28-89ca71d4c6be" />
+    <Project Path="13/VecAddCS/VecAddCS.vcxproj" Id="4619c9f2-c51e-483d-8379-9131eebd6328" />
+    <Project Path="13/WavesCS/WavesCS.vcxproj" Id="bb5ffd7f-8799-4172-b5db-388bfcd61b14" />
+  </Folder>
   <Folder Name="/Common/">
     <Project Path="Shared/Shared.vcxproj" Id="71a3731d-95eb-49ec-b69f-e0b5e166115b" />
   </Folder>
