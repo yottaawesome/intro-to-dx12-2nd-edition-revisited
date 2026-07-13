@@ -313,7 +313,7 @@ public:
         mGeometries[waveGeo->Name] = std::move(waveGeo);
 
         // Kick off upload work asyncronously.
-        std::future<void> result = mUploadBatch->End(mCommandQueue.Get());
+        auto result = std::future<void>{mUploadBatch->End(mCommandQueue.Get())};
 
         // Other init work...
         BuildRootSignature();
@@ -329,19 +329,19 @@ public:
     }
 
 private:
-    virtual void CreateRtvAndDsvDescriptorHeaps()override
+    void CreateRtvAndDsvDescriptorHeaps()override
     {
         mRtvHeap.Init(md3dDevice.Get(), D3D12::D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_RTV, SwapChainBufferCount);
         mDsvHeap.Init(md3dDevice.Get(), D3D12::D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_DSV, SwapChainBufferCount);
     }
-    virtual void OnResize()override
+    void OnResize()override
     {
         D3DApp::OnResize();
         // The window resized, so update the aspect ratio and recompute the projection matrix.
         auto P = DirectX::XMMATRIX{DirectX::XMMatrixPerspectiveFovLH(0.25f * MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f)};
         DirectX::XMStoreFloat4x4(&mProj, P);
     }
-    virtual void Update(const GameTimer& gt)override
+    void Update(const GameTimer& gt)override
     {
         OnKeyboardInput(gt);
         UpdateCamera(gt);
@@ -354,21 +354,19 @@ private:
         // If not, wait until the GPU has completed commands up to this fence point.
         if (mCurrFrameResource->Fence != 0 && mFence->GetCompletedValue() < mCurrFrameResource->Fence)
         {
-			auto event = Event{ };
+			auto event = Event{};
             ThrowIfFailed(mFence->SetEventOnCompletion(mCurrFrameResource->Fence, event.Get()));
             event.Wait();
         }
 
         //
         // Animate the lights.
-        //
-
         mLightRotationAngle += 0.1f * gt.DeltaTime();
 
         auto R = DirectX::XMMATRIX{DirectX::XMMatrixRotationY(mLightRotationAngle)};
-        for (int i = 0; i < 3; ++i)
+        for (auto i = 0; i < 3; ++i)
         {
-            DirectX::XMVECTOR lightDir = DirectX::XMLoadFloat3(&mBaseLightDirections[i]);
+            auto lightDir = DirectX::XMVECTOR{DirectX::XMLoadFloat3(&mBaseLightDirections[i])};
             lightDir = DirectX::XMVector3TransformNormal(lightDir, R);
             DirectX::XMStoreFloat3(&mRotatedLightDirections[i], lightDir);
         }
@@ -379,7 +377,7 @@ private:
         UpdateMainPassCB(gt);
         UpdateWaves(gt);
     }
-    virtual void Draw(const GameTimer& gt)override
+    void Draw(const GameTimer& gt)override
     {
         auto& cbvSrvUavHeap = CbvSrvUavHeap::Get();
         auto& samHeap = SamplerHeap::Get();
@@ -398,14 +396,12 @@ private:
 
         auto descriptorHeaps = std::array{ cbvSrvUavHeap.GetD3dHeap(), samHeap.GetD3dHeap() };
         mCommandList->SetDescriptorHeaps(static_cast<UINT>(descriptorHeaps.size()), descriptorHeaps.data());
-
         mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
         // Bind all the materials used in this scene.  For structured buffers, we can bypass the heap and 
         // set as a root descriptor.
         auto matBuffer = mCurrFrameResource->MaterialBuffer->Resource();
         mCommandList->SetGraphicsRootShaderResourceView(GFX_ROOT_ARG_MATERIAL_SRV, matBuffer->GetGPUVirtualAddress());
-
         mCommandList->RSSetViewports(1, &mScreenViewport);
         mCommandList->RSSetScissorRects(1, &mScissorRect);
 
@@ -415,7 +411,7 @@ private:
         mCommandList->ResourceBarrier(1, &transition);
 
         // Clear the back buffer and depth buffer.
-        float clearColor[4] = { 0.0f, 0.0f, 0.2f, 0.0f };
+        auto clearColor = std::array{ 0.0f, 0.0f, 0.2f, 0.0f };
         if (mFogEnabled)
         {
             // Use fog color for background
@@ -423,7 +419,7 @@ private:
             clearColor[1] = mFogColor.y;
             clearColor[2] = mFogColor.z;
         }
-        mCommandList->ClearRenderTargetView(CurrentBackBufferView(), clearColor, 0, nullptr);
+        mCommandList->ClearRenderTargetView(CurrentBackBufferView(), clearColor.data(), 0, nullptr);
         mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12::D3D12_CLEAR_FLAGS{ D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL }, 1.0f, 0, 0, nullptr);
 
         // Specify the buffers we are going to render to.
@@ -456,8 +452,7 @@ private:
         ImGui::ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), mCommandList.Get());
 
         // Indicate a state transition on the resource usage.
-        transition = CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
-            D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+        transition = CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
         mCommandList->ResourceBarrier(1, &transition);
 
         // Done recording commands.
@@ -625,10 +620,10 @@ private:
         mEyePos.y = mRadius * std::cosf(mPhi);
 
         // Build the view matrix.
-        auto pos = DirectX::XMVectorSet(mEyePos.x, mEyePos.y, mEyePos.z, 1.0f);
-        auto target = DirectX::XMVectorZero();
-        auto up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-        auto view = DirectX::XMMatrixLookAtLH(pos, target, up);
+        auto pos = DirectX::XMVECTOR{DirectX::XMVectorSet(mEyePos.x, mEyePos.y, mEyePos.z, 1.0f)};
+        auto target = DirectX::XMVECTOR{DirectX::XMVectorZero()};
+        auto up = DirectX::XMVECTOR{DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)};
+        auto view = DirectX::XMMATRIX{DirectX::XMMatrixLookAtLH(pos, target, up)};
         DirectX::XMStoreFloat4x4(&mView, view);
     }
     void UpdatePerObjectCB(const GameTimer& gt)
@@ -653,23 +648,22 @@ private:
             // Only update the buffer data if the data has changed.  If the buffer
             // data changes, it needs to be updated for each FrameResource.
             auto mat = static_cast<Material*>(e.second.get());
-            if (mat->NumFramesDirty > 0)
-            {
-                auto matTransform = DirectX::XMMATRIX{ DirectX::XMLoadFloat4x4(&mat->MatTransform) };
-                auto matData = MaterialData{
-                    .DiffuseAlbedo = mat->DiffuseAlbedo,
-                    .FresnelR0 = mat->FresnelR0,
-                    .Roughness = mat->Roughness,
-                    .DiffuseMapIndex = static_cast<std::uint32_t>(mat->AlbedoBindlessIndex),
-                    .NormalMapIndex = static_cast<std::uint32_t>(mat->NormalBindlessIndex),
-                    .GlossHeightAoMapIndex = static_cast<std::uint32_t>(mat->GlossHeightAoBindlessIndex)
-                };
-                DirectX::XMStoreFloat4x4(&matData.MatTransform, DirectX::XMMatrixTranspose(matTransform));
-                currMaterialBuffer->CopyData(mat->MatIndex, matData);
+            if (mat->NumFramesDirty < 1)
+                continue;
 
-                // Next FrameResource need to be updated too.
-                mat->NumFramesDirty--;
-            }
+            auto matTransform = DirectX::XMMATRIX{ DirectX::XMLoadFloat4x4(&mat->MatTransform) };
+            auto matData = MaterialData{
+                .DiffuseAlbedo = mat->DiffuseAlbedo,
+                .FresnelR0 = mat->FresnelR0,
+                .Roughness = mat->Roughness,
+                .DiffuseMapIndex = static_cast<std::uint32_t>(mat->AlbedoBindlessIndex),
+                .NormalMapIndex = static_cast<std::uint32_t>(mat->NormalBindlessIndex),
+                .GlossHeightAoMapIndex = static_cast<std::uint32_t>(mat->GlossHeightAoBindlessIndex)
+            };
+            DirectX::XMStoreFloat4x4(&matData.MatTransform, DirectX::XMMatrixTranspose(matTransform));
+            currMaterialBuffer->CopyData(mat->MatIndex, matData);
+            // Next FrameResource need to be updated too.
+            mat->NumFramesDirty--;
         }
     }
     void UpdateMainPassCB(const GameTimer& gt)
@@ -777,7 +771,7 @@ private:
             tex->BindlessIndex = cbvSrvUavHeap.NextFreeIndex();
 
             auto hDescriptor = D3D12::CD3DX12_CPU_DESCRIPTOR_HANDLE{ cbvSrvUavHeap.CpuHandle(tex->BindlessIndex) };
-            auto texResource = static_cast<ID3D12Resource*>(tex->Resource.Get());
+            auto texResource = static_cast<D3D12::ID3D12Resource*>(tex->Resource.Get());
             if (tex->IsCubeMap)
                 CreateSrvCube(md3dDevice.Get(), texResource, texResource->GetDesc().Format, texResource->GetDesc().MipLevels, hDescriptor);
             else
@@ -871,12 +865,6 @@ private:
             &wireframePsoDesc,
             __uuidof(ID3D12PipelineState), &mPSOs["opaque_wireframe"]));
 
-        //
-        // PSO for transparent objects
-        //
-
-        auto transparentPsoDesc = basePsoDesc;
-
         auto transparencyBlendDesc = D3D12::D3D12_RENDER_TARGET_BLEND_DESC{
             .BlendEnable = true,
             .LogicOpEnable = false,
@@ -890,6 +878,9 @@ private:
             .RenderTargetWriteMask = D3D12::D3D12_COLOR_WRITE_ENABLE::D3D12_COLOR_WRITE_ENABLE_ALL,
         };
 
+        //
+        // PSO for transparent objects
+        auto transparentPsoDesc = basePsoDesc;
         transparentPsoDesc.BlendState.RenderTarget[0] = transparencyBlendDesc;
         ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&transparentPsoDesc,
             __uuidof(ID3D12PipelineState), &mPSOs["transparent"]));
@@ -946,8 +937,8 @@ private:
     {
         auto& matLib = MaterialLib::GetLib();
 
-        DirectX::XMFLOAT4X4 worldTransform = MathHelper::Identity4x4;
-        DirectX::XMFLOAT4X4 texTransform = MathHelper::Identity4x4;
+        auto worldTransform = DirectX::XMFLOAT4X4{MathHelper::Identity4x4};
+        auto texTransform = DirectX::XMFLOAT4X4{MathHelper::Identity4x4};
 
         worldTransform = MathHelper::Identity4x4;
         DirectX::XMStoreFloat4x4(&texTransform, DirectX::XMMatrixScaling(5.0f, 5.0f, 1.0f));
@@ -963,8 +954,8 @@ private:
             mGeometries["landGeo"].get(),
             mGeometries["landGeo"]->DrawArgs["grid"]);
 
-        DirectX::XMMATRIX S = DirectX::XMMatrixScaling(8.0f, 8.0f, 8.0f);
-        DirectX::XMMATRIX T = DirectX::XMMatrixTranslation(3.0f, 2.0f, -9.0f);
+        auto S = DirectX::XMMATRIX{ DirectX::XMMatrixScaling(8.0f, 8.0f, 8.0f) };
+        auto T = DirectX::XMMATRIX{ DirectX::XMMatrixTranslation(3.0f, 2.0f, -9.0f) };
         DirectX::XMStoreFloat4x4(&worldTransform, S * T);
         texTransform = MathHelper::Identity4x4;
         AddRenderItem(RenderLayer::AlphaTested, worldTransform, texTransform, matLib["fence"], mGeometries["shapeGeo"].get(), mGeometries["shapeGeo"]->DrawArgs["box"]);
@@ -1103,7 +1094,7 @@ private:
         geo->IndexBufferByteSize = ibByteSize;
 
         auto submesh = SubmeshGeometry{
-            .IndexCount = (UINT)indices.size(),
+            .IndexCount = static_cast<UINT>(indices.size()),
             .StartIndexLocation = 0,
             .BaseVertexLocation = 0
         };
