@@ -112,6 +112,7 @@ public:
             FlushCommandQueue();
     }
 
+private:
     void Initialize()override
     {
         D3DApp::Initialize();
@@ -124,17 +125,17 @@ public:
 
         LoadTextures();
 
-        auto shapeGeo = std::unique_ptr<MeshGeometry>{d3dUtil::BuildShapeGeometry(md3dDevice.Get(), *mUploadBatch.get())};
+        auto shapeGeo = std::unique_ptr<MeshGeometry>{ d3dUtil::BuildShapeGeometry(md3dDevice.Get(), *mUploadBatch.get()) };
         mGeometries[shapeGeo->Name] = std::move(shapeGeo);
-        auto landGeo = std::unique_ptr<MeshGeometry>{BuildLandGeometry(md3dDevice.Get(), *mUploadBatch.get())};
+        auto landGeo = std::unique_ptr<MeshGeometry>{ BuildLandGeometry(md3dDevice.Get(), *mUploadBatch.get()) };
         mGeometries[landGeo->Name] = std::move(landGeo);
-        auto waveGeo = std::unique_ptr<MeshGeometry>{BuildWaveGeometry(md3dDevice.Get(), *mUploadBatch.get())};
+        auto waveGeo = std::unique_ptr<MeshGeometry>{ BuildWaveGeometry(md3dDevice.Get(), *mUploadBatch.get()) };
         mGeometries[waveGeo->Name] = std::move(waveGeo);
-        auto treeSpriteGeo = std::unique_ptr<MeshGeometry>{BuildBillboardSpriteGeometry(md3dDevice.Get(), *mUploadBatch.get())};
+        auto treeSpriteGeo = std::unique_ptr<MeshGeometry>{ BuildBillboardSpriteGeometry(md3dDevice.Get(), *mUploadBatch.get()) };
         mGeometries[treeSpriteGeo->Name] = std::move(treeSpriteGeo);
 
         // Kick off upload work asyncronously.
-        auto result = std::future<void>{mUploadBatch->End(mCommandQueue.Get())};
+        auto result = std::future<void>{ mUploadBatch->End(mCommandQueue.Get()) };
 
         // Other init work...
         BuildRootSignature();
@@ -149,7 +150,6 @@ public:
         result.wait();
     }
 
-private:
     void CreateRtvAndDsvDescriptorHeaps()override 
     {
         mRtvHeap.Init(md3dDevice.Get(), D3D12::D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_RTV, SwapChainBufferCount);

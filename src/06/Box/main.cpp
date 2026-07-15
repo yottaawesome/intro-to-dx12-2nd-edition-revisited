@@ -22,15 +22,8 @@ try
     // Enable run-time memory check for debug builds.
     if constexpr (IsDebugBuild)
         Win32::_CrtSetDbgFlag(Win32::CrtAllocMemDf | Win32::CrtLeakCheckDf);
-
     auto theApp = BoxApp{ hInstance };
-    theApp.Initialize();
     return theApp.Run();
-}
-catch (const DxException& e)
-{
-    Win32::MessageBoxW(nullptr, e.ToString().c_str(), L"HR Failed", Win32::MbOk);
-    return 0;
 }
 catch (const std::exception& e)
 {

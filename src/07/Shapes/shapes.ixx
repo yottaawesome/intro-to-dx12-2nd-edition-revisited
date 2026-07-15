@@ -102,7 +102,9 @@ export class ShapesApp : public D3DApp
 public:
     ShapesApp(Win32::HINSTANCE hInstance)
         : D3DApp(hInstance)
-    { }
+    {
+        Initialize();
+    }
 
     ~ShapesApp()
     {
@@ -110,7 +112,8 @@ public:
             FlushCommandQueue();
     }
 
-	void Initialize() override
+private:
+    void Initialize() override
     {
         D3DApp::Initialize();
 
@@ -123,7 +126,7 @@ public:
             mGeometries[shapeGeo->Name] = std::move(shapeGeo);
 
         // Kick off upload work asyncronously.
-        auto result = std::future<void>{mUploadBatch->End(mCommandQueue.Get())};
+        auto result = std::future<void>{ mUploadBatch->End(mCommandQueue.Get()) };
 
         // Other init work...
         BuildRootSignature();
@@ -137,7 +140,6 @@ public:
         result.wait();
     }
 
-private:
     void CreateRtvAndDsvDescriptorHeaps()override
     {
         mRtvHeap.Init(md3dDevice.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, SwapChainBufferCount);

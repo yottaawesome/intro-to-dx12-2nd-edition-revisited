@@ -96,7 +96,9 @@ export class LitWavesApp : public D3DApp
 public:
 	LitWavesApp(HINSTANCE hInstance)
 		: D3DApp(hInstance)
-	{ }
+	{ 
+		Initialize(); 
+	}
 
 	~LitWavesApp()
 	{
@@ -104,6 +106,7 @@ public:
 			FlushCommandQueue();
 	}
 
+private:
 	void Initialize() override
 	{
 		D3DApp::Initialize();
@@ -138,7 +141,6 @@ public:
 		result.wait();
 	}
 
-private:
 	void CreateRtvAndDsvDescriptorHeaps()override
 	{
 		mRtvHeap.Init(md3dDevice.Get(), D3D12::D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_RTV, SwapChainBufferCount);

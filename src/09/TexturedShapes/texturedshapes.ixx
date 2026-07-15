@@ -94,7 +94,9 @@ export class TexturedShapesApp : public D3DApp
 public:
     TexturedShapesApp(HINSTANCE hInstance)
         : D3DApp(hInstance)
-    { }
+    {
+        Initialize();
+    }
     TexturedShapesApp(const TexturedShapesApp& rhs) = delete;
     TexturedShapesApp& operator=(const TexturedShapesApp& rhs) = delete;
     ~TexturedShapesApp()
@@ -103,6 +105,7 @@ public:
             FlushCommandQueue();
     }
 
+private:
     void Initialize()override
     {
         D3DApp::Initialize();
@@ -134,7 +137,6 @@ public:
         result.wait();
     }
 
-private:
     void CreateRtvAndDsvDescriptorHeaps()override
     {
         mRtvHeap.Init(md3dDevice.Get(), D3D12::D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_RTV, SwapChainBufferCount);

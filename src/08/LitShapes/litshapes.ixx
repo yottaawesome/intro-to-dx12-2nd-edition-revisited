@@ -95,7 +95,9 @@ export class LitShapesApp : public D3DApp
 public:
     LitShapesApp(HINSTANCE hInstance)
         : D3DApp(hInstance) 
-    { }
+    {
+        Initialize();
+    }
     LitShapesApp(const LitShapesApp& rhs) = delete;
     LitShapesApp& operator=(const LitShapesApp& rhs) = delete;
     ~LitShapesApp()
@@ -104,6 +106,7 @@ public:
             FlushCommandQueue();
     }
 
+private:
     void Initialize() override
     {
         D3DApp::Initialize();
@@ -134,7 +137,6 @@ public:
         result.wait();
     }
 
-private:
     void CreateRtvAndDsvDescriptorHeaps()override
     {
         mRtvHeap.Init(md3dDevice.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, SwapChainBufferCount);

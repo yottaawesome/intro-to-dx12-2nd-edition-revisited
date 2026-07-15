@@ -19,11 +19,10 @@ try
 	if constexpr (IsDebugBuild)
 		Win32::_CrtSetDbgFlag(Win32::CrtAllocMemDf | Win32::CrtLeakCheckDf);
 	auto theApp = LitShapesApp{ hInstance };
-	theApp.Initialize();
     return theApp.Run();
 }
-catch (const DxException& e)
+catch (const std::exception& e)
 {
-	Win32::MessageBoxW(nullptr, e.ToString().c_str(), L"HR Failed", Win32::MbOk);
+	Win32::MessageBoxW(nullptr, AnsiToWString(e.what()).c_str(), L"Error", Win32::MbOk);
 	return 0;
 }

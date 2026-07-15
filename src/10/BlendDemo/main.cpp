@@ -19,7 +19,6 @@ try
 	if (IsDebugBuild)
 		Win32::_CrtSetDbgFlag(Win32::CrtAllocMemDf | Win32::CrtLeakCheckDf);
 	auto theApp = BlendDemoApp{ hInstance };
-	theApp.Initialize();
 	return theApp.Run();
 }
 catch (const std::exception& ex)

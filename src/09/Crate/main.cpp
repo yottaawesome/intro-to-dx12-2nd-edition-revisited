@@ -17,13 +17,7 @@ auto wWinMain(Win32::HINSTANCE hInstance, Win32::HINSTANCE, Win32::LPWSTR, int) 
 try
 {
 	auto theApp = CrateApp{ hInstance };
-	theApp.Initialize();
 	return theApp.Run();
-}
-catch (const DxException& ex)
-{
-	Win32::MessageBoxW(nullptr, ex.ToString().c_str(), L"HR Failed", Win32::MbOk);
-	return 0;
 }
 catch (const std::exception& e)
 {

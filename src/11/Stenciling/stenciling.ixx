@@ -84,7 +84,9 @@ export class StencilingApp : public D3DApp
 public:
     StencilingApp(HINSTANCE hInstance)
         : D3DApp(hInstance)
-    {}
+    {
+        Initialize();
+    }
     StencilingApp(const StencilingApp& rhs) = delete;
     StencilingApp& operator=(const StencilingApp& rhs) = delete;
     ~StencilingApp()
@@ -93,7 +95,8 @@ public:
             FlushCommandQueue();
     }
 
-    virtual void Initialize()override
+private:
+    void Initialize()override
     {
         D3DApp::Initialize();
 
@@ -103,14 +106,14 @@ public:
 
         LoadTextures();
 
-        std::unique_ptr<MeshGeometry> shapeGeo = BuildRoomGeometry(md3dDevice.Get(), *mUploadBatch.get());
+        auto shapeGeo = std::unique_ptr<MeshGeometry>{BuildRoomGeometry(md3dDevice.Get(), *mUploadBatch.get())};
         mGeometries[shapeGeo->Name] = std::move(shapeGeo);
 
-        std::unique_ptr<MeshGeometry> skullGeo = d3dUtil::BuildSkullGeometry(md3dDevice.Get(), *mUploadBatch.get());
+        auto skullGeo = std::unique_ptr<MeshGeometry>{d3dUtil::BuildSkullGeometry(md3dDevice.Get(), *mUploadBatch.get())};
         mGeometries[skullGeo->Name] = std::move(skullGeo);
 
         // Kick off upload work asyncronously.
-        std::future<void> result = mUploadBatch->End(mCommandQueue.Get());
+        auto result = std::future<void>{ mUploadBatch->End(mCommandQueue.Get()) };
 
         // Other init work...
         BuildRootSignature();
@@ -125,13 +128,12 @@ public:
         result.wait();
     }
 
-private:
-    virtual void CreateRtvAndDsvDescriptorHeaps()override
+    void CreateRtvAndDsvDescriptorHeaps()override
     {
         mRtvHeap.Init(md3dDevice.Get(), D3D12::D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_RTV, SwapChainBufferCount);
         mDsvHeap.Init(md3dDevice.Get(), D3D12::D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_DSV, SwapChainBufferCount);
     }
-    virtual void OnResize()override
+    void OnResize()override
     {
         D3DApp::OnResize();
 
@@ -139,7 +141,7 @@ private:
         auto P = DirectX::XMMATRIX{DirectX::XMMatrixPerspectiveFovLH(0.25f * MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f)};
         DirectX::XMStoreFloat4x4(&mProj, P);
     }
-    virtual void Update(const GameTimer& gt)override
+    void Update(const GameTimer& gt)override
     {
         OnKeyboardInput(gt);
         UpdateCamera(gt);
@@ -175,7 +177,7 @@ private:
         UpdateMainPassCB(gt);
         UpdateReflectedPassCB(gt);
     }
-    virtual void Draw(const GameTimer& gt)override
+    void Draw(const GameTimer& gt)override
     {
         auto& cbvSrvUavHeap = CbvSrvUavHeap::Get();
         auto& samHeap = SamplerHeap::Get();
@@ -291,7 +293,7 @@ private:
         mCommandQueue->Signal(mFence.Get(), mCurrentFence);
     }
 
-    virtual void UpdateImgui(const GameTimer& gt)override
+    void UpdateImgui(const GameTimer& gt)override
     {
         D3DApp::UpdateImgui(gt);
 
@@ -338,7 +340,7 @@ private:
 
         ImGui::Render();
     }
-    virtual void OnMouseDown(WPARAM btnState, int x, int y)override
+    void OnMouseDown(WPARAM btnState, int x, int y)override
     {
         if (auto& io = ImGui::GetIO(); not io.WantCaptureMouse)
         {
@@ -347,12 +349,12 @@ private:
             Win32::SetCapture(mhMainWnd);
         }
     }
-    virtual void OnMouseUp(WPARAM btnState, int x, int y)override
+    void OnMouseUp(WPARAM btnState, int x, int y)override
     {
         if (auto& io = ImGui::GetIO(); not io.WantCaptureMouse)
             Win32::ReleaseCapture();
     }
-    virtual void OnMouseMove(WPARAM btnState, int x, int y)override
+    void OnMouseMove(WPARAM btnState, int x, int y)override
     {
         auto& io = ImGui::GetIO();
         if (io.WantCaptureMouse)

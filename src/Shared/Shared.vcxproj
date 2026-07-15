@@ -172,6 +172,7 @@
     <ClCompile Include="descriptorutil.ixx" />
     <ClCompile Include="event.ixx" />
     <ClCompile Include="gametimer.ixx" />
+    <ClCompile Include="hr.ixx" />
     <ClCompile Include="imgui.ixx" />
     <ClCompile Include="loadm3d.ixx" />
     <ClCompile Include="materiallib.ixx" />

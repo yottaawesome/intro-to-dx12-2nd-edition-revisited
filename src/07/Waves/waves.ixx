@@ -106,7 +106,9 @@ export class WavesApp : public D3DApp
 public:
 	WavesApp(Win32::HINSTANCE hInstance)
 		: D3DApp(hInstance)
-	{ }
+	{
+		Initialize();
+	}
 	WavesApp(const WavesApp& rhs) = delete;
 	WavesApp& operator=(const WavesApp& rhs) = delete;
 	~WavesApp()
@@ -115,6 +117,7 @@ public:
 			FlushCommandQueue();
 	}
 
+private:
 	void Initialize() override
 	{
 		D3DApp::Initialize();
@@ -131,7 +134,7 @@ public:
 		mGeometries[waveGeo->Name] = std::move(waveGeo);
 
 		// Kick off upload work asyncronously.
-		auto result = std::future<void>{mUploadBatch->End(mCommandQueue.Get())};
+		auto result = std::future<void>{ mUploadBatch->End(mCommandQueue.Get()) };
 
 		// Other init work...
 		BuildRootSignature();
@@ -145,7 +148,6 @@ public:
 		result.wait();
 	}
 
-private:
 	void CreateRtvAndDsvDescriptorHeaps()override
 	{
 		mRtvHeap.Init(md3dDevice.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, SwapChainBufferCount);

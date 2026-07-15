@@ -19,7 +19,6 @@ try
 	if constexpr(IsDebugBuild)
 		Win32::_CrtSetDbgFlag(Win32::CrtAllocMemDf | Win32::CrtLeakCheckDf);
 	auto theApp = StencilingApp{hInstance};
-	theApp.Initialize();
     return theApp.Run();
 }
 catch (const std::exception& e)

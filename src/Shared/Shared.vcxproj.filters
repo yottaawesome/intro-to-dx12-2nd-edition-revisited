@@ -75,6 +75,9 @@
     <ClCompile Include="waves.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="hr.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="vcpkg.json" />

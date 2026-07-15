@@ -89,7 +89,9 @@ export class CrateApp : public D3DApp
 public:
     CrateApp(Win32::HINSTANCE hInstance)
         : D3DApp(hInstance)
-    { }
+    { 
+        Initialize(); 
+    }
     CrateApp(const CrateApp& rhs) = delete;
     CrateApp& operator=(const CrateApp& rhs) = delete;
     ~CrateApp()
@@ -98,6 +100,7 @@ public:
             FlushCommandQueue();
     }
 
+private:
     void Initialize() override
     {
         D3DApp::Initialize();
@@ -108,11 +111,11 @@ public:
 
         LoadTextures();
 
-        auto shapeGeo = std::unique_ptr<MeshGeometry>{BuildShapeGeometry(md3dDevice.Get(), *mUploadBatch.get())};
+        auto shapeGeo = std::unique_ptr<MeshGeometry>{ BuildShapeGeometry(md3dDevice.Get(), *mUploadBatch.get()) };
         mGeometries[shapeGeo->Name] = std::move(shapeGeo);
 
         // Kick off upload work asyncronously.
-        auto result = std::future<void>{mUploadBatch->End(mCommandQueue.Get())};
+        auto result = std::future<void>{ mUploadBatch->End(mCommandQueue.Get()) };
 
         // Other init work...
         BuildRootSignature();
@@ -127,7 +130,6 @@ public:
         result.wait();
     }
 
-private:
     void CreateRtvAndDsvDescriptorHeaps()override
     {
         mRtvHeap.Init(md3dDevice.Get(), D3D12::D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_RTV, SwapChainBufferCount);

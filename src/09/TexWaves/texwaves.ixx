@@ -93,7 +93,9 @@ export class TexWavesApp : public D3DApp
 public:
     TexWavesApp(HINSTANCE hInstance)
         : D3DApp(hInstance)
-    { }
+    { 
+        Initialize(); 
+    }
     TexWavesApp(const TexWavesApp& rhs) = delete;
     TexWavesApp& operator=(const TexWavesApp& rhs) = delete;
     ~TexWavesApp()
@@ -102,6 +104,7 @@ public:
             FlushCommandQueue();
     }
 
+private:
     void Initialize()override
     {
         D3DApp::Initialize();
@@ -114,28 +117,17 @@ public:
 
         LoadTextures();
 
-        std::unique_ptr<MeshGeometry> shapeGeo = d3dUtil::BuildShapeGeometry(md3dDevice.Get(), *mUploadBatch.get());
-        if (shapeGeo != nullptr)
-        {
-            mGeometries[shapeGeo->Name] = std::move(shapeGeo);
-        }
+        auto shapeGeo = std::unique_ptr<MeshGeometry>{ d3dUtil::BuildShapeGeometry(md3dDevice.Get(), *mUploadBatch.get()) };
+        mGeometries[shapeGeo->Name] = std::move(shapeGeo);
 
-        std::unique_ptr<MeshGeometry> landGeo = BuildLandGeometry(
-            md3dDevice.Get(), *mUploadBatch.get());
-        if (landGeo != nullptr)
-        {
-            mGeometries[landGeo->Name] = std::move(landGeo);
-        }
+        auto landGeo = std::unique_ptr<MeshGeometry>{ BuildLandGeometry(md3dDevice.Get(), *mUploadBatch.get()) };
+        mGeometries[landGeo->Name] = std::move(landGeo);
 
-        std::unique_ptr<MeshGeometry> waveGeo = BuildWaveGeometry(
-            md3dDevice.Get(), *mUploadBatch.get());
-        if (waveGeo != nullptr)
-        {
-            mGeometries[waveGeo->Name] = std::move(waveGeo);
-        }
+        auto waveGeo = std::unique_ptr<MeshGeometry>{ BuildWaveGeometry(md3dDevice.Get(), *mUploadBatch.get()) };
+        mGeometries[waveGeo->Name] = std::move(waveGeo);
 
         // Kick off upload work asyncronously.
-        std::future<void> result = mUploadBatch->End(mCommandQueue.Get());
+        auto result = std::future<void>{ mUploadBatch->End(mCommandQueue.Get()) };
 
         // Other init work...
         BuildRootSignature();
@@ -150,7 +142,6 @@ public:
         result.wait();
     }
 
-private:
     void CreateRtvAndDsvDescriptorHeaps()override
     {
         mRtvHeap.Init(md3dDevice.Get(),D3D12::D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_RTV, SwapChainBufferCount);

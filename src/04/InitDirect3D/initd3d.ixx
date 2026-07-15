@@ -5,7 +5,7 @@
 export module initd3d;
 import shared;
 
-export constexpr auto CBV_SRV_UAV_HEAP_CAPACITY = 16384u;
+constexpr auto CBV_SRV_UAV_HEAP_CAPACITY = 16384u;
 
 // CBV = Constant Buffer View
 // SRV = Shader Resource View
@@ -14,192 +14,199 @@ export constexpr auto CBV_SRV_UAV_HEAP_CAPACITY = 16384u;
 export class InitDirect3DApp : public D3DApp
 {
 public:
-    InitDirect3DApp(Win32::HINSTANCE hInstance)
-        : D3DApp(hInstance)
-    {}
+	InitDirect3DApp(Win32::HINSTANCE hInstance)
+		: D3DApp(hInstance)
+	{
+		Initialize();
+	}
 
-    InitDirect3DApp(const InitDirect3DApp& rhs) = delete;
-    InitDirect3DApp& operator=(const InitDirect3DApp& rhs) = delete;
-    ~InitDirect3DApp()
-    {
-        if (md3dDevice != nullptr)
-            FlushCommandQueue();
-    }
-
-    void Initialize() override
-    {
-        D3DApp::Initialize();
-        BuildCbvSrvUavDescriptorHeap();
-    }
+	InitDirect3DApp(const InitDirect3DApp& rhs) = delete;
+	InitDirect3DApp& operator=(const InitDirect3DApp& rhs) = delete;
+	~InitDirect3DApp()
+	{
+		if (md3dDevice != nullptr)
+			FlushCommandQueue();
+	}
 
 private:
-    void CreateRtvAndDsvDescriptorHeaps()override
-    {
-        mRtvHeap.Init(md3dDevice.Get(), D3D12::D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_RTV, SwapChainBufferCount);
-        mDsvHeap.Init(md3dDevice.Get(), D3D12::D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_DSV, SwapChainBufferCount);
-    }
-    void OnResize()override
-    {
-        D3DApp::OnResize();
-    }
-    void Update(const GameTimer& gt)override
-    {
+	void Initialize() override
+	{
+		D3DApp::Initialize();
+		BuildCbvSrvUavDescriptorHeap();
+	}
 
-    }
-    void Draw(const GameTimer& gt)override
-        {
-            auto& cbvSrvUavHeap = CbvSrvUavHeap::Get();
+	void CreateRtvAndDsvDescriptorHeaps()override
+	{
+		mRtvHeap.Init(md3dDevice.Get(), D3D12::D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_RTV, SwapChainBufferCount);
+		mDsvHeap.Init(md3dDevice.Get(), D3D12::D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_DSV, SwapChainBufferCount);
+	}
 
-            UpdateImgui(gt);
+	void OnResize()override
+	{
+		D3DApp::OnResize();
+	}
 
-            // Reuse the memory associated with command recording.
-            // We can only reset when the associated command lists have finished execution on the GPU.
-            ThrowIfFailed(mDirectCmdListAlloc->Reset());
+	void Update(const GameTimer& gt)override
+	{
+	}
 
-            // A command list can be reset after it has been added to the command queue via ExecuteCommandList.
-            // Reusing the command list reuses memory.
-            ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
+	void Draw(const GameTimer& gt)override
+	{
+		auto& cbvSrvUavHeap = CbvSrvUavHeap::Get();
 
-            auto descriptorHeaps = std::array{ cbvSrvUavHeap.GetD3dHeap() };
-            mCommandList->SetDescriptorHeaps(1, descriptorHeaps.data());
+		UpdateImgui(gt);
 
-            mCommandList->RSSetViewports(1, &mScreenViewport);
-            mCommandList->RSSetScissorRects(1, &mScissorRect);
+		// Reuse the memory associated with command recording.
+		// We can only reset when the associated command lists have finished execution on the GPU.
+		if (auto hr = mDirectCmdListAlloc->Reset(); Win32::Failed(hr))
+			throw DxException{ hr };
 
-            // Indicate a state transition on the resource usage.
-            auto transition = D3D12::CD3DX12_RESOURCE_BARRIER::Transition(
-                CurrentBackBuffer(),
-                D3D12::D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_PRESENT,
-                D3D12::D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_RENDER_TARGET);
-            mCommandList->ResourceBarrier(1, &transition);
+		// A command list can be reset after it has been added to the command queue via ExecuteCommandList.
+		// Reusing the command list reuses memory.
+		if (auto hr = mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr); Win32::Failed(hr))
+			throw DxException{ hr };
 
-            // Clear the back buffer and depth buffer.
-            mCommandList->ClearRenderTargetView(
-                CurrentBackBufferView(),
-                DirectX::Colors::LightSteelBlue,
-                0,
-                nullptr);
-            constexpr auto clearFlags = D3D12::D3D12_CLEAR_FLAGS{ D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL };
-            mCommandList->ClearDepthStencilView(
-                DepthStencilView(),
-                clearFlags,
-                1.0f,
-                0,
-                0,
-                nullptr);
+		auto descriptorHeaps = std::array{ cbvSrvUavHeap.GetD3dHeap() };
+		mCommandList->SetDescriptorHeaps(1, descriptorHeaps.data());
 
-            // Specify the buffers we are going to render to.
-            auto cbbv = CurrentBackBufferView();
-            auto dsv = DepthStencilView();
-            mCommandList->OMSetRenderTargets(1, &cbbv, true, &dsv);
+		mCommandList->RSSetViewports(1, &mScreenViewport);
+		mCommandList->RSSetScissorRects(1, &mScissorRect);
 
-            // Draw imgui UI.
-            ImGui::ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), mCommandList.Get());
+		// Indicate a state transition on the resource usage.
+		auto transition = D3D12::CD3DX12_RESOURCE_BARRIER::Transition(
+			CurrentBackBuffer(),
+			D3D12::D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_PRESENT,
+			D3D12::D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_RENDER_TARGET);
+		mCommandList->ResourceBarrier(1, &transition);
 
-            // Indicate a state transition on the resource usage.
-            transition = D3D12::CD3DX12_RESOURCE_BARRIER::Transition(
-                CurrentBackBuffer(),
-                D3D12::D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_RENDER_TARGET,
-                D3D12::D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_PRESENT);
-            mCommandList->ResourceBarrier(1, &transition);
+		// Clear the back buffer and depth buffer.
+		mCommandList->ClearRenderTargetView(
+			CurrentBackBufferView(),
+			DirectX::Colors::LightSteelBlue,
+			0,
+			nullptr);
+		constexpr auto clearFlags = D3D12::D3D12_CLEAR_FLAGS{ D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL };
+		mCommandList->ClearDepthStencilView(
+			DepthStencilView(),
+			clearFlags,
+			1.0f,
+			0,
+			0,
+			nullptr);
 
-            // Done recording commands.
-            ThrowIfFailed(mCommandList->Close());
+		// Specify the buffers we are going to render to.
+		auto cbbv = CurrentBackBufferView();
+		auto dsv = DepthStencilView();
+		mCommandList->OMSetRenderTargets(1, &cbbv, true, &dsv);
 
-            // Add the command list to the queue for execution.
+		// Draw imgui UI.
+		ImGui::ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), mCommandList.Get());
 
-            auto cmdsLists = std::array<D3D12::ID3D12CommandList*, 1>{ mCommandList.Get() };
-            mCommandQueue->ExecuteCommandLists(static_cast<UINT>(cmdsLists.size()), cmdsLists.data());
+		// Indicate a state transition on the resource usage.
+		transition = D3D12::CD3DX12_RESOURCE_BARRIER::Transition(
+			CurrentBackBuffer(),
+			D3D12::D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_RENDER_TARGET,
+			D3D12::D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_PRESENT);
+		mCommandList->ResourceBarrier(1, &transition);
 
-            // Swap the back and front buffers
-            auto presentParams = DXGI::DXGI_PRESENT_PARAMETERS{ 0 };
-            ThrowIfFailed(mSwapChain->Present1(0, 0, &presentParams));
-            mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
+		// Done recording commands.
+		if (auto hr = mCommandList->Close(); Win32::Failed(hr))
+			throw DxException{ hr };
 
-            // Wait until frame commands are complete.  This waiting is inefficient and is
-            // done for simplicity.  Later we will show how to organize our rendering code
-            // so we do not have to wait per frame.
-            FlushCommandQueue();
-        }
+		// Add the command list to the queue for execution.
+		auto cmdsLists = std::array<D3D12::ID3D12CommandList*, 1>{ mCommandList.Get() };
+		mCommandQueue->ExecuteCommandLists(static_cast<UINT>(cmdsLists.size()), cmdsLists.data());
 
-    void UpdateImgui(const GameTimer& gt)override
-    {
-        D3DApp::UpdateImgui(gt);
+		// Swap the back and front buffers
+		auto presentParams = DXGI::DXGI_PRESENT_PARAMETERS{ 0 };
+		if (auto hr = mSwapChain->Present1(0, 0, &presentParams); Win32::Failed(hr))
+			throw DxException{ hr };
+		mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
 
-        //
-        // Define a panel to render GUI elements.
-        // 
-        ImGui::Begin("Options");
+		// Wait until frame commands are complete.  This waiting is inefficient and is
+		// done for simplicity.  Later we will show how to organize our rendering code
+		// so we do not have to wait per frame.
+		FlushCommandQueue();
+	}
 
-        ImGui::Text(
-            "Application average %.3f ms/frame (%.1f FPS)",
-            1000.0f / ImGui::GetIO().Framerate,
-            ImGui::GetIO().Framerate);
+	void UpdateImgui(const GameTimer& gt)override
+	{
+		D3DApp::UpdateImgui(gt);
 
-        auto gfxMemStats = DirectX::GraphicsMemoryStatistics{
-            DirectX::GraphicsMemory::Get(md3dDevice.Get()).GetStatistics() };
+		//
+		// Define a panel to render GUI elements.
+		// 
+		ImGui::Begin("Options");
 
-        if (ImGui::CollapsingHeader("VideoMemoryInfo"))
-        {
-            static auto vidMemPollTime = 0.0f;
-            vidMemPollTime += gt.DeltaTime();
+		ImGui::Text(
+			"Application average %.3f ms/frame (%.1f FPS)",
+			1000.0f / ImGui::GetIO().Framerate,
+			ImGui::GetIO().Framerate);
 
-            static auto videoMemInfo = DXGI::DXGI_QUERY_VIDEO_MEMORY_INFO{};
-            if (vidMemPollTime >= 1.0f) // poll every second
-            {
-                mDefaultAdapter->QueryVideoMemoryInfo(
-                    0, // assume single GPU
-                    DXGI::DXGI_MEMORY_SEGMENT_GROUP::DXGI_MEMORY_SEGMENT_GROUP_LOCAL, // interested in local GPU memory, not shared
-                    &videoMemInfo);
-                vidMemPollTime -= 1.0f;
-            }
+		auto gfxMemStats = DirectX::GraphicsMemoryStatistics{
+			DirectX::GraphicsMemory::Get(md3dDevice.Get()).GetStatistics() };
 
-            ImGui::Text("Budget (bytes): %u", videoMemInfo.Budget);
-            ImGui::Text("CurrentUsage (bytes): %u", videoMemInfo.CurrentUsage);
-            ImGui::Text("AvailableForReservation (bytes): %u", videoMemInfo.AvailableForReservation);
-            ImGui::Text("CurrentReservation (bytes): %u", videoMemInfo.CurrentReservation);
-        }
-        if (ImGui::CollapsingHeader("GraphicsMemoryStatistics"))
-        {
-            ImGui::Text("Bytes of memory in-flight: %u", gfxMemStats.committedMemory);
-            ImGui::Text("Total bytes used: %u", gfxMemStats.totalMemory);
-            ImGui::Text("Total page count: %u", gfxMemStats.totalPages);
-        }
+		if (ImGui::CollapsingHeader("VideoMemoryInfo"))
+		{
+			static auto vidMemPollTime = 0.0f;
+			vidMemPollTime += gt.DeltaTime();
 
-        ImGui::End();
-        ImGui::Render();
-    }
+			static auto videoMemInfo = DXGI::DXGI_QUERY_VIDEO_MEMORY_INFO{};
+			if (vidMemPollTime >= 1.0f) // poll every second
+			{
+				mDefaultAdapter->QueryVideoMemoryInfo(
+					0, // assume single GPU
+					DXGI::DXGI_MEMORY_SEGMENT_GROUP::DXGI_MEMORY_SEGMENT_GROUP_LOCAL, // interested in local GPU memory, not shared
+					&videoMemInfo);
+				vidMemPollTime -= 1.0f;
+			}
 
-    void OnMouseDown(Win32::WPARAM btnState, int x, int y)override
-    {
-        if (ImGui::ImGuiIO& io = ImGui::GetIO(); not io.WantCaptureMouse)
-        {
-            mLastMousePos.x = x;
-            mLastMousePos.y = y;
-            Win32::SetCapture(mhMainWnd);
-        }
-    }
-    void OnMouseUp(Win32::WPARAM btnState, int x, int y)override
-    {
-        if (ImGui::ImGuiIO& io = ImGui::GetIO(); not io.WantCaptureMouse)
-            Win32::ReleaseCapture();
-    }
-    void OnMouseMove(Win32::WPARAM btnState, int x, int y)override
-    {
-        if (ImGui::ImGuiIO& io = ImGui::GetIO(); not io.WantCaptureMouse)
-        {
-            mLastMousePos.x = x;
-            mLastMousePos.y = y;
-        }
-    }
+			ImGui::Text("Budget (bytes): %u", videoMemInfo.Budget);
+			ImGui::Text("CurrentUsage (bytes): %u", videoMemInfo.CurrentUsage);
+			ImGui::Text("AvailableForReservation (bytes): %u", videoMemInfo.AvailableForReservation);
+			ImGui::Text("CurrentReservation (bytes): %u", videoMemInfo.CurrentReservation);
+		}
+		if (ImGui::CollapsingHeader("GraphicsMemoryStatistics"))
+		{
+			ImGui::Text("Bytes of memory in-flight: %u", gfxMemStats.committedMemory);
+			ImGui::Text("Total bytes used: %u", gfxMemStats.totalMemory);
+			ImGui::Text("Total page count: %u", gfxMemStats.totalPages);
+		}
 
-    void BuildCbvSrvUavDescriptorHeap()
-    {
-        auto& cbvSrvUavHeap = CbvSrvUavHeap::Get();
-        cbvSrvUavHeap.Init(md3dDevice.Get(), CBV_SRV_UAV_HEAP_CAPACITY);
-        InitImgui(cbvSrvUavHeap);
-    }
+		ImGui::End();
+		ImGui::Render();
+	}
+
+	void OnMouseDown(Win32::WPARAM btnState, int x, int y)override
+	{
+		if (ImGui::ImGuiIO& io = ImGui::GetIO(); not io.WantCaptureMouse)
+		{
+			mLastMousePos.x = x;
+			mLastMousePos.y = y;
+			Win32::SetCapture(mhMainWnd);
+		}
+	}
+	void OnMouseUp(Win32::WPARAM btnState, int x, int y)override
+	{
+		if (ImGui::ImGuiIO& io = ImGui::GetIO(); not io.WantCaptureMouse)
+			Win32::ReleaseCapture();
+	}
+	void OnMouseMove(Win32::WPARAM btnState, int x, int y)override
+	{
+		if (ImGui::ImGuiIO& io = ImGui::GetIO(); not io.WantCaptureMouse)
+		{
+			mLastMousePos.x = x;
+			mLastMousePos.y = y;
+		}
+	}
+
+	void BuildCbvSrvUavDescriptorHeap()
+	{
+		auto& cbvSrvUavHeap = CbvSrvUavHeap::Get();
+		cbvSrvUavHeap.Init(md3dDevice.Get(), CBV_SRV_UAV_HEAP_CAPACITY);
+		InitImgui(cbvSrvUavHeap);
+	}
 
 private:
-    Win32::POINT mLastMousePos;
+	Win32::POINT mLastMousePos;
 };

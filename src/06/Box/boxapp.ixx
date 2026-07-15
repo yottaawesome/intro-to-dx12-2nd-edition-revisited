@@ -32,7 +32,9 @@ export class BoxApp : public D3DApp
 public:
     BoxApp(Win32::HINSTANCE hInstance)
         : D3DApp(hInstance)
-    { }
+    {
+        Initialize();
+    }
     BoxApp(const BoxApp& rhs) = delete;
     BoxApp& operator=(const BoxApp& rhs) = delete;
     ~BoxApp()
@@ -41,7 +43,8 @@ public:
             FlushCommandQueue();
     }
 
-	void Initialize() override
+private:
+    void Initialize() override
     {
         D3DApp::Initialize();
 
@@ -52,7 +55,7 @@ public:
         BuildBoxGeometry(md3dDevice.Get(), *mUploadBatch.get());
 
         // Kick off upload work asyncronously.
-        auto result = std::future<void>{mUploadBatch->End(mCommandQueue.Get())};
+        auto result = std::future<void>{ mUploadBatch->End(mCommandQueue.Get()) };
 
         // Other init work...
         BuildCbvSrvUavDescriptorHeap();
@@ -65,7 +68,6 @@ public:
         result.wait();
     }
 
-private:
     void CreateRtvAndDsvDescriptorHeaps()override
     {
         mRtvHeap.Init(md3dDevice.Get(), D3D12::D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_RTV, SwapChainBufferCount);
