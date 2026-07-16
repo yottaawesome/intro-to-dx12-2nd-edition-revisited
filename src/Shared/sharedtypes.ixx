@@ -9,6 +9,8 @@ export
 	using 
 		::PerPassCB,
 		::MaterialData,
-		::PerObjectCB
+		::PerObjectCB,
+		::BlurDispatchCB,
+		::GpuWavesCB
 		;
 }

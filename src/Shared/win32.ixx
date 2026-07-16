@@ -313,6 +313,7 @@ export namespace D3D12
 	}
 
 	using
+		::D3D12_COMPUTE_PIPELINE_STATE_DESC,
 		::D3D12_DEPTH_STENCIL_DESC,
 		::D3D12_DEPTH_STENCILOP_DESC,
 		::D3D12_COLOR_WRITE_ENABLE,
@@ -330,6 +331,7 @@ export namespace D3D12
 		::D3D12_INPUT_CLASSIFICATION,
 		::D3D12_ROOT_SIGNATURE_FLAGS,
 		::D3D12_DESCRIPTOR_RANGE_TYPE,
+		::D3D12_RESOURCE_DIMENSION,
 		::D3D12_FILL_MODE,
 		::D3D12_CULL_MODE,
 		::CD3DX12_ROOT_PARAMETER,
@@ -455,7 +457,9 @@ export namespace DirectX
 		::DirectX::XMFLOAT2,
 		::DirectX::CXMMATRIX,
 		::DirectX::XMVECTOR,
+		::DirectX::XMUINT4,
 		::DirectX::BoundingSphere,
+		::DirectX::XMUINT2,
 		::DirectX::BoundingFrustum,
 		::DirectX::GraphicsMemory,
 		::DirectX::BoundingBox,

@@ -44,6 +44,7 @@ export namespace ImGui
 		::ImGui::SliderFloat,
 		::ImGui::NewFrame,
 		::ImGui::Begin,
+		::ImGui::SliderInt,
 		::ImGui::End,
 		::ImGui::Render
 		;
