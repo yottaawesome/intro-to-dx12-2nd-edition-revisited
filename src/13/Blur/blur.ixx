@@ -138,10 +138,11 @@ public:
 		D3D12::ID3D12PipelineState* vertBlurPSO,
 		D3D12::ID3D12Resource* input,
 		int blurCount,
-		float blurSigma)
+		float blurSigma
+	)
 	{
 		auto weights = CalcGaussWeights(blurSigma);
-		int blurRadius = (int)weights.size() / 2;
+		auto blurRadius = static_cast<int>(weights.size() / 2);
 
 		cmdList->SetComputeRootSignature(rootSig);
 
@@ -177,12 +178,10 @@ public:
 			D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
 		cmdList->ResourceBarrier(1, &transition);
 
-		for (int i = 0; i < blurCount; ++i)
+		for (auto i = 0; i < blurCount; ++i)
 		{
 			//
 			// Horizontal Blur pass.
-			//
-
 			transition = D3D12::CD3DX12_RESOURCE_BARRIER::Transition(mBlurMap1.Get(),
 				D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 			cmdList->ResourceBarrier(1, &transition);
@@ -208,8 +207,6 @@ public:
 
 			//
 			// Vertical Blur pass.
-			//
-
 			cmdList->SetComputeRootConstantBufferView(
 				COMPUTE_ROOT_ARG_DISPATCH_CBV,
 				mVertPassConstants.GpuAddress());
@@ -230,29 +227,27 @@ public:
 private:
 	auto CalcGaussWeights(float sigma) -> std::vector<float>
 	{
-		float twoSigma2 = 2.0f * sigma * sigma;
+		auto twoSigma2 = 2.0f * sigma * sigma;
 
 		// Estimate the blur radius based on sigma since sigma controls the "width" of the bell curve.
-		int blurRadius = (int)ceil(2.0f * sigma);
+		auto blurRadius = static_cast<int>(ceil(2.0f * sigma));
 
 		//assert(blurRadius <= MaxBlurRadius);
 
-		std::vector<float> weights;
+		auto weights = std::vector<float>{};
 		weights.resize(2 * blurRadius + 1);
 
-		float weightSum = 0.0f;
+		auto weightSum = 0.0f;
 
-		for (int i = -blurRadius; i <= blurRadius; ++i)
+		for (auto i = -blurRadius; i <= blurRadius; ++i)
 		{
-			float x = (float)i;
-
+			auto x = static_cast<float>(i);
 			weights[i + blurRadius] = std::expf(-x * x / twoSigma2);
-
 			weightSum += weights[i + blurRadius];
 		}
 
 		// Divide by the sum so all the weights add up to 1.0.
-		for (int i = 0; i < weights.size(); ++i)
+		for (auto i = 0; i < weights.size(); ++i)
 		{
 			weights[i] /= weightSum;
 		}
@@ -267,7 +262,6 @@ private:
 		// cannot be bound as an UnorderedAccessView, or cast to a format that
 		// could be bound as an UnorderedAccessView.  Therefore this format 
 		// does not support D3D11_BIND_UNORDERED_ACCESS.
-
 		auto texDesc = D3D12::D3D12_RESOURCE_DESC{
 			.Dimension = D3D12::D3D12_RESOURCE_DIMENSION::D3D12_RESOURCE_DIMENSION_TEXTURE2D,
 			.Alignment = 0,
@@ -364,8 +358,8 @@ public:
 		mTimeStep = dt;
 		mSpatialStep = dx;
 
-		float d = damping * dt + 2.0f;
-		float e = (speed * speed) * (dt * dt) / (dx * dx);
+		auto d = damping * dt + 2.0f;
+		auto e = (speed * speed) * (dt * dt) / (dx * dx);
 		mK[0] = (damping * dt - 2.0f) / d;
 		mK[1] = (4.0f - 8.0f * e) / d;
 		mK[2] = (2.0f * e) / d;
@@ -413,8 +407,8 @@ public:
 
 	void SetConstants(float speed, float damping)
 	{
-		float d = damping * mTimeStep + 2.0f;
-		float e = (speed * speed) * (mTimeStep * mTimeStep) / (mSpatialStep * mSpatialStep);
+		auto d = damping * mTimeStep + 2.0f;
+		auto e = (speed * speed) * (mTimeStep * mTimeStep) / (mSpatialStep * mSpatialStep);
 		mK[0] = (damping * mTimeStep - 2.0f) / d;
 		mK[1] = (4.0f - 8.0f * e) / d;
 		mK[2] = (2.0f * e) / d;
@@ -425,12 +419,13 @@ public:
 		// All the textures for the wave simulation will be bound as a shader resource and
 		// unordered access view at some point since we ping-pong the buffers.
 
-		std::vector<float> zeroFloats(mVertexCount, 0.0f);
-
-		D3D12::D3D12_SUBRESOURCE_DATA initData;
-		initData.pData = zeroFloats.data();
-		initData.RowPitch = mNumCols * sizeof(float);
-		initData.SlicePitch = initData.RowPitch * mNumRows;
+		auto zeroFloats = std::vector<float>(mVertexCount, 0.0f);
+		auto initData = D3D12::D3D12_SUBRESOURCE_DATA{
+			.pData = zeroFloats.data(),
+			.RowPitch = mNumCols * sizeof(float),
+			.SlicePitch = mNumCols * sizeof(float) * mNumRows
+		};
+		
 
 		CreateTextureFromMemory(
 			md3dDevice, uploadBatch,
@@ -512,16 +507,17 @@ public:
 			COMPUTE_ROOT_ARG_PASS_CBV,
 			passCB->GetGPUVirtualAddress());
 
-		GpuWavesCB wavesCB;
-		wavesCB.gWaveConstant0 = mK[0];
-		wavesCB.gWaveConstant1 = mK[1];
-		wavesCB.gWaveConstant2 = mK[2];
-		wavesCB.gDisturbMag = 0.0f;
-		wavesCB.gDisturbIndex = DirectX::XMUINT2(0, 0);
-		wavesCB.gGridSize = DirectX::XMUINT2(mNumCols, mNumRows);
-		wavesCB.gPrevSolIndex = mPrevSolUavIndex;
-		wavesCB.gCurrSolIndex = mCurrSolUavIndex;
-		wavesCB.gOutputIndex = mNextSolUavIndex;
+		auto wavesCB = GpuWavesCB{
+			.gWaveConstant0 = mK[0],
+			.gWaveConstant1 = mK[1],
+			.gWaveConstant2 = mK[2],
+			.gDisturbMag = 0.0f,
+			.gDisturbIndex = DirectX::XMUINT2(0, 0),
+			.gGridSize = DirectX::XMUINT2(mNumCols, mNumRows),
+			.gPrevSolIndex = mPrevSolUavIndex,
+			.gCurrSolIndex = mCurrSolUavIndex,
+			.gOutputIndex = mNextSolUavIndex
+		};
 
 		auto& linearAllocator = DirectX::GraphicsMemory::Get(md3dDevice);
 		mUpdateConstantsMemHandle = linearAllocator.AllocateConstant(wavesCB);
@@ -602,16 +598,18 @@ public:
 			COMPUTE_ROOT_ARG_PASS_CBV,
 			passCB->GetGPUVirtualAddress());
 
-		GpuWavesCB wavesCB;
-		wavesCB.gWaveConstant0 = mK[0];
-		wavesCB.gWaveConstant1 = mK[1];
-		wavesCB.gWaveConstant2 = mK[2];
-		wavesCB.gDisturbMag = magnitude;
-		wavesCB.gDisturbIndex = DirectX::XMUINT2(j, i);
-		wavesCB.gGridSize = DirectX::XMUINT2(mNumCols, mNumRows);
-		wavesCB.gPrevSolIndex = mPrevSolUavIndex;
-		wavesCB.gCurrSolIndex = mCurrSolUavIndex;
-		wavesCB.gOutputIndex = mNextSolUavIndex;
+		auto wavesCB = GpuWavesCB{
+			.gWaveConstant0 = mK[0],
+			.gWaveConstant1 = mK[1],
+			.gWaveConstant2 = mK[2],
+			.gDisturbMag = magnitude,
+			.gDisturbIndex = DirectX::XMUINT2(j, i),
+			.gGridSize = DirectX::XMUINT2(mNumCols, mNumRows),
+			.gPrevSolIndex = mPrevSolUavIndex,
+			.gCurrSolIndex = mCurrSolUavIndex,
+			.gOutputIndex = mNextSolUavIndex
+		};
+		
 
 		auto& linearAllocator = DirectX::GraphicsMemory::Get(md3dDevice);
 		mDisturbConstantsMemHandle = linearAllocator.AllocateConstant(wavesCB);
@@ -625,7 +623,6 @@ public:
 	}
 
 private:
-
 	std::uint32_t mNumRows;
 	std::uint32_t mNumCols;
 
@@ -741,17 +738,17 @@ public:
 
 		LoadTextures();
 
-		std::unique_ptr<MeshGeometry> shapeGeo = d3dUtil::BuildShapeGeometry(md3dDevice.Get(), *mUploadBatch.get());
+		auto shapeGeo = std::unique_ptr<MeshGeometry>{d3dUtil::BuildShapeGeometry(md3dDevice.Get(), *mUploadBatch.get())};
 		mGeometries[shapeGeo->Name] = std::move(shapeGeo);
 
-		std::unique_ptr<MeshGeometry> landGeo = BuildLandGeometry(md3dDevice.Get(), *mUploadBatch.get());
+		auto landGeo = std::unique_ptr<MeshGeometry>{BuildLandGeometry(md3dDevice.Get(), *mUploadBatch.get())};
 		mGeometries[landGeo->Name] = std::move(landGeo);
 
-		std::unique_ptr<MeshGeometry> waveGeo = BuildWaveGeometry(md3dDevice.Get(), *mUploadBatch.get());
+		auto waveGeo = std::unique_ptr<MeshGeometry>{BuildWaveGeometry(md3dDevice.Get(), *mUploadBatch.get())};
 		mGeometries[waveGeo->Name] = std::move(waveGeo);
 
 		// Kick off upload work asyncronously.
-		std::future<void> result = mUploadBatch->End(mCommandQueue.Get());
+		auto result = std::future<void>{mUploadBatch->End(mCommandQueue.Get())};
 
 		// Other init work...
 		BuildRootSignature();
@@ -772,19 +769,19 @@ private:
 		mRtvHeap.Init(md3dDevice.Get(),D3D12::D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_RTV, SwapChainBufferCount);
 		mDsvHeap.Init(md3dDevice.Get(), D3D12::D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_DSV, SwapChainBufferCount);
 	}
+
 	void OnResize()override
 	{
 		D3DApp::OnResize();
 
 		// The window resized, so update the aspect ratio and recompute the projection matrix.
-		DirectX::XMMATRIX P = DirectX::XMMatrixPerspectiveFovLH(0.25f * MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
+		auto P = DirectX::XMMatrixPerspectiveFovLH(0.25f * MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
 		DirectX::XMStoreFloat4x4(&mProj, P);
 
 		if (CbvSrvUavHeap::Get().IsInitialized())
-		{
 			mBlurFilter->OnResize(mClientWidth, mClientHeight);
-		}
 	}
+
 	void Update(const GameTimer& gt)override
 	{
 		OnKeyboardInput(gt);
@@ -796,7 +793,7 @@ private:
 
 		// Has the GPU finished processing the commands of the current frame resource?
 		// If not, wait until the GPU has completed commands up to this fence point.
-		if (mCurrFrameResource->Fence != 0 && mFence->GetCompletedValue() < mCurrFrameResource->Fence)
+		if (mCurrFrameResource->Fence != 0 and mFence->GetCompletedValue() < mCurrFrameResource->Fence)
 		{
 			auto event = Event{};
 			ThrowIfFailed(mFence->SetEventOnCompletion(mCurrFrameResource->Fence, event.Get()));
@@ -809,10 +806,10 @@ private:
 
 		mLightRotationAngle += 0.1f * gt.DeltaTime();
 
-		DirectX::XMMATRIX R = DirectX::XMMatrixRotationY(mLightRotationAngle);
+		auto R = DirectX::XMMatrixRotationY(mLightRotationAngle);
 		for (int i = 0; i < 3; ++i)
 		{
-			DirectX::XMVECTOR lightDir = DirectX::XMLoadFloat3(&mBaseLightDirections[i]);
+			auto lightDir = DirectX::XMVECTOR{DirectX::XMLoadFloat3(&mBaseLightDirections[i])};
 			lightDir = DirectX::XMVector3TransformNormal(lightDir, R);
 			DirectX::XMStoreFloat3(&mRotatedLightDirections[i], lightDir);
 		}
@@ -822,10 +819,11 @@ private:
 		UpdateMaterialBuffer(gt);
 		UpdateMainPassCB(gt);
 	}
+
 	void Draw(const GameTimer& gt)override
 	{
-		CbvSrvUavHeap& cbvSrvUavHeap = CbvSrvUavHeap::Get();
-		SamplerHeap& samHeap = SamplerHeap::Get();
+		auto& cbvSrvUavHeap = CbvSrvUavHeap::Get();
+		auto& samHeap = SamplerHeap::Get();
 
 		UpdateImgui(gt);
 
@@ -839,8 +837,8 @@ private:
 		// Reusing the command list reuses memory.
 		ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), mPSOs["opaque"].Get()));
 
-		D3D12::ID3D12DescriptorHeap* descriptorHeaps[] = { cbvSrvUavHeap.GetD3dHeap(), samHeap.GetD3dHeap() };
-		mCommandList->SetDescriptorHeaps(std::size(descriptorHeaps), descriptorHeaps);
+		auto descriptorHeaps = std::array{ cbvSrvUavHeap.GetD3dHeap(), samHeap.GetD3dHeap() };
+		mCommandList->SetDescriptorHeaps(static_cast<std::uint32_t>(descriptorHeaps.size()), descriptorHeaps.data());
 
 		auto passCB = mCurrFrameResource->PassCB->Resource();
 
@@ -871,7 +869,12 @@ private:
 			clearColor[2] = mFogColor.z;
 		}
 		mCommandList->ClearRenderTargetView(CurrentBackBufferView(), clearColor, 0, nullptr);
-		mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12::D3D12_CLEAR_FLAGS{ D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL }, 1.0f, 0, 0, nullptr);
+		mCommandList->ClearDepthStencilView(DepthStencilView(), 
+			D3D12::D3D12_CLEAR_FLAGS{ D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL }, 
+			1.0f, 
+			0, 
+			0, 
+			nullptr);
 
 		// Specify the buffers we are going to render to.
 		auto cbbv = CurrentBackBufferView();
@@ -942,11 +945,11 @@ private:
 		mLinearAllocator->Commit(mCommandQueue.Get());
 
 		// Add the command list to the queue for execution.
-		D3D12::ID3D12CommandList* cmdsLists[] = { mCommandList.Get() };
-		mCommandQueue->ExecuteCommandLists(std::size(cmdsLists), cmdsLists);
+		auto cmdsLists = std::array{ static_cast<D3D12::ID3D12CommandList*>(mCommandList.Get()) };
+		mCommandQueue->ExecuteCommandLists(static_cast<std::uint32_t>(cmdsLists.size()), cmdsLists.data());
 
 		// Swap the back and front buffers
-		DXGI::DXGI_PRESENT_PARAMETERS presentParams = { 0 };
+		auto presentParams = DXGI::DXGI_PRESENT_PARAMETERS{ 0 };
 		ThrowIfFailed(mSwapChain->Present1(0, 0, &presentParams));
 		mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
 
@@ -1024,7 +1027,7 @@ private:
 
 		ImGui::Render();
 	}
-	void OnMouseDown(WPARAM btnState, int x, int y)override
+	void OnMouseDown(Win32::WPARAM btnState, int x, int y)override
 	{
 		if (auto& io = ImGui::GetIO(); !io.WantCaptureMouse)
 		{
@@ -1033,7 +1036,7 @@ private:
 			Win32::SetCapture(mhMainWnd);
 		}
 	}
-	void OnMouseUp(WPARAM btnState, int x, int y)override
+	void OnMouseUp(Win32::WPARAM btnState, int x, int y)override
 	{
 		if (auto& io = ImGui::GetIO(); !io.WantCaptureMouse)
 			Win32::ReleaseCapture();
@@ -1079,7 +1082,7 @@ private:
 
 	void AnimateMaterials(const GameTimer& gt)
 	{
-		MaterialLib& matLib = MaterialLib::GetLib();
+		auto& matLib = MaterialLib::GetLib();
 
 		// Scroll the water material texture coordinates.
 		auto waterMat = matLib["water"];
@@ -1110,11 +1113,10 @@ private:
 		mEyePos.y = mRadius * std::cosf(mPhi);
 
 		// Build the view matrix.
-		DirectX::XMVECTOR pos = DirectX::XMVectorSet(mEyePos.x, mEyePos.y, mEyePos.z, 1.0f);
-		DirectX::XMVECTOR target = DirectX::XMVectorZero();
-		DirectX::XMVECTOR up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-
-		DirectX::XMMATRIX view = DirectX::XMMatrixLookAtLH(pos, target, up);
+		auto pos = DirectX::XMVECTOR{DirectX::XMVectorSet(mEyePos.x, mEyePos.y, mEyePos.z, 1.0f)};
+		auto target = DirectX::XMVECTOR{DirectX::XMVectorZero()};
+		auto up = DirectX::XMVECTOR{DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)};
+		auto view = DirectX::XMMATRIX{DirectX::XMMatrixLookAtLH(pos, target, up)};
 		DirectX::XMStoreFloat4x4(&mView, view);
 	}
 	void UpdatePerObjectCB(const GameTimer& gt)
@@ -1149,19 +1151,23 @@ private:
 		{
 			// Only update the buffer data if the data has changed.  If the buffer
 			// data changes, it needs to be updated for each FrameResource.
-			Material* mat = e.second.get();
+			auto mat = static_cast<Material*>(e.second.get());
 			if (mat->NumFramesDirty < 1)
 				continue;
-			DirectX::XMMATRIX matTransform = DirectX::XMLoadFloat4x4(&mat->MatTransform);
+			auto matTransform = DirectX::XMMATRIX{DirectX::XMLoadFloat4x4(&mat->MatTransform)};
 
-			MaterialData matData;
+			auto matData = MaterialData{
+				.DiffuseAlbedo = mat->DiffuseAlbedo,
+				.FresnelR0 = mat->FresnelR0,
+				.Roughness = mat->Roughness,
+				.DiffuseMapIndex = static_cast<std::uint32_t>(mat->AlbedoBindlessIndex),
+				.NormalMapIndex = static_cast<std::uint32_t>(mat->NormalBindlessIndex),
+				.GlossHeightAoMapIndex = static_cast<std::uint32_t>(mat->GlossHeightAoBindlessIndex)
+			};
 			matData.DiffuseAlbedo = mat->DiffuseAlbedo;
 			matData.FresnelR0 = mat->FresnelR0;
 			matData.Roughness = mat->Roughness;
 			DirectX::XMStoreFloat4x4(&matData.MatTransform, DirectX::XMMatrixTranspose(matTransform));
-			matData.DiffuseMapIndex = mat->AlbedoBindlessIndex;
-			matData.NormalMapIndex = mat->NormalBindlessIndex;
-			matData.GlossHeightAoMapIndex = mat->GlossHeightAoBindlessIndex;
 
 			currMaterialBuffer->CopyData(mat->MatIndex, matData);
 
@@ -1173,16 +1179,16 @@ private:
 	{
 		mMainPassCB = {};
 
-		DirectX::XMMATRIX view = DirectX::XMLoadFloat4x4(&mView);
-		DirectX::XMMATRIX proj = DirectX::XMLoadFloat4x4(&mProj);
+		auto view = DirectX::XMMATRIX{DirectX::XMLoadFloat4x4(&mView)};
+		auto proj = DirectX::XMMATRIX{DirectX::XMLoadFloat4x4(&mProj)};
 
-		DirectX::XMMATRIX viewProj = DirectX::XMMatrixMultiply(view, proj);
-		auto detView = DirectX::XMMatrixDeterminant(view);
-		auto detProj = DirectX::XMMatrixDeterminant(proj);
-		auto detViewProj = DirectX::XMMatrixDeterminant(viewProj);
-		DirectX::XMMATRIX invView = DirectX::XMMatrixInverse(&detView, view);
-		DirectX::XMMATRIX invProj = DirectX::XMMatrixInverse(&detProj, proj);
-		DirectX::XMMATRIX invViewProj = DirectX::XMMatrixInverse(&detViewProj, viewProj);
+		auto viewProj = DirectX::XMMATRIX{ DirectX::XMMatrixMultiply(view, proj) };
+		auto detView = DirectX::XMVECTOR{ DirectX::XMMatrixDeterminant(view) };
+		auto detProj = DirectX::XMVECTOR{ DirectX::XMMatrixDeterminant(proj) };
+		auto detViewProj = DirectX::XMVECTOR{ DirectX::XMMatrixDeterminant(viewProj) };
+		auto invView = DirectX::XMMATRIX{DirectX::XMMatrixInverse(&detView, view)};
+		auto invProj = DirectX::XMMATRIX{DirectX::XMMatrixInverse(&detProj, proj)};
+		auto invViewProj = DirectX::XMMATRIX{DirectX::XMMatrixInverse(&detViewProj, viewProj)};
 
 		DirectX::XMStoreFloat4x4(&mMainPassCB.gView, DirectX::XMMatrixTranspose(view));
 		DirectX::XMStoreFloat4x4(&mMainPassCB.gInvView, DirectX::XMMatrixTranspose(invView));
@@ -1236,7 +1242,7 @@ private:
 
 	void LoadTextures()
 	{
-		TextureLib& texLib = TextureLib::GetLib();
+		auto& texLib = TextureLib::GetLib();
 		texLib.Init(md3dDevice.Get(), *mUploadBatch.get());
 	}
 
@@ -1250,11 +1256,11 @@ private:
 		auto& texLib = TextureLib::GetLib();
 		for (auto& it : texLib.GetCollection())
 		{
-			Texture* tex = it.second.get();
+			auto tex = static_cast<Texture*>(it.second.get());
 			tex->BindlessIndex = cbvSrvUavHeap.NextFreeIndex();
 
-			D3D12::CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor = cbvSrvUavHeap.CpuHandle(tex->BindlessIndex);
-			ID3D12Resource* texResource = tex->Resource.Get();
+			auto hDescriptor = D3D12::CD3DX12_CPU_DESCRIPTOR_HANDLE{cbvSrvUavHeap.CpuHandle(tex->BindlessIndex)};
+			auto texResource = static_cast<D3D12::ID3D12Resource*>(tex->Resource.Get());
 			if (tex->IsCubeMap)
 				CreateSrvCube(md3dDevice.Get(), texResource, texResource->GetDesc().Format, texResource->GetDesc().MipLevels, hDescriptor);
 			else
@@ -1267,7 +1273,7 @@ private:
 	void BuildRootSignature()
 	{
 		// Root parameter can be a table, root descriptor or root constants.
-		D3D12::CD3DX12_ROOT_PARAMETER gfxRootParameters[GFX_ROOT_ARG_COUNT];
+		auto gfxRootParameters = std::array<D3D12::CD3DX12_ROOT_PARAMETER, GFX_ROOT_ARG_COUNT>{};
 
 		// Perfomance TIP: Order from most frequent to least frequent.
 		gfxRootParameters[GFX_ROOT_ARG_OBJECT_CBV].InitAsConstantBufferView(0);
@@ -1275,18 +1281,20 @@ private:
 		gfxRootParameters[GFX_ROOT_ARG_MATERIAL_SRV].InitAsShaderResourceView(0);
 
 		// A root signature is an array of root parameters.
-		D3D12::CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(
+		auto rootSigDesc = D3D12::CD3DX12_ROOT_SIGNATURE_DESC(
 			GFX_ROOT_ARG::GFX_ROOT_ARG_COUNT,
-			gfxRootParameters,
-			0, nullptr,
-			D3D12::D3D12_ROOT_SIGNATURE_FLAGS{ D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
-			D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED |
-			D3D12_ROOT_SIGNATURE_FLAG_SAMPLER_HEAP_DIRECTLY_INDEXED }
-			);
+			gfxRootParameters.data(),
+			0, 
+			nullptr,
+			D3D12::D3D12_ROOT_SIGNATURE_FLAGS{ 
+				D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
+				D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED |
+				D3D12_ROOT_SIGNATURE_FLAG_SAMPLER_HEAP_DIRECTLY_INDEXED 
+			});
 
 		// create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
-		Microsoft::WRL::ComPtr<D3D::ID3DBlob> serializedRootSig = nullptr;
-		Microsoft::WRL::ComPtr<D3D::ID3DBlob> errorBlob = nullptr;
+		auto serializedRootSig = Microsoft::WRL::ComPtr<D3D::ID3DBlob>{};
+		auto errorBlob = Microsoft::WRL::ComPtr<D3D::ID3DBlob>{};
 		auto hr = D3D12::D3D12SerializeRootSignature(
 			&rootSigDesc,
 			D3D::D3D_ROOT_SIGNATURE_VERSION::D3D_ROOT_SIGNATURE_VERSION_1,
@@ -1294,9 +1302,7 @@ private:
 			errorBlob.GetAddressOf());
 
 		if (errorBlob != nullptr)
-		{
 			Win32::OutputDebugStringA((char*)errorBlob->GetBufferPointer());
-		}
 		ThrowIfFailed(hr);
 
 		ThrowIfFailed(md3dDevice->CreateRootSignature(
@@ -1314,20 +1320,20 @@ private:
 		computeRootParameters[COMPUTE_ROOT_ARG_PASS_EXTRA_CBV].InitAsConstantBufferView(2);
 
 		// A root signature is an array of root parameters.
-		D3D12::CD3DX12_ROOT_SIGNATURE_DESC computeRootSigDesc(
-			COMPUTE_ROOT_ARG::COMPUTE_ROOT_ARG_COUNT, computeRootParameters,
-			0, nullptr, // static samplers
-			D3D12::D3D12_ROOT_SIGNATURE_FLAGS{ D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED |
-			D3D12_ROOT_SIGNATURE_FLAG_SAMPLER_HEAP_DIRECTLY_INDEXED }
-			);
+		auto computeRootSigDesc = D3D12::CD3DX12_ROOT_SIGNATURE_DESC(
+			COMPUTE_ROOT_ARG::COMPUTE_ROOT_ARG_COUNT,
+			computeRootParameters,
+			0, 
+			nullptr, // static samplers
+			D3D12::D3D12_ROOT_SIGNATURE_FLAGS{ 
+				D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED | D3D12_ROOT_SIGNATURE_FLAG_SAMPLER_HEAP_DIRECTLY_INDEXED 
+			});
 
 		hr = D3D12::D3D12SerializeRootSignature(&computeRootSigDesc, D3D::D3D_ROOT_SIGNATURE_VERSION::D3D_ROOT_SIGNATURE_VERSION_1,
 			serializedRootSig.GetAddressOf(), errorBlob.GetAddressOf());
 
 		if (errorBlob != nullptr)
-		{
 			Win32::OutputDebugStringA((char*)errorBlob->GetBufferPointer());
-		}
 		ThrowIfFailed(hr);
 
 		ThrowIfFailed(md3dDevice->CreateRootSignature(0,
@@ -1344,18 +1350,18 @@ private:
 #define COMMA_DEBUG_ARGS
 #endif
 
-		auto vsArgs = std::vector<LPCWSTR>{ L"-E", L"VS", L"-T", L"vs_6_6" COMMA_DEBUG_ARGS };
-		auto vsWavesArgs = std::vector<LPCWSTR>{ L"-E", L"VS", L"-T", L"vs_6_6", L"-D WAVES_VS=1" COMMA_DEBUG_ARGS };
+		auto vsArgs = std::vector{ L"-E", L"VS", L"-T", L"vs_6_6" COMMA_DEBUG_ARGS };
+		auto vsWavesArgs = std::vector{ L"-E", L"VS", L"-T", L"vs_6_6", L"-D WAVES_VS=1" COMMA_DEBUG_ARGS };
 
-		auto psArgs = std::vector<LPCWSTR>{ L"-E", L"PS", L"-T", L"ps_6_6" COMMA_DEBUG_ARGS };
+		auto psArgs = std::vector{ L"-E", L"PS", L"-T", L"ps_6_6" COMMA_DEBUG_ARGS };
 
-		auto psAlphaTestedArgs = std::vector<LPCWSTR>{ L"-E", L"PS", L"-T", L"ps_6_6", L"-D ALPHA_TEST=1" COMMA_DEBUG_ARGS };
+		auto psAlphaTestedArgs = std::vector{ L"-E", L"PS", L"-T", L"ps_6_6", L"-D ALPHA_TEST=1" COMMA_DEBUG_ARGS };
 
-		auto csUpdateWavesArgs = std::vector<LPCWSTR>{ L"-E", L"UpdateWavesCS", L"-T", L"cs_6_6" COMMA_DEBUG_ARGS };
-		auto csDisturbWavesArgs = std::vector<LPCWSTR>{ L"-E", L"DisturbWavesCS", L"-T", L"cs_6_6" COMMA_DEBUG_ARGS };
+		auto csUpdateWavesArgs = std::vector{ L"-E", L"UpdateWavesCS", L"-T", L"cs_6_6" COMMA_DEBUG_ARGS };
+		auto csDisturbWavesArgs = std::vector{ L"-E", L"DisturbWavesCS", L"-T", L"cs_6_6" COMMA_DEBUG_ARGS };
 
-		auto csHorzBlurArgs = std::vector<LPCWSTR>{ L"-E", L"HorzBlurCS", L"-T", L"cs_6_6" COMMA_DEBUG_ARGS };
-		auto csVertBlurArgs = std::vector<LPCWSTR>{ L"-E", L"VertBlurCS", L"-T", L"cs_6_6" COMMA_DEBUG_ARGS };
+		auto csHorzBlurArgs = std::vector{ L"-E", L"HorzBlurCS", L"-T", L"cs_6_6" COMMA_DEBUG_ARGS };
+		auto csVertBlurArgs = std::vector{ L"-E", L"VertBlurCS", L"-T", L"cs_6_6" COMMA_DEBUG_ARGS };
 
 		mShaders["standardVS"] = d3dUtil::CompileShader(L"Shaders\\BasicBlend.hlsl", vsArgs);
 		mShaders["opaquePS"] = d3dUtil::CompileShader(L"Shaders\\BasicBlend.hlsl", psArgs);
@@ -1378,7 +1384,7 @@ private:
 
 	void BuildPSOs()
 	{
-		D3D12::D3D12_GRAPHICS_PIPELINE_STATE_DESC basePsoDesc = d3dUtil::InitDefaultPso(
+		auto basePsoDesc = d3dUtil::InitDefaultPso(
 			mBackBufferFormat,
 			mDepthStencilFormat,
 			mInputLayout,
@@ -1391,7 +1397,7 @@ private:
 			__uuidof(D3D12::ID3D12PipelineState), 
 			&mPSOs["opaque"]));
 
-		D3D12::D3D12_GRAPHICS_PIPELINE_STATE_DESC wireframePsoDesc = basePsoDesc;
+		auto wireframePsoDesc = D3D12::D3D12_GRAPHICS_PIPELINE_STATE_DESC{ basePsoDesc };
 		wireframePsoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
 
 		ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(
@@ -1403,19 +1409,21 @@ private:
 		// PSO for transparent objects
 		//
 
-		D3D12::D3D12_GRAPHICS_PIPELINE_STATE_DESC transparentPsoDesc = basePsoDesc;
+		auto transparentPsoDesc = D3D12::D3D12_GRAPHICS_PIPELINE_STATE_DESC{ basePsoDesc };
 
-		D3D12::D3D12_RENDER_TARGET_BLEND_DESC transparencyBlendDesc;
-		transparencyBlendDesc.BlendEnable = true;
-		transparencyBlendDesc.LogicOpEnable = false;
-		transparencyBlendDesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
-		transparencyBlendDesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
-		transparencyBlendDesc.BlendOp = D3D12_BLEND_OP_ADD;
-		transparencyBlendDesc.SrcBlendAlpha = D3D12_BLEND_ONE;
-		transparencyBlendDesc.DestBlendAlpha = D3D12_BLEND_ZERO;
-		transparencyBlendDesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
-		transparencyBlendDesc.LogicOp = D3D12_LOGIC_OP_NOOP;
-		transparencyBlendDesc.RenderTargetWriteMask = D3D12::D3D12_COLOR_WRITE_ENABLE:: D3D12_COLOR_WRITE_ENABLE_ALL;
+		auto transparencyBlendDesc = D3D12::D3D12_RENDER_TARGET_BLEND_DESC{
+			.BlendEnable = true,
+			.LogicOpEnable = false,
+			.SrcBlend = D3D12_BLEND_SRC_ALPHA,
+			.DestBlend = D3D12_BLEND_INV_SRC_ALPHA,
+			.BlendOp = D3D12_BLEND_OP_ADD,
+			.SrcBlendAlpha = D3D12_BLEND_ONE,
+			.DestBlendAlpha = D3D12_BLEND_ZERO,
+			.BlendOpAlpha = D3D12_BLEND_OP_ADD,
+			.LogicOp = D3D12_LOGIC_OP_NOOP,
+			.RenderTargetWriteMask = D3D12::D3D12_COLOR_WRITE_ENABLE::D3D12_COLOR_WRITE_ENABLE_ALL
+		};
+		
 
 		transparentPsoDesc.BlendState.RenderTarget[0] = transparencyBlendDesc;
 		ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&transparentPsoDesc,
@@ -1426,7 +1434,7 @@ private:
 		// PSO for alpha tested objects
 		//
 
-		D3D12::D3D12_GRAPHICS_PIPELINE_STATE_DESC alphaTestedPsoDesc = basePsoDesc;
+		auto alphaTestedPsoDesc = D3D12::D3D12_GRAPHICS_PIPELINE_STATE_DESC{ basePsoDesc };
 		alphaTestedPsoDesc.PS = d3dUtil::ByteCodeFromBlob(mShaders["alphaTestedPS"].Get());
 		alphaTestedPsoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
 		ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&alphaTestedPsoDesc,
@@ -1436,14 +1444,14 @@ private:
 		//
 		// PSO for drawing waves
 		//
-		D3D12::D3D12_GRAPHICS_PIPELINE_STATE_DESC wavesRenderPSO = transparentPsoDesc;
+		auto wavesRenderPSO = D3D12::D3D12_GRAPHICS_PIPELINE_STATE_DESC{ transparentPsoDesc };
 		wavesRenderPSO.VS = d3dUtil::ByteCodeFromBlob(mShaders["wavesVS"].Get());
 		ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(
 			&wavesRenderPSO, 
 			__uuidof(D3D12::ID3D12PipelineState),
 			&mPSOs["waves_transparent"]));
 
-		D3D12::D3D12_GRAPHICS_PIPELINE_STATE_DESC wavesRenderWireframePSO = basePsoDesc;
+		auto wavesRenderWireframePSO = D3D12::D3D12_GRAPHICS_PIPELINE_STATE_DESC{ basePsoDesc };
 		wavesRenderWireframePSO.VS = d3dUtil::ByteCodeFromBlob(mShaders["wavesVS"].Get());
 		wavesRenderWireframePSO.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
 		ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&wavesRenderWireframePSO, 
@@ -1453,7 +1461,7 @@ private:
 		//
 		// PSO for disturbing waves
 		//
-		D3D12::D3D12_COMPUTE_PIPELINE_STATE_DESC wavesDisturbPSO = {};
+		auto wavesDisturbPSO = D3D12::D3D12_COMPUTE_PIPELINE_STATE_DESC{};
 		wavesDisturbPSO.pRootSignature = mComputeRootSignature.Get();
 		wavesDisturbPSO.CS = d3dUtil::ByteCodeFromBlob(mShaders["wavesDisturbCS"].Get());
 		wavesDisturbPSO.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
@@ -1464,7 +1472,7 @@ private:
 		//
 		// PSO for updating waves
 		//
-		D3D12::D3D12_COMPUTE_PIPELINE_STATE_DESC wavesUpdatePSO = {};
+		auto wavesUpdatePSO = D3D12::D3D12_COMPUTE_PIPELINE_STATE_DESC{};
 		wavesUpdatePSO.pRootSignature = mComputeRootSignature.Get();
 		wavesUpdatePSO.CS = d3dUtil::ByteCodeFromBlob(mShaders["wavesUpdateCS"].Get());
 		wavesUpdatePSO.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
@@ -1475,7 +1483,7 @@ private:
 		//
 		// PSO for horizontal blur
 		//
-		D3D12::D3D12_COMPUTE_PIPELINE_STATE_DESC horzBlurPSO = {};
+		auto horzBlurPSO = D3D12::D3D12_COMPUTE_PIPELINE_STATE_DESC{};
 		horzBlurPSO.pRootSignature = mComputeRootSignature.Get();
 		horzBlurPSO.CS = d3dUtil::ByteCodeFromBlob(mShaders["horzBlurCS"].Get());
 		horzBlurPSO.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
@@ -1486,7 +1494,7 @@ private:
 		//
 		// PSO for vertical blur
 		//
-		D3D12::D3D12_COMPUTE_PIPELINE_STATE_DESC vertBlurPSO = {};
+		auto vertBlurPSO = D3D12::D3D12_COMPUTE_PIPELINE_STATE_DESC{};
 		vertBlurPSO.pRootSignature = mComputeRootSignature.Get();
 		vertBlurPSO.CS = d3dUtil::ByteCodeFromBlob(mShaders["vertBlurCS"].Get());
 		vertBlurPSO.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
@@ -1496,15 +1504,11 @@ private:
 	}
 	void BuildFrameResources()
 	{
-		MaterialLib& matLib = MaterialLib::GetLib();
+		auto& matLib = MaterialLib::GetLib();
 
-		constexpr UINT passCount = 1;
+		constexpr auto passCount = 1u;
 		for (int i = 0; i < gNumFrameResources; ++i)
-		{
-			mFrameResources.push_back(
-				std::make_unique<FrameResource>(md3dDevice.Get(),
-					passCount, matLib.GetMaterialCount(), mWaves->VertexCount()));
-		}
+			mFrameResources.push_back(std::make_unique<FrameResource>(md3dDevice.Get(), passCount, matLib.GetMaterialCount(), mWaves->VertexCount()));
 	}
 	void BuildMaterials()
 	{
@@ -1557,10 +1561,8 @@ private:
 	{
 		auto& matLib = MaterialLib::GetLib();
 
-		DirectX::XMFLOAT4X4 worldTransform = MathHelper::Identity4x4;
-		DirectX::XMFLOAT4X4 texTransform = MathHelper::Identity4x4;
-
-		worldTransform = MathHelper::Identity4x4;
+		auto texTransform = DirectX::XMFLOAT4X4{MathHelper::Identity4x4};
+		auto worldTransform = DirectX::XMFLOAT4X4{ MathHelper::Identity4x4 };
 		XMStoreFloat4x4(&texTransform, DirectX::XMMatrixScaling(5.0f, 5.0f, 1.0f));
 		AddWaveRenderItem(
 			RenderLayer::GpuWaves,
@@ -1582,8 +1584,8 @@ private:
 			mGeometries["landGeo"].get(),
 			mGeometries["landGeo"]->DrawArgs["grid"]);
 
-		DirectX::XMMATRIX S = DirectX::XMMatrixScaling(8.0f, 8.0f, 8.0f);
-		DirectX::XMMATRIX T = DirectX::XMMatrixTranslation(3.0f, 2.0f, -9.0f);
+		auto S = DirectX::XMMatrixScaling(8.0f, 8.0f, 8.0f);
+		auto T = DirectX::XMMatrixTranslation(3.0f, 2.0f, -9.0f);
 		XMStoreFloat4x4(&worldTransform, S * T);
 		texTransform = MathHelper::Identity4x4;
 		AddRenderItem(RenderLayer::AlphaTested, worldTransform, texTransform, matLib["fence"], mGeometries["shapeGeo"].get(), mGeometries["shapeGeo"]->DrawArgs["box"]);
@@ -1627,7 +1629,7 @@ private:
 		//
 
 		auto vertices = std::vector<ModelVertex>(grid.Vertices.size());
-		for (size_t i = 0; i < grid.Vertices.size(); ++i)
+		for (auto i = 0ull; i < grid.Vertices.size(); ++i)
 		{
 			auto& p = grid.Vertices[i].Position;
 			vertices[i].Pos = p;
@@ -1638,7 +1640,7 @@ private:
 			vertices[i].TexC = grid.Vertices[i].TexC;
 
 			// Not used in this demo.
-			vertices[i].TangentU = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+			vertices[i].TangentU = DirectX::XMFLOAT3{0.0f, 0.0f, 0.0f};
 		}
 
 		const auto indexCount = static_cast<std::uint32_t>(grid.Indices32.size());
@@ -1674,11 +1676,13 @@ private:
 		geo->IndexFormat = DXGI_FORMAT_R16_UINT;
 		geo->IndexBufferByteSize = ibByteSize;
 
-		SubmeshGeometry submesh;
-		submesh.IndexCount = (UINT)indices.size();
-		submesh.StartIndexLocation = 0;
-		submesh.BaseVertexLocation = 0;
-		submesh.VertexCount = static_cast<UINT>(vertices.size());
+		auto submesh = SubmeshGeometry{
+			.IndexCount = static_cast<std::uint32_t>(indices.size()),
+			.StartIndexLocation = 0,
+			.BaseVertexLocation = 0,
+			.VertexCount = static_cast<UINT>(vertices.size())
+		};
+		
 		geo->DrawArgs["grid"] = submesh;
 
 		return geo;
@@ -1697,7 +1701,6 @@ private:
 		auto meshGen = MeshGen{};
 		auto grid = MeshGenData{meshGen.CreateGrid(waterWorldSize, waterWorldSize, m, n)};
 
-
 		// Extract the vertex elements we are interested into our vertex buffer. 
 		auto vertices = std::vector<ModelVertex>(grid.Vertices.size());
 		for (auto i = 0ull; i < grid.Vertices.size(); ++i)
@@ -1709,11 +1712,9 @@ private:
 		}
 
 		const auto indexCount = static_cast<std::uint32_t>(grid.Indices32.size());
-
-		const auto indexElementByteSize = std::uint32_t{ sizeof(std::uint32_t) };
-		const auto vbByteSize = std::uint32_t{ static_cast<std::uint32_t>(vertices.size() * sizeof(ModelVertex)) };
-		const auto ibByteSize = std::uint32_t{ indexCount * indexElementByteSize };
-
+		const auto indexElementByteSize = static_cast<std::uint32_t>(sizeof(std::uint32_t));
+		const auto vbByteSize = static_cast<std::uint32_t>(vertices.size() * sizeof(ModelVertex));
+		const auto ibByteSize = indexCount * indexElementByteSize;
 		const auto indexData = reinterpret_cast<Win32::byte*>(grid.Indices32.data());
 
 		auto geo = std::make_unique<MeshGeometry>();
@@ -1738,13 +1739,16 @@ private:
 		geo->IndexFormat = DXGI_FORMAT_R32_UINT;
 		geo->IndexBufferByteSize = ibByteSize;
 
-		SubmeshGeometry submesh;
-		submesh.IndexCount = indexCount;
-		submesh.StartIndexLocation = 0;
-		submesh.BaseVertexLocation = 0;
-		submesh.VertexCount = static_cast<UINT>(vertices.size());
-		submesh.Bounds.Center = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
-		submesh.Bounds.Extents = DirectX::XMFLOAT3(waterWorldSize, waterWorldSize, 2.0f);
+		auto submesh = SubmeshGeometry{
+			.IndexCount = indexCount,
+			.StartIndexLocation = 0,
+			.BaseVertexLocation = 0,
+			.VertexCount = static_cast<UINT>(vertices.size()),
+			.Bounds{
+				DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),
+				DirectX::XMFLOAT3(waterWorldSize, waterWorldSize, 2.0f)
+			}};
+		
 
 		geo->DrawArgs["grid"] = submesh;
 
@@ -1759,25 +1763,22 @@ private:
 	auto GetHillsNormal(float x, float z)const -> DirectX::XMFLOAT3
 	{
 		// n = (-df/dx, 1, -df/dz)
-		DirectX::XMFLOAT3 n(
+		auto n = DirectX::XMFLOAT3{
 			-0.03f * z * std::cosf(0.1f * x) - 0.3f * std::cosf(0.1f * z),
 			1.0f,
-			-0.3f * std::sinf(0.1f * x) + 0.03f * x * std::sinf(0.1f * z));
-
-		DirectX::XMVECTOR unitNormal = DirectX::XMVector3Normalize(DirectX::XMLoadFloat3(&n));
+			-0.3f * std::sinf(0.1f * x) + 0.03f * x * std::sinf(0.1f * z) };
+		auto unitNormal = DirectX::XMVECTOR{DirectX::XMVector3Normalize(DirectX::XMLoadFloat3(&n))};
 		DirectX::XMStoreFloat3(&n, unitNormal);
-
 		return n;
 	}
 
 private:
-
 	std::vector<std::unique_ptr<FrameResource>> mFrameResources;
 	FrameResource* mCurrFrameResource = nullptr;
 	int mCurrFrameResourceIndex = 0;
 
-	Microsoft::WRL::ComPtr<D3D12::ID3D12RootSignature> mRootSignature = nullptr;
-	Microsoft::WRL::ComPtr<D3D12::ID3D12RootSignature> mComputeRootSignature = nullptr;
+	Microsoft::WRL::ComPtr<D3D12::ID3D12RootSignature> mRootSignature;
+	Microsoft::WRL::ComPtr<D3D12::ID3D12RootSignature> mComputeRootSignature;
 
 	std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> mGeometries;
 	std::unordered_map<std::string, Microsoft::WRL::ComPtr<DXC::IDxcBlob>> mShaders;
