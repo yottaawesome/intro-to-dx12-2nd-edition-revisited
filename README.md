@@ -26,6 +26,7 @@ The effort is currently in progress. The following projects have been converted 
 * [10/BlendDemo](./src/10/BlendDemo)
 * [11/Stenciling](./src/11/Stenciling)
 * [12/BillboardGS](./src/12/BillboardGS)
+* [13/Blur](./src/12/BillboardGS)
 
 ## Building and running
 
@@ -45,6 +46,7 @@ Microsoft Visual Studio 2026 with the _Desktop development with C++_ and _Game d
 * Removal of macros like `CALLBACK` and `WINAPI`, these are ignored for x64 builds and add visual noise.
 * The original code used an obsolete version of `imgui`. Newer versions of `imgui` require the application to provide SRV allocation/deallocation functions; this is now done in the `D3DApp` superclass.
 * Multiprocessor compilation has been enabled in the project settings.
+* A back buffer state transition bug in the Blur demo is now fixed. The bug didn't crash the demo, but caused the DX12 runtime to log debug error messages.
 * A lightweight `Event` class has been added to prevent a potential memory leak in `FlushCommandQueue()`.
 * Function signatures are being updated to use trailing return type syntax, which are visually easier to navigate in classes with many methods.
 * Various class-level `static` member variables have been made `inline`, simplifying their initialisation.
