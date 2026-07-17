@@ -21,6 +21,21 @@
     <ClCompile Include="blur.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="blurapp.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="frameresource.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="blurfilter.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="computerootarg.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="gpuwaves.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="vcpkg.json" />
