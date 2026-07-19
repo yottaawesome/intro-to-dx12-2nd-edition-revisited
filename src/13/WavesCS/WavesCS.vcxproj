@@ -152,11 +152,16 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="app.ixx" />
+    <ClCompile Include="computerootarg.ixx" />
+    <ClCompile Include="frameresource.ixx" />
+    <ClCompile Include="gpuwave.ixx" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="wavescs.ixx" />
   </ItemGroup>
-	<ItemGroup>
-		<PackageReference Include="Microsoft.Direct3D.D3D12" />
-	</ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Direct3D.D3D12" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Shared\Shared.vcxproj">
       <Project>{71a3731d-95eb-49ec-b69f-e0b5e166115b}</Project>
