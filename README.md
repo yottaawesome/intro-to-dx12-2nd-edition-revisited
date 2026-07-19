@@ -26,7 +26,8 @@ The effort is currently in progress. The following projects have been converted 
 * [10/BlendDemo](./src/10/BlendDemo)
 * [11/Stenciling](./src/11/Stenciling)
 * [12/BillboardGS](./src/12/BillboardGS)
-* [13/Blur](./src/12/BillboardGS)
+* [13/Blur](./src/13/Blur)
+* [13/VecAddCS](./src/13/VecAddCS)
 
 ## Building and running
 
