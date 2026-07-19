@@ -1,5 +1,6 @@
 import std;
 import shared;
+import vecaddcs;
 
 // Required exports for DX12-Agility SDK
 // https://devblogs.microsoft.com/directx/gettingstarted-dx12agility/
@@ -12,7 +13,14 @@ extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = ".\\D3D12\\
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "dxcompiler.lib") // dxc
 
-auto wWinMain(Win32::HINSTANCE hInstance, Win32::HINSTANCE, Win32::LPWSTR, int nCmdShow)->int
+auto wWinMain(Win32::HINSTANCE hInstance, Win32::HINSTANCE, Win32::LPWSTR, int) -> int
+try
 {
+	auto theApp = VecAddCS{ hInstance };
+	return theApp.Run();
+}
+catch (const std::exception& e)
+{
+	Win32::MessageBoxW(nullptr, AnsiToWString(e.what()).c_str(), L"Error", Win32::MbOk);
 	return 0;
 }

@@ -153,10 +153,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="vecaddcs.ixx" />
   </ItemGroup>
-	<ItemGroup>
-		<PackageReference Include="Microsoft.Direct3D.D3D12" />
-	</ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Direct3D.D3D12" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Shared\Shared.vcxproj">
       <Project>{71a3731d-95eb-49ec-b69f-e0b5e166115b}</Project>
