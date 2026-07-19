@@ -1,5 +1,6 @@
 import std;
 import shared;
+import wavescs;
 
 #pragma comment(lib,"d3dcompiler.lib")
 #pragma comment(lib, "D3D12.lib")
@@ -15,7 +16,8 @@ extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = ".\\D3D12\\
 auto wWinMain(Win32::HINSTANCE hInstance, Win32::HINSTANCE, Win32::LPWSTR, int nCmdShow) -> int
 try
 {
-	return 0;
+	auto theApp = WavesCSApp{ hInstance };
+	return theApp.Run();
 }
 catch (const std::exception& e)
 {

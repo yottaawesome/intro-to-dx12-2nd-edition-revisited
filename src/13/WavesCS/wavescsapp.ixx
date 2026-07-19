@@ -63,29 +63,429 @@ struct RenderItem
 export class WavesCSApp : public D3DApp
 {
 public:
-    WavesCSApp(HINSTANCE hInstance);
+    WavesCSApp(Win32::HINSTANCE hInstance)
+        : D3DApp(hInstance)
+    {
+        Initialize();
+    }
     WavesCSApp(const WavesCSApp& rhs) = delete;
     WavesCSApp& operator=(const WavesCSApp& rhs) = delete;
-    ~WavesCSApp();
-
-    void Initialize()override;
+    ~WavesCSApp()
+    {
+        if (md3dDevice != nullptr)
+            FlushCommandQueue();
+    }
 
 private:
-    void CreateRtvAndDsvDescriptorHeaps()override;
-    void OnResize()override;
-    void Update(const GameTimer& gt)override;
-    void Draw(const GameTimer& gt)override;
+    void Initialize()override
+    {
+        D3DApp::Initialize();
 
-    void UpdateImgui(const GameTimer& gt)override;
-    void OnMouseDown(WPARAM btnState, int x, int y)override;
-    virtual void OnMouseUp(WPARAM btnState, int x, int y)override;
-    virtual void OnMouseMove(WPARAM btnState, int x, int y)override;
+        // We will upload on the direct queue for the book samples, but 
+        // copy queue would be better for real game.
+        mUploadBatch->Begin(D3D12_COMMAND_LIST_TYPE_DIRECT);
 
-    void OnKeyboardInput(const GameTimer& gt);
-    void AnimateMaterials(const GameTimer& gt);
-    void UpdateCamera(const GameTimer& gt);
-    void UpdatePerObjectCB(const GameTimer& gt);
-    void UpdateMaterialBuffer(const GameTimer& gt);
+        mWaves = std::make_unique<GpuWaves>(
+            md3dDevice.Get(),
+            *mUploadBatch,
+            256, 256, 0.25f, 0.016f, mWaveSpeed, mWaveDamping);
+
+        LoadTextures();
+
+        auto shapeGeo = std::unique_ptr<MeshGeometry>{ d3dUtil::BuildShapeGeometry(md3dDevice.Get(), *mUploadBatch.get()) };
+        mGeometries[shapeGeo->Name] = std::move(shapeGeo);
+
+        auto landGeo = std::unique_ptr<MeshGeometry>{BuildLandGeometry(md3dDevice.Get(), *mUploadBatch.get())};
+        mGeometries[landGeo->Name] = std::move(landGeo);
+
+        auto waveGeo = std::unique_ptr<MeshGeometry>{BuildWaveGeometry(md3dDevice.Get(), *mUploadBatch.get())};
+        mGeometries[waveGeo->Name] = std::move(waveGeo);
+
+        // Kick off upload work asyncronously.
+        auto result = std::future<void>{ mUploadBatch->End(mCommandQueue.Get()) };
+
+        // Other init work...
+        BuildRootSignature();
+        BuildCbvSrvUavDescriptorHeap();
+        BuildShadersAndInputLayout();
+        BuildMaterials();
+        BuildRenderItems();
+        BuildFrameResources();
+        BuildPSOs();
+
+        // Block until the upload work is complete.
+        result.wait();
+    }
+
+    void CreateRtvAndDsvDescriptorHeaps()override
+    {
+        mRtvHeap.Init(md3dDevice.Get(), D3D12::D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_RTV, SwapChainBufferCount);
+        mDsvHeap.Init(md3dDevice.Get(), D3D12::D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_DSV, SwapChainBufferCount);
+    }
+    void OnResize()override
+    {
+        D3DApp::OnResize();
+
+        // The window resized, so update the aspect ratio and recompute the projection matrix.
+        auto P = DirectX::XMMATRIX{ DirectX::XMMatrixPerspectiveFovLH(0.25f * MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f) };
+        DirectX::XMStoreFloat4x4(&mProj, P);
+    }
+    void Update(const GameTimer& gt)override
+    {
+        OnKeyboardInput(gt);
+        UpdateCamera(gt);
+
+        // Cycle through the circular frame resource array.
+        mCurrFrameResourceIndex = (mCurrFrameResourceIndex + 1) % gNumFrameResources;
+        mCurrFrameResource = mFrameResources[mCurrFrameResourceIndex].get();
+
+        // Has the GPU finished processing the commands of the current frame resource?
+        // If not, wait until the GPU has completed commands up to this fence point.
+        if (mCurrFrameResource->Fence != 0 && mFence->GetCompletedValue() < mCurrFrameResource->Fence)
+        {
+			auto event = Event{};
+            ThrowIfFailed(mFence->SetEventOnCompletion(mCurrFrameResource->Fence, event.Get()));
+            event.Wait();
+        }
+
+        //
+        // Animate the lights.
+        //
+
+        mLightRotationAngle += 0.1f * gt.DeltaTime();
+
+        auto R = DirectX::XMMATRIX{ DirectX::XMMatrixRotationY(mLightRotationAngle) };
+        for (int i = 0; i < 3; ++i)
+        {
+            auto lightDir = DirectX::XMVECTOR{DirectX::XMLoadFloat3(&mBaseLightDirections[i])};
+            lightDir = DirectX::XMVector3TransformNormal(lightDir, R);
+            DirectX::XMStoreFloat3(&mRotatedLightDirections[i], lightDir);
+        }
+
+        AnimateMaterials(gt);
+        UpdatePerObjectCB(gt);
+        UpdateMaterialBuffer(gt);
+        UpdateMainPassCB(gt);
+    }
+
+    void Draw(const GameTimer& gt)override
+    {
+        auto& cbvSrvUavHeap = CbvSrvUavHeap::Get();
+        auto& samHeap = SamplerHeap::Get();
+
+        UpdateImgui(gt);
+
+        auto cmdListAlloc = mCurrFrameResource->CmdListAlloc;
+
+        // Reuse the memory associated with command recording.
+        // We can only reset when the associated command lists have finished execution on the GPU.
+        ThrowIfFailed(cmdListAlloc->Reset());
+
+        // A command list can be reset after it has been added to the command queue via ExecuteCommandList.
+        // Reusing the command list reuses memory.
+        ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), mPSOs["opaque"].Get()));
+
+        auto descriptorHeaps = std::array{ cbvSrvUavHeap.GetD3dHeap(), samHeap.GetD3dHeap() };
+        mCommandList->SetDescriptorHeaps(static_cast<std::uint32_t>(descriptorHeaps.size()), descriptorHeaps.data());
+
+        auto passCB = mCurrFrameResource->PassCB->Resource();
+
+        UpdateWavesGPU(gt, passCB);
+
+        mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
+
+        // Bind all the materials used in this scene.  For structured buffers, we can bypass the heap and 
+        // set as a root descriptor.
+        auto matBuffer = mCurrFrameResource->MaterialBuffer->Resource();
+        mCommandList->SetGraphicsRootShaderResourceView(GFX_ROOT_ARG_MATERIAL_SRV, matBuffer->GetGPUVirtualAddress());
+
+        mCommandList->RSSetViewports(1, &mScreenViewport);
+        mCommandList->RSSetScissorRects(1, &mScissorRect);
+
+        // Indicate a state transition on the resource usage.
+        auto transition = D3D12::CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
+            D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+        mCommandList->ResourceBarrier(1, &transition);
+
+        // Clear the back buffer and depth buffer.
+        float clearColor[4] = { 0.0f, 0.0f, 0.2f, 0.0f };
+        if (mFogEnabled)
+        {
+            // Use fog color for background
+            clearColor[0] = mFogColor.x;
+            clearColor[1] = mFogColor.y;
+            clearColor[2] = mFogColor.z;
+        }
+        mCommandList->ClearRenderTargetView(CurrentBackBufferView(), clearColor, 0, nullptr);
+        mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12::D3D12_CLEAR_FLAGS{ D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL }, 1.0f, 0, 0, nullptr);
+
+        // Specify the buffers we are going to render to.
+        auto cbbv = CurrentBackBufferView();
+        auto ibv = DepthStencilView();
+        mCommandList->OMSetRenderTargets(1, &cbbv, true, &ibv);
+
+        mCommandList->SetGraphicsRootConstantBufferView(GFX_ROOT_ARG_PASS_CBV, passCB->GetGPUVirtualAddress());
+
+        mCommandList->SetPipelineState(
+            mDrawWireframe ?
+            mPSOs["opaque_wireframe"].Get() :
+            mPSOs["opaque"].Get());
+        DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Opaque]);
+
+        mCommandList->SetPipelineState(
+            mDrawWireframe ?
+            mPSOs["opaque_wireframe"].Get() :
+            mPSOs["alphaTested"].Get());
+        DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::AlphaTested]);
+
+        mCommandList->SetPipelineState(
+            mDrawWireframe ?
+            mPSOs["opaque_wireframe"].Get() :
+            mPSOs["transparent"].Get());
+        DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Transparent]);
+
+        mCommandList->SetPipelineState(
+            mDrawWireframe ?
+            mPSOs["waves_wireframe"].Get() :
+            mPSOs["waves_transparent"].Get());
+        DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::GpuWaves]);
+
+        // Draw imgui UI.
+        ImGui::ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), mCommandList.Get());
+
+        // Indicate a state transition on the resource usage.
+        transition = D3D12::CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
+            D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+        mCommandList->ResourceBarrier(1, &transition);
+
+        // Done recording commands.
+        ThrowIfFailed(mCommandList->Close());
+
+        mLinearAllocator->Commit(mCommandQueue.Get());
+
+        // Add the command list to the queue for execution.
+        auto cmdsLists = std::array{ static_cast<ID3D12CommandList*>(mCommandList.Get()) };
+        mCommandQueue->ExecuteCommandLists(static_cast<std::uint32_t>(cmdsLists.size()), cmdsLists.data());
+
+        // Swap the back and front buffers
+        auto presentParams = DXGI::DXGI_PRESENT_PARAMETERS{ };
+        ThrowIfFailed(mSwapChain->Present1(0, 0, &presentParams));
+        mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
+
+        // Advance the fence value to mark commands up to this fence point.
+        mCurrFrameResource->Fence = ++mCurrentFence;
+
+        // Add an instruction to the command queue to set a new fence point. 
+        // Because we are on the GPU timeline, the new fence point won't be 
+        // set until the GPU finishes processing all the commands prior to this Signal().
+        mCommandQueue->Signal(mFence.Get(), mCurrentFence);
+    }
+
+    void UpdateImgui(const GameTimer& gt)override
+    {
+        D3DApp::UpdateImgui(gt);
+
+        //
+        // Define a panel to render GUI elements.
+        // 
+        ImGui::Begin("Options");
+
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
+        ImGui::Checkbox("Wireframe", &mDrawWireframe);
+        ImGui::Checkbox("FogEnabled", &mFogEnabled);
+
+        ImGui::SliderFloat("FogStart", &mFogStart, 10.0f, 100);
+        ImGui::SliderFloat("FogEnd", &mFogEnd, 20.0f, 200.0f);
+
+        if (mFogStart >= mFogEnd)
+            mFogStart = 10.0f;
+
+        ImGui::SliderFloat("WaveScale", &mWaveScale, 0.25f, 4.0f);
+        ImGui::SliderFloat("WaveSpeed", &mWaveSpeed, 2.0f, 16.0f);
+        ImGui::SliderFloat("WaveDamping", &mWaveDamping, 0.0f, 3.0f);
+
+        mWaves->SetConstants(mWaveSpeed, mWaveDamping);
+
+        auto gfxMemStats = DirectX::GraphicsMemory::Get(md3dDevice.Get()).GetStatistics();
+
+        if (ImGui::CollapsingHeader("VideoMemoryInfo"))
+        {
+            static auto vidMemPollTime = 0.0f;
+            vidMemPollTime += gt.DeltaTime();
+
+            static auto videoMemInfo = DXGI::DXGI_QUERY_VIDEO_MEMORY_INFO{};
+            if (vidMemPollTime >= 1.0f) // poll every second
+            {
+                mDefaultAdapter->QueryVideoMemoryInfo(
+                    0, // assume single GPU
+                    DXGI::DXGI_MEMORY_SEGMENT_GROUP::DXGI_MEMORY_SEGMENT_GROUP_LOCAL, // interested in local GPU memory, not shared
+                    &videoMemInfo);
+
+                vidMemPollTime -= 1.0f;
+            }
+
+            ImGui::Text("Budget (bytes): %u", videoMemInfo.Budget);
+            ImGui::Text("CurrentUsage (bytes): %u", videoMemInfo.CurrentUsage);
+            ImGui::Text("AvailableForReservation (bytes): %u", videoMemInfo.AvailableForReservation);
+            ImGui::Text("CurrentReservation (bytes): %u", videoMemInfo.CurrentReservation);
+
+        }
+        if (ImGui::CollapsingHeader("GraphicsMemoryStatistics"))
+        {
+            ImGui::Text("Bytes of memory in-flight: %u", gfxMemStats.committedMemory);
+            ImGui::Text("Total bytes used: %u", gfxMemStats.totalMemory);
+            ImGui::Text("Total page count: %u", gfxMemStats.totalPages);
+        }
+
+        ImGui::End();
+
+        ImGui::Render();
+    }
+    void OnMouseDown(WPARAM btnState, int x, int y)override
+    {
+        if (auto& io = ImGui::GetIO(); not io.WantCaptureMouse)
+        {
+            mLastMousePos.x = x;
+            mLastMousePos.y = y;
+            Win32::SetCapture(mhMainWnd);
+        }
+    }
+    void OnMouseUp(Win32::WPARAM btnState, int x, int y)override
+    {
+        if (auto& io = ImGui::GetIO(); not io.WantCaptureMouse)
+            Win32::ReleaseCapture();
+    }
+    void OnMouseMove(Win32::WPARAM btnState, int x, int y)override
+    {
+        auto& io = ImGui::GetIO();
+
+        if (io.WantCaptureMouse)
+            return;
+
+        if ((btnState & Win32::MK::LButton) != 0)
+        {
+            // Make each pixel correspond to a quarter of a degree.
+            auto dx = DirectX::XMConvertToRadians(0.25f * static_cast<float>(x - mLastMousePos.x));
+            auto dy = DirectX::XMConvertToRadians(0.25f * static_cast<float>(y - mLastMousePos.y));
+
+            // Update angles based on input to orbit camera around box.
+            mTheta += dx;
+            mPhi += dy;
+
+            // Restrict the angle mPhi.
+            mPhi = std::clamp(mPhi, 0.1f, MathHelper::Pi - 0.1f);
+        }
+        else if ((btnState & Win32::MK::RButton) != 0)
+        {
+            // Make each pixel correspond to 0.005 unit in the scene.
+            auto dx = 0.05f * static_cast<float>(x - mLastMousePos.x);
+            auto dy = 0.05f * static_cast<float>(y - mLastMousePos.y);
+
+            // Update the camera radius based on input.
+            mRadius += dx - dy;
+
+            // Restrict the radius.
+            mRadius = std::clamp(mRadius, 5.0f, 150.0f);
+        }
+        mLastMousePos.x = x;
+        mLastMousePos.y = y;
+    }
+
+    void OnKeyboardInput(const GameTimer& gt)
+    {}
+    void AnimateMaterials(const GameTimer& gt)
+    {
+        auto& matLib = MaterialLib::GetLib();
+
+        // Scroll the water material texture coordinates.
+        auto waterMat = matLib["water"];
+
+        auto& tu = waterMat->MatTransform(3, 0);
+        auto& tv = waterMat->MatTransform(3, 1);
+
+        tu += 0.1f * gt.DeltaTime();
+        tv += 0.02f * gt.DeltaTime();
+
+        if (tu >= 1.0f)
+            tu -= 1.0f;
+
+        if (tv >= 1.0f)
+            tv -= 1.0f;
+
+        waterMat->MatTransform(3, 0) = tu;
+        waterMat->MatTransform(3, 1) = tv;
+
+        // Material has changed, so need to update cbuffer.
+        waterMat->NumFramesDirty = gNumFrameResources;
+    }
+
+    void UpdateCamera(const GameTimer& gt)
+    {
+        // Convert Spherical to Cartesian coordinates.
+        mEyePos.x = mRadius * std::sinf(mPhi) * std::cosf(mTheta);
+        mEyePos.z = mRadius * std::sinf(mPhi) * std::sinf(mTheta);
+        mEyePos.y = mRadius * std::cosf(mPhi);
+
+        // Build the view matrix.
+        auto pos = DirectX::XMVECTOR{DirectX::XMVectorSet(mEyePos.x, mEyePos.y, mEyePos.z, 1.0f)};
+        auto target = DirectX::XMVECTOR{DirectX::XMVectorZero()};
+        auto up = DirectX::XMVECTOR{DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)};
+        auto view = DirectX::XMMATRIX{DirectX::XMMatrixLookAtLH(pos, target, up)};
+        DirectX::XMStoreFloat4x4(&mView, view);
+    }
+    void UpdatePerObjectCB(const GameTimer& gt)
+    {
+        for (auto& ri : mRitemLayer[(int)RenderLayer::GpuWaves])
+        {
+            // The current solution displacement map gets ping-ponged every frame, 
+            // so we need to set it every frame.
+            ri->MiscUint4.x = mWaves->DisplacementMapSrvIndex();
+        }
+
+        // Update per object constants once per frame so the data can be shared across different render passes.
+        for (auto& ri : mAllRitems)
+        {
+            DirectX::XMStoreFloat4x4(&ri->ObjectConstants.gWorld, DirectX::XMMatrixTranspose(DirectX::XMLoadFloat4x4(&ri->World)));
+            DirectX::XMStoreFloat4x4(&ri->ObjectConstants.gTexTransform, DirectX::XMMatrixTranspose(DirectX::XMLoadFloat4x4(&ri->TexTransform)));
+            ri->ObjectConstants.gMaterialIndex = ri->Mat->MatIndex;
+
+            ri->ObjectConstants.gMiscUint4 = ri->MiscUint4;
+            ri->ObjectConstants.gMiscFloat4 = ri->MiscFloat4;
+
+            // Need to hold handle until we submit work to GPU.
+            ri->MemHandleToObjectCB = mLinearAllocator->AllocateConstant(ri->ObjectConstants);
+        }
+    }
+    void UpdateMaterialBuffer(const GameTimer& gt) 
+    {
+        auto& matLib = MaterialLib::GetLib();
+
+        auto currMaterialBuffer = mCurrFrameResource->MaterialBuffer.get();
+        for (auto& e : matLib.GetCollection())
+        {
+            // Only update the buffer data if the data has changed.  If the buffer
+            // data changes, it needs to be updated for each FrameResource.
+            auto mat = static_cast<Material*>(e.second.get());
+            if (mat->NumFramesDirty < 1)
+                continue;
+
+            auto matTransform = DirectX::XMMATRIX{ DirectX::XMLoadFloat4x4(&mat->MatTransform) };
+            auto matData = MaterialData{
+                .DiffuseAlbedo = mat->DiffuseAlbedo,
+                .FresnelR0 = mat->FresnelR0,
+                .Roughness = mat->Roughness,
+                .DiffuseMapIndex = static_cast<std::uint32_t>(mat->AlbedoBindlessIndex),
+                .NormalMapIndex = static_cast<std::uint32_t>(mat->NormalBindlessIndex),
+                .GlossHeightAoMapIndex = static_cast<std::uint32_t>(mat->GlossHeightAoBindlessIndex),
+            };
+                
+            DirectX::XMStoreFloat4x4(&matData.MatTransform, DirectX::XMMatrixTranspose(matTransform));
+            currMaterialBuffer->CopyData(mat->MatIndex, matData);
+            // Next FrameResource need to be updated too.
+            mat->NumFramesDirty--;
+        }
+    }
 
     void UpdateMainPassCB(const GameTimer& gt)
     {
