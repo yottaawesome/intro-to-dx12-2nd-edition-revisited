@@ -28,6 +28,7 @@ The effort is currently in progress. The following projects have been converted 
 * [12/BillboardGS](./src/12/BillboardGS)
 * [13/Blur](./src/13/Blur)
 * [13/VecAddCS](./src/13/VecAddCS)
+* [13/WavesCS](./src/13/WavesCS)
 
 ## Building and running
 
