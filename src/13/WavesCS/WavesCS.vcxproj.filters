@@ -24,7 +24,7 @@
     <ClCompile Include="gpuwaves.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="app.ixx">
+    <ClCompile Include="wavescsapp.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="computerootarg.ixx">

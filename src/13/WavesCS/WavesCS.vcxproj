@@ -152,7 +152,7 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="app.ixx" />
+    <ClCompile Include="wavescsapp.ixx" />
     <ClCompile Include="computerootarg.ixx" />
     <ClCompile Include="frameresource.ixx" />
     <ClCompile Include="gpuwaves.ixx" />
