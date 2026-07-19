@@ -21,7 +21,7 @@
     <ClCompile Include="wavescs.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="gpuwave.ixx">
+    <ClCompile Include="gpuwaves.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="app.ixx">

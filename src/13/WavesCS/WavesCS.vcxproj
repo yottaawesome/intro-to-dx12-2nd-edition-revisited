@@ -155,7 +155,7 @@
     <ClCompile Include="app.ixx" />
     <ClCompile Include="computerootarg.ixx" />
     <ClCompile Include="frameresource.ixx" />
-    <ClCompile Include="gpuwave.ixx" />
+    <ClCompile Include="gpuwaves.ixx" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="wavescs.ixx" />
   </ItemGroup>
