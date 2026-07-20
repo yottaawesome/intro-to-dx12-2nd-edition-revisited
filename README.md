@@ -30,6 +30,7 @@ The effort is currently in progress. The following projects have been converted 
 * [13/VecAddCS](./src/13/VecAddCS)
 * [13/WavesCS](./src/13/WavesCS)
 * [14/BasicTesselation](./src/14/BasicTesselation)
+* [14/BezierPatch](./src/14/BezierPatch)
 
 ## Building and running
 
