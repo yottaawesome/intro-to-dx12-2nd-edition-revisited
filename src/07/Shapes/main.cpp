@@ -23,8 +23,7 @@ try
     // Enable run-time memory check for debug builds.
     if constexpr (IsDebugBuild)
         Win32::_CrtSetDbgFlag(Win32::CrtAllocMemDf | Win32::CrtLeakCheckDf);
-    auto theApp = ShapesApp{ hInstance };
-    return theApp.Run();
+    return ShapesApp{ hInstance }.Run();
 }
 catch (const std::exception& e)
 {

@@ -16,7 +16,7 @@ extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = ".\\D3D12\\
 auto wWinMain(Win32::HINSTANCE hInstance, Win32::HINSTANCE , Win32::LPWSTR, int) -> int
 try
 {
-	if (IsDebugBuild)
+	if constexpr (IsDebugBuild)
 		Win32::_CrtSetDbgFlag(Win32::CrtAllocMemDf | Win32::CrtLeakCheckDf);
 	return InstancingAndCullingApp{ hInstance }.Run();
 }

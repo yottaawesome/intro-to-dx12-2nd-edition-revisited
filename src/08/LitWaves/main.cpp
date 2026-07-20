@@ -18,8 +18,7 @@ try
 {
 	if constexpr (IsDebugBuild)
 		Win32::_CrtSetDbgFlag(Win32::CrtAllocMemDf | Win32::CrtLeakCheckDf);
-	auto theApp = LitWavesApp{ hInstance };
-	return theApp.Run();
+	return LitWavesApp{ hInstance }.Run();
 }
 catch (const std::exception& e)
 {
