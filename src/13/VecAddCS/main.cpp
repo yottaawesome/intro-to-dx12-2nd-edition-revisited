@@ -16,8 +16,9 @@ extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = ".\\D3D12\\
 auto wWinMain(Win32::HINSTANCE hInstance, Win32::HINSTANCE, Win32::LPWSTR, int) -> int
 try
 {
-	auto theApp = VecAddCS{ hInstance };
-	return theApp.Run();
+	if (IsDebugBuild)
+		Win32::_CrtSetDbgFlag(Win32::CrtAllocMemDf | Win32::CrtLeakCheckDf);
+	return VecAddCS{ hInstance }.Run();
 }
 catch (const std::exception& e)
 {

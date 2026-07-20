@@ -81,6 +81,12 @@
     <ClCompile Include="camera.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="psolib.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="shaderlib.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="vcpkg.json" />

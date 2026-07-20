@@ -180,7 +180,9 @@
     <ClCompile Include="mathhelper.ixx" />
     <ClCompile Include="meshgen.ixx" />
     <ClCompile Include="meshutil.ixx" />
+    <ClCompile Include="psolib.ixx" />
     <ClCompile Include="random.ixx" />
+    <ClCompile Include="shaderlib.ixx" />
     <ClCompile Include="shared.ixx" />
     <ClCompile Include="sharedtypes.ixx" />
     <ClCompile Include="skinneddata.ixx" />

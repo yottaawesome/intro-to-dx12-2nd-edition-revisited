@@ -22,3 +22,5 @@ export import :materiallib;
 export import :waves;
 export import :hr;
 export import :camera;
+export import :psolib;
+export import :shaderlib;
