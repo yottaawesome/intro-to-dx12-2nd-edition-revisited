@@ -21,3 +21,4 @@ export import :texturelib;
 export import :materiallib;
 export import :waves;
 export import :hr;
+export import :camera;

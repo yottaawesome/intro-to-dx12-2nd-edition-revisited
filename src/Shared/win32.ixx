@@ -313,6 +313,7 @@ export namespace D3D12
 	}
 
 	using
+		::D3D12_PRIMITIVE_TOPOLOGY,
 		::D3D12_COMPUTE_PIPELINE_STATE_DESC,
 		::D3D12_DEPTH_STENCIL_DESC,
 		::D3D12_DEPTH_STENCILOP_DESC,
@@ -465,6 +466,11 @@ export namespace DirectX
 		::DirectX::BoundingBox,
 		::DirectX::GraphicsResource,
 		::DirectX::DDS_LOADER_FLAGS,
+		::DirectX::XMVectorMultiplyAdd,
+		::DirectX::XMVectorReplicate,
+		::DirectX::XMMatrixRotationAxis,
+		::DirectX::XMVectorSubtract,
+		::DirectX::XMMatrixRotationRollPitchYaw,
 		::DirectX::XMMatrixShadow,
 		::DirectX::XMMatrixScaling,
 		::DirectX::CreateDDSTextureFromFileEx,

@@ -11,6 +11,7 @@ export
 		::MaterialData,
 		::PerObjectCB,
 		::BlurDispatchCB,
-		::GpuWavesCB
+		::GpuWavesCB,
+		::InstanceData
 		;
 }

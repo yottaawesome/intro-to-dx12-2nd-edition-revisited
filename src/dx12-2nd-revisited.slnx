@@ -47,6 +47,9 @@
     <Project Path="14/BasicTesselation/BasicTesselation.vcxproj" Id="c51e942d-654f-4a64-b199-b53d4dd2c5e0" />
     <Project Path="14/BezierPatch/BezierPatch.vcxproj" Id="2040d3e9-51d8-4b01-aeb2-54d7193d36f8" />
   </Folder>
+  <Folder Name="/16/">
+    <Project Path="16/InstancingAndCulling/InstancingAndCulling.vcxproj" Id="6391c3ab-4b5a-4c2c-87f0-369f67d8ac42" />
+  </Folder>
   <Folder Name="/Common/">
     <Project Path="Shared/Shared.vcxproj" Id="71a3731d-95eb-49ec-b69f-e0b5e166115b" />
   </Folder>
