@@ -1,5 +1,6 @@
 import std;
 import shared;
+import bezierpatch;
 
 #pragma comment(lib,"d3dcompiler.lib")
 #pragma comment(lib, "D3D12.lib")
@@ -9,7 +10,7 @@ import shared;
 auto wWinMain(Win32::HINSTANCE hInstance, Win32::HINSTANCE, Win32::LPWSTR, int) -> int
 try
 {
-	return 0;
+	return BezierPatchApp{hInstance}.Run();
 }
 catch (const std::exception& ex)
 {
