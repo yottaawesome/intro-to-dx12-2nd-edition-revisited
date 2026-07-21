@@ -856,9 +856,9 @@ private:
 	{
 		// n = (-df/dx, 1, -df/dz)
 		auto n = DirectX::XMFLOAT3{
-			-0.03f * z * cosf(0.1f * x) - 0.3f * cosf(0.1f * z),
+			-0.03f * z * std::cosf(0.1f * x) - 0.3f * std::cosf(0.1f * z),
 			1.0f,
-			-0.3f * sinf(0.1f * x) + 0.03f * x * sinf(0.1f * z) 
+			-0.3f * std::sinf(0.1f * x) + 0.03f * x * std::sinf(0.1f * z) 
 		};
 		auto unitNormal = DirectX::XMVECTOR{DirectX::XMVector3Normalize(DirectX::XMLoadFloat3(&n))};
 		DirectX::XMStoreFloat3(&n, unitNormal);

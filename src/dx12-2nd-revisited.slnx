@@ -50,6 +50,9 @@
   <Folder Name="/16/">
     <Project Path="16/InstancingAndCulling/InstancingAndCulling.vcxproj" Id="6391c3ab-4b5a-4c2c-87f0-369f67d8ac42" />
   </Folder>
+  <Folder Name="/17/">
+    <Project Path="17/Picking/Picking.vcxproj" Id="3e20903f-1d20-4f77-93be-89074ba397d4" />
+  </Folder>
   <Folder Name="/Common/">
     <Project Path="Shared/Shared.vcxproj" Id="71a3731d-95eb-49ec-b69f-e0b5e166115b" />
   </Folder>
