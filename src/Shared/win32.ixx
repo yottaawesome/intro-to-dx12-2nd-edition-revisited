@@ -458,6 +458,13 @@ export namespace DirectX
 			::DirectX::Colors::SteelBlue
 			;
 	}
+
+	namespace TriangleTests
+	{
+		using
+			::DirectX::TriangleTests::Intersects
+			;
+	}
 	
 	using
 		::DirectX::GraphicsMemoryStatistics,
@@ -478,6 +485,7 @@ export namespace DirectX
 		::DirectX::BoundingBox,
 		::DirectX::GraphicsResource,
 		::DirectX::DDS_LOADER_FLAGS,
+		::DirectX::XMVector3TransformCoord,
 		::DirectX::XMVectorMultiplyAdd,
 		::DirectX::XMVectorReplicate,
 		::DirectX::XMMatrixRotationAxis,
@@ -515,6 +523,7 @@ export namespace DirectX
 		::DirectX::XMVectorZero,
 		::DirectX::XMVector3Greater,
 		::DirectX::XMVector3Normalize,
+		::DirectX::XMVector3Length,
 		::DirectX::XMVector3LengthSq,
 		::DirectX::CreateTextureFromMemory,
 		::DirectX::XMVectorSet,
