@@ -117,16 +117,14 @@ private:
 		// copy queue would be better for real game.
 		mUploadBatch->Begin(D3D12_COMMAND_LIST_TYPE_DIRECT);
 
-		std::unique_ptr<MeshGeometry> landGeo = BuildLandGeometry(
-			md3dDevice.Get(), *mUploadBatch.get());
+		auto landGeo = std::unique_ptr<MeshGeometry>{BuildLandGeometry(md3dDevice.Get(), *mUploadBatch.get())};
 		mGeometries[landGeo->Name] = std::move(landGeo);
 
-		std::unique_ptr<MeshGeometry> waveGeo = BuildWaveGeometry(
-			md3dDevice.Get(), *mUploadBatch.get());
+		auto waveGeo = std::unique_ptr<MeshGeometry>{BuildWaveGeometry(md3dDevice.Get(), *mUploadBatch.get())};
 		mGeometries[waveGeo->Name] = std::move(waveGeo);
 
 		// Kick off upload work asyncronously.
-		std::future<void> result = mUploadBatch->End(mCommandQueue.Get());
+		auto result = std::future<void>{mUploadBatch->End(mCommandQueue.Get())};
 
 		// Other init work...
 		BuildRootSignature();
@@ -152,7 +150,7 @@ private:
 		D3DApp::OnResize();
 
 		// The window resized, so update the aspect ratio and recompute the projection matrix.
-		DirectX::XMMATRIX P = DirectX::XMMatrixPerspectiveFovLH(0.25f * MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
+		auto P = DirectX::XMMATRIX{DirectX::XMMatrixPerspectiveFovLH(0.25f * MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f)};
 		DirectX::XMStoreFloat4x4(&mProj, P);
 	}
 
@@ -180,7 +178,7 @@ private:
 
 		mLightRotationAngle += 0.1f * gt.DeltaTime();
 
-		DirectX::XMMATRIX R = DirectX::XMMatrixRotationY(mLightRotationAngle);
+		auto R = DirectX::XMMATRIX{DirectX::XMMatrixRotationY(mLightRotationAngle)};
 		for (int i = 0; i < 3; ++i)
 		{
 			DirectX::XMVECTOR lightDir = DirectX::XMLoadFloat3(&mBaseLightDirections[i]);
@@ -211,17 +209,15 @@ private:
 		// Reusing the command list reuses memory.
 		ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), mPSOs["opaque"].Get()));
 
-		ID3D12DescriptorHeap* descriptorHeaps[] = { cbvSrvUavHeap.GetD3dHeap() };
-		mCommandList->SetDescriptorHeaps(1, descriptorHeaps);
+		auto descriptorHeaps = std::array{ cbvSrvUavHeap.GetD3dHeap() };
+		mCommandList->SetDescriptorHeaps(static_cast<std::uint32_t>(descriptorHeaps.size()), descriptorHeaps.data());
 
 		mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
 		// Bind all the materials used in this scene.  For structured buffers, we can bypass the heap and 
 		// set as a root descriptor.
-		ID3D12Resource* matBuffer = mCurrFrameResource->MaterialBuffer->Resource();
-		mCommandList->SetGraphicsRootShaderResourceView(
-			GFX_ROOT_ARG_MATERIAL_SRV,
-			matBuffer->GetGPUVirtualAddress());
+		auto matBuffer = static_cast<D3D12::ID3D12Resource*>(mCurrFrameResource->MaterialBuffer->Resource());
+		mCommandList->SetGraphicsRootShaderResourceView(GFX_ROOT_ARG_MATERIAL_SRV, matBuffer->GetGPUVirtualAddress());
 
 		mCommandList->RSSetViewports(1, &mScreenViewport);
 		mCommandList->RSSetScissorRects(1, &mScissorRect);
@@ -263,11 +259,11 @@ private:
 		mLinearAllocator->Commit(mCommandQueue.Get());
 
 		// Add the command list to the queue for execution.
-		ID3D12CommandList* cmdsLists[] = { mCommandList.Get() };
-		mCommandQueue->ExecuteCommandLists(1, cmdsLists);
+		auto cmdsLists = std::array{ static_cast<D3D12::ID3D12CommandList*>(mCommandList.Get()) };
+		mCommandQueue->ExecuteCommandLists(static_cast<std::uint32_t>(cmdsLists.size()), cmdsLists.data());
 
 		// Swap the back and front buffers
-		DXGI::DXGI_PRESENT_PARAMETERS presentParams = { 0 };
+		auto presentParams = DXGI::DXGI_PRESENT_PARAMETERS{ 0 };
 		ThrowIfFailed(mSwapChain->Present1(0, 0, &presentParams));
 		mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
 
@@ -298,7 +294,7 @@ private:
 
 		mWaves->SetConstants(mWaveSpeed, mWaveDamping);
 
-		DirectX::GraphicsMemoryStatistics gfxMemStats = DirectX::GraphicsMemory::Get(md3dDevice.Get()).GetStatistics();
+		auto gfxMemStats = DirectX::GraphicsMemory::Get(md3dDevice.Get()).GetStatistics();
 
 		if (ImGui::CollapsingHeader("VideoMemoryInfo"))
 		{
@@ -336,9 +332,7 @@ private:
 
 	void OnMouseDown(WPARAM btnState, int x, int y)override
 	{
-		ImGuiIO& io = ImGui::GetIO();
-
-		if (!io.WantCaptureMouse)
+		if (auto& io = ImGui::GetIO(); not io.WantCaptureMouse)
 		{
 			mLastMousePos.x = x;
 			mLastMousePos.y = y;
@@ -349,45 +343,45 @@ private:
 
 	void OnMouseUp(WPARAM btnState, int x, int y)override
 	{
-		if (ImGuiIO& io = ImGui::GetIO(); !io.WantCaptureMouse)
+		if (auto& io = ImGui::GetIO(); not io.WantCaptureMouse)
 			Win32::ReleaseCapture();
 	}
 
 	void OnMouseMove(WPARAM btnState, int x, int y)override
 	{
-		ImGuiIO& io = ImGui::GetIO();
+		auto& io = ImGui::GetIO();
 
-		if (!io.WantCaptureMouse)
+		if (io.WantCaptureMouse)
+			return;
+
+		if ((btnState & Win32::MK::LButton) != 0)
 		{
-			if ((btnState & Win32::MK::LButton) != 0)
-			{
-				// Make each pixel correspond to a quarter of a degree.
-				float dx = DirectX::XMConvertToRadians(0.25f * static_cast<float>(x - mLastMousePos.x));
-				float dy = DirectX::XMConvertToRadians(0.25f * static_cast<float>(y - mLastMousePos.y));
+			// Make each pixel correspond to a quarter of a degree.
+			auto dx = DirectX::XMConvertToRadians(0.25f * static_cast<float>(x - mLastMousePos.x));
+			auto dy = DirectX::XMConvertToRadians(0.25f * static_cast<float>(y - mLastMousePos.y));
 
-				// Update angles based on input to orbit camera around box.
-				mTheta += dx;
-				mPhi += dy;
+			// Update angles based on input to orbit camera around box.
+			mTheta += dx;
+			mPhi += dy;
 
-				// Restrict the angle mPhi.
-				mPhi = std::clamp(mPhi, 0.1f, MathHelper::Pi - 0.1f);
-			}
-			else if ((btnState & Win32::MK::RButton) != 0)
-			{
-				// Make each pixel correspond to 0.005 unit in the scene.
-				float dx = 0.05f * static_cast<float>(x - mLastMousePos.x);
-				float dy = 0.05f * static_cast<float>(y - mLastMousePos.y);
-
-				// Update the camera radius based on input.
-				mRadius += dx - dy;
-
-				// Restrict the radius.
-				mRadius = std::clamp(mRadius, 5.0f, 150.0f);
-			}
-
-			mLastMousePos.x = x;
-			mLastMousePos.y = y;
+			// Restrict the angle mPhi.
+			mPhi = std::clamp(mPhi, 0.1f, MathHelper::Pi - 0.1f);
 		}
+		else if ((btnState & Win32::MK::RButton) != 0)
+		{
+			// Make each pixel correspond to 0.005 unit in the scene.
+			auto dx = 0.05f * static_cast<float>(x - mLastMousePos.x);
+			auto dy = 0.05f * static_cast<float>(y - mLastMousePos.y);
+
+			// Update the camera radius based on input.
+			mRadius += dx - dy;
+
+			// Restrict the radius.
+			mRadius = std::clamp(mRadius, 5.0f, 150.0f);
+		}
+
+		mLastMousePos.x = x;
+		mLastMousePos.y = y;
 	}
 
 	void OnKeyboardInput(const GameTimer& gt)
@@ -456,16 +450,15 @@ private:
 	{
 		mMainPassCB = {};
 
-		DirectX::XMMATRIX view = DirectX::XMLoadFloat4x4(&mView);
-		DirectX::XMMATRIX proj = DirectX::XMLoadFloat4x4(&mProj);
-
-		DirectX::XMMATRIX viewProj = DirectX::XMMatrixMultiply(view, proj);
-		auto detView = DirectX::XMMatrixDeterminant(view);
-		auto detProj = DirectX::XMMatrixDeterminant(proj);
-		DirectX::XMMATRIX invView = DirectX::XMMatrixInverse(&detView, view);
-		DirectX::XMMATRIX invProj = DirectX::XMMatrixInverse(&detProj, proj);
-		auto detViewProj = DirectX::XMMatrixDeterminant(viewProj);
-		DirectX::XMMATRIX invViewProj = DirectX::XMMatrixInverse(&detViewProj, viewProj);
+		auto view = DirectX::XMMATRIX{ DirectX::XMLoadFloat4x4(&mView) };
+		auto proj = DirectX::XMMATRIX{ DirectX::XMLoadFloat4x4(&mProj) };
+		auto viewProj = DirectX::XMMATRIX{ DirectX::XMMatrixMultiply(view, proj) };
+		auto detView = DirectX::XMVECTOR{ DirectX::XMMatrixDeterminant(view) };
+		auto invView = DirectX::XMMATRIX{ DirectX::XMMatrixInverse(&detView, view) };
+		auto detProj = DirectX::XMVECTOR{ DirectX::XMMatrixDeterminant(proj) };
+		auto invProj = DirectX::XMMATRIX{ DirectX::XMMatrixInverse(&detProj, proj) };
+		auto detViewProj = DirectX::XMVECTOR{ DirectX::XMMatrixDeterminant(viewProj) };
+		auto invViewProj = DirectX::XMMATRIX{ DirectX::XMMatrixInverse(&detViewProj, viewProj) };
 
 		DirectX::XMStoreFloat4x4(&mMainPassCB.gView, DirectX::XMMatrixTranspose(view));
 		DirectX::XMStoreFloat4x4(&mMainPassCB.gInvView, DirectX::XMMatrixTranspose(invView));
@@ -500,16 +493,13 @@ private:
 	void UpdateWaves(const GameTimer& gt)
 	{
 		// Every quarter second, generate a random wave.
-		static float t_base = 0.0f;
+		static auto t_base = 0.0f;
 		if ((mTimer.TotalTime() - t_base) >= 0.25f)
 		{
 			t_base += 0.25f;
-
-			int i = MathHelper::Rand(4, mWaves->RowCount() - 5);
-			int j = MathHelper::Rand(4, mWaves->ColumnCount() - 5);
-
-			float r = mWaveScale * MathHelper::RandF(0.3f, 0.6f);
-
+			auto i = MathHelper::Rand(4, mWaves->RowCount() - 5);
+			auto j = MathHelper::Rand(4, mWaves->ColumnCount() - 5);
+			auto r = mWaveScale * MathHelper::RandF(0.3f, 0.6f);
 			mWaves->Disturb(i, j, r);
 		}
 
@@ -518,8 +508,8 @@ private:
 
 		// Update the wave vertex buffer with the new solution.
 		auto currWavesVB = mCurrFrameResource->WavesVB.get();
-		std::vector<ModelVertex> verts(mWaves->VertexCount());
-		for (int i = 0; i < mWaves->VertexCount(); ++i)
+		auto verts = std::vector<ModelVertex>(mWaves->VertexCount());
+		for (auto i = 0; i < mWaves->VertexCount(); ++i)
 		{
 			verts[i].Pos = mWaves->Position(i);
 			verts[i].Normal = mWaves->Normal(i);
@@ -536,7 +526,7 @@ private:
 
 	void BuildCbvSrvUavDescriptorHeap()
 	{
-		CbvSrvUavHeap& cbvSrvUavHeap = CbvSrvUavHeap::Get();
+		auto& cbvSrvUavHeap = CbvSrvUavHeap::Get();
 		cbvSrvUavHeap.Init(md3dDevice.Get(), CBV_SRV_UAV_HEAP_CAPACITY);
 
 		InitImgui(cbvSrvUavHeap);
@@ -545,7 +535,7 @@ private:
 	void BuildRootSignature()
 	{
 		// Root parameter can be a table, root descriptor or root constants.
-		D3D12::CD3DX12_ROOT_PARAMETER gfxRootParameters[GFX_ROOT_ARG_COUNT];
+		auto gfxRootParameters = std::array<D3D12::CD3DX12_ROOT_PARAMETER, GFX_ROOT_ARG_COUNT>{};
 
 		// Perfomance TIP: Order from most frequent to least frequent.
 		gfxRootParameters[GFX_ROOT_ARG_OBJECT_CBV].InitAsConstantBufferView(0);
@@ -553,15 +543,16 @@ private:
 		gfxRootParameters[GFX_ROOT_ARG_MATERIAL_SRV].InitAsShaderResourceView(0);
 
 		// A root signature is an array of root parameters.
-		D3D12::CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(
+		auto rootSigDesc = D3D12::CD3DX12_ROOT_SIGNATURE_DESC{
 			GFX_ROOT_ARG_COUNT,
-			gfxRootParameters,
-			0, nullptr,
-			D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+			gfxRootParameters.data(),
+			0,
+			nullptr,
+			D3D12::D3D12_ROOT_SIGNATURE_FLAGS::D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT };
 
 		// create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
-		Microsoft::WRL::ComPtr<D3D::ID3DBlob> serializedRootSig = nullptr;
-		Microsoft::WRL::ComPtr<D3D::ID3DBlob> errorBlob = nullptr;
+		auto serializedRootSig = Microsoft::WRL::ComPtr<D3D::ID3DBlob>{};
+		auto errorBlob = Microsoft::WRL::ComPtr<D3D::ID3DBlob>{};
 		auto hr = D3D12::D3D12SerializeRootSignature(
 			&rootSigDesc,
 			D3D::D3D_ROOT_SIGNATURE_VERSION::D3D_ROOT_SIGNATURE_VERSION_1,
@@ -581,30 +572,28 @@ private:
 
 	void BuildShadersAndInputLayout()
 	{
-#if defined(DEBUG) || defined(_DEBUG)  
-#define COMMA_DEBUG_ARGS ,DXC::ArgDebug, DXC::ArgSkipOptimizations
-#else
-#define COMMA_DEBUG_ARGS
-#endif
-
-		auto vsArgs = std::vector<Win32::LPCWSTR>{ L"-E", L"VS", L"-T", L"vs_6_6" COMMA_DEBUG_ARGS };
-		auto psArgs = std::vector<Win32::LPCWSTR>{ L"-E", L"PS", L"-T", L"ps_6_6" COMMA_DEBUG_ARGS };
-
-		mShaders["standardVS"] = d3dUtil::CompileShader(L"Shaders\\BasicLit.hlsl", vsArgs);
-		mShaders["opaquePS"] = d3dUtil::CompileShader(L"Shaders\\BasicLit.hlsl", psArgs);
-
-		mInputLayout =
+		if constexpr (IsDebugBuild)
 		{
-			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12::D3D12_INPUT_CLASSIFICATION::D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12::D3D12_INPUT_CLASSIFICATION::D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D12::D3D12_INPUT_CLASSIFICATION::D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 32, D3D12::D3D12_INPUT_CLASSIFICATION::D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			mShaders["standardVS"] = d3dUtil::CompileShader(L"Shaders\\BasicLit.hlsl", { L"-E", L"VS", L"-T", L"vs_6_6", DXC::ArgDebug, DXC::ArgSkipOptimizations });
+			mShaders["opaquePS"] = d3dUtil::CompileShader(L"Shaders\\BasicLit.hlsl", { L"-E", L"PS", L"-T", L"ps_6_6", DXC::ArgDebug, DXC::ArgSkipOptimizations });
+		}
+		else
+		{
+			mShaders["standardVS"] = d3dUtil::CompileShader(L"Shaders\\BasicLit.hlsl", { L"-E", L"VS", L"-T", L"vs_6_6" });
+			mShaders["opaquePS"] = d3dUtil::CompileShader(L"Shaders\\BasicLit.hlsl", { L"-E", L"PS", L"-T", L"ps_6_6" });
+		}
+
+		mInputLayout = {
+			{ "POSITION", 0, DXGI::DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12::D3D12_INPUT_CLASSIFICATION::D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "NORMAL", 0, DXGI::DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12::D3D12_INPUT_CLASSIFICATION::D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "TEXCOORD", 0, DXGI::DXGI_FORMAT::DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D12::D3D12_INPUT_CLASSIFICATION::D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "TANGENT", 0, DXGI::DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT, 0, 32, D3D12::D3D12_INPUT_CLASSIFICATION::D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		};
 	}
 
 	void BuildPSOs()
 	{
-		D3D12_GRAPHICS_PIPELINE_STATE_DESC basePsoDesc = d3dUtil::InitDefaultPso(
+		auto basePsoDesc = d3dUtil::InitDefaultPso(
 			mBackBufferFormat,
 			mDepthStencilFormat,
 			mInputLayout,
@@ -616,7 +605,7 @@ private:
 			&basePsoDesc,
 			__uuidof(D3D12::ID3D12PipelineState), &mPSOs["opaque"]));
 
-		D3D12_GRAPHICS_PIPELINE_STATE_DESC wireframePsoDesc = basePsoDesc;
+		auto wireframePsoDesc = basePsoDesc;
 		wireframePsoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
 
 		ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(
@@ -626,14 +615,14 @@ private:
 
 	void BuildFrameResources()
 	{
-		constexpr UINT passCount = 1;
+		constexpr auto passCount = 1u;
 		for (int i = 0; i < gNumFrameResources; ++i)
 			mFrameResources.push_back(std::make_unique<FrameResource>(md3dDevice.Get(), passCount, static_cast<UINT>(mMaterials.size()), mWaves->VertexCount()));
 	}
 
 	void BuildMaterials()
 	{
-		int matIndex = 0;
+		auto matIndex = 0;
 
 		auto AddMaterial = 
 			[&matIndex, this](
@@ -693,13 +682,13 @@ private:
 		ritem->StartIndexLocation = drawArgs.StartIndexLocation;
 		ritem->BaseVertexLocation = drawArgs.BaseVertexLocation;
 
-		mRitemLayer[(int)layer].push_back(ritem.get());
+		mRitemLayer[static_cast<int>(layer)].push_back(ritem.get());
 		mAllRitems.push_back(std::move(ritem));
 	}
 
 	void BuildRenderItems()
 	{
-		DirectX::XMFLOAT4X4 worldTransform = MathHelper::Identity4x4;
+		auto worldTransform = MathHelper::Identity4x4;
 
 		AddRenderItem(
 			RenderLayer::Opaque,
@@ -720,26 +709,23 @@ private:
 
 	void DrawRenderItems(D3D12::ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& ritems)
 	{
-		for (size_t i = 0; i < ritems.size(); ++i)
+		for (auto i = 0ull; i < ritems.size(); ++i)
 		{
 			auto ri = ritems[i];
-
 			auto vbv = ri->Geo->VertexBufferView();
 			auto ibv = ri->Geo->IndexBufferView();
 			cmdList->IASetVertexBuffers(0, 1, &vbv);
 			cmdList->IASetIndexBuffer(&ibv);
 			cmdList->IASetPrimitiveTopology(ri->PrimitiveType);
-
 			cmdList->SetGraphicsRootConstantBufferView(GFX_ROOT_ARG::GFX_ROOT_ARG_OBJECT_CBV, ri->MemHandleToObjectCB.GpuAddress());
-
 			cmdList->DrawIndexedInstanced(ri->IndexCount, 1, ri->StartIndexLocation, ri->BaseVertexLocation, 0);
 		}
 	}
 
 	auto BuildLandGeometry(D3D12::ID3D12Device* device, DirectX::ResourceUploadBatch& uploadBatch) -> std::unique_ptr<MeshGeometry>
 	{
-		MeshGen meshGen;
-		MeshGenData grid = meshGen.CreateGrid(160.0f, 160.0f, 50, 50);
+		auto meshGen = MeshGen{};
+		auto grid = MeshGenData{meshGen.CreateGrid(160.0f, 160.0f, 50, 50)};
 
 		//
 		// Extract the vertex elements we are interested and apply the height function to
@@ -747,26 +733,24 @@ private:
 		// sandy looking beaches, grassy low hills, and snow mountain peaks.
 		//
 
-		std::vector<ModelVertex> vertices(grid.Vertices.size());
-		for (size_t i = 0; i < grid.Vertices.size(); ++i)
+		auto vertices = std::vector<ModelVertex>(grid.Vertices.size());
+		for (auto i = 0ull; i < grid.Vertices.size(); ++i)
 		{
 			auto& p = grid.Vertices[i].Position;
 			vertices[i].Pos = p;
 			vertices[i].Pos.y = GetHillsHeight(p.x, p.z);
-
 			vertices[i].Normal = GetHillsNormal(p.x, p.z);
-
 			// Not used in this demo.
 			vertices[i].TexC = DirectX::XMFLOAT2(0.0f, 0.0f);
 			vertices[i].TangentU = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
 		}
 
-		const uint32_t indexCount = (UINT)grid.Indices32.size();
-		const UINT indexElementByteSize = sizeof(uint16_t);
-		const UINT vbByteSize = (UINT)vertices.size() * sizeof(ModelVertex);
-		const UINT ibByteSize = indexCount * indexElementByteSize;
+		const auto indexCount = static_cast<std::uint32_t>(grid.Indices32.size());
+		const auto indexElementByteSize = std::uint32_t{ sizeof(uint16_t) };
+		const auto vbByteSize = static_cast<std::uint32_t>(vertices.size()) * sizeof(ModelVertex);
+		const auto ibByteSize = indexCount * indexElementByteSize;
 
-		std::vector<std::uint16_t> indices = grid.GetIndices16();
+		auto indices = std::vector<std::uint16_t>{grid.GetIndices16()};
 
 		auto geo = std::make_unique<MeshGeometry>();
 		geo->Name = "landGeo";
@@ -794,11 +778,12 @@ private:
 		geo->IndexFormat = DXGI_FORMAT_R16_UINT;
 		geo->IndexBufferByteSize = ibByteSize;
 
-		SubmeshGeometry submesh;
-		submesh.IndexCount = static_cast<UINT>(indices.size());
-		submesh.StartIndexLocation = 0;
-		submesh.BaseVertexLocation = 0;
-		submesh.VertexCount = static_cast<UINT>(vertices.size());
+		auto submesh = SubmeshGeometry{
+			.IndexCount = static_cast<std::uint32_t>(indices.size()),
+			.StartIndexLocation = 0,
+			.BaseVertexLocation = 0,
+			.VertexCount = static_cast<std::uint32_t>(vertices.size())
+		};
 		geo->DrawArgs["grid"] = submesh;
 
 		return geo;
@@ -806,15 +791,15 @@ private:
 
 	auto BuildWaveGeometry(D3D12::ID3D12Device* device, DirectX::ResourceUploadBatch& uploadBatch) -> std::unique_ptr<MeshGeometry>
 	{
-		std::vector<std::uint32_t> indices(3 * mWaves->TriangleCount()); // 3 indices per face
+		auto indices = std::vector<std::uint32_t>(3 * mWaves->TriangleCount()); // 3 indices per face
 
 		// Iterate over each quad.
-		int m = mWaves->RowCount();
-		int n = mWaves->ColumnCount();
-		int k = 0;
-		for (int i = 0; i < m - 1; ++i)
+		auto m = mWaves->RowCount();
+		auto n = mWaves->ColumnCount();
+		auto k = 0;
+		for (auto i = 0; i < m - 1; ++i)
 		{
-			for (int j = 0; j < n - 1; ++j)
+			for (auto j = 0; j < n - 1; ++j)
 			{
 				indices[k] = i * n + j;
 				indices[k + 1] = i * n + j + 1;
@@ -828,8 +813,8 @@ private:
 			}
 		}
 
-		UINT vbByteSize = mWaves->VertexCount() * sizeof(ModelVertex);
-		UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint32_t);
+		auto vbByteSize = std::uint32_t{ mWaves->VertexCount() * sizeof(ModelVertex) };
+		auto ibByteSize = static_cast<std::uint32_t>(indices.size() * sizeof(std::uint32_t));
 
 		auto geo = std::make_unique<MeshGeometry>();
 		geo->Name = "waterGeo";
@@ -852,11 +837,11 @@ private:
 		geo->IndexFormat = DXGI_FORMAT_R32_UINT;
 		geo->IndexBufferByteSize = ibByteSize;
 
-		SubmeshGeometry submesh;
-		submesh.IndexCount = (UINT)indices.size();
-		submesh.StartIndexLocation = 0;
-		submesh.BaseVertexLocation = 0;
-
+		auto submesh = SubmeshGeometry{
+			.IndexCount = static_cast<std::uint32_t>(indices.size()),
+			.StartIndexLocation = 0,
+			.BaseVertexLocation = 0
+		};
 		geo->DrawArgs["grid"] = submesh;
 
 		return geo;
@@ -873,16 +858,14 @@ private:
 		auto n = DirectX::XMFLOAT3{
 			-0.03f * z * cosf(0.1f * x) - 0.3f * cosf(0.1f * z),
 			1.0f,
-			-0.3f * sinf(0.1f * x) + 0.03f * x * sinf(0.1f * z) };
-
-		DirectX::XMVECTOR unitNormal = DirectX::XMVector3Normalize(DirectX::XMLoadFloat3(&n));
+			-0.3f * sinf(0.1f * x) + 0.03f * x * sinf(0.1f * z) 
+		};
+		auto unitNormal = DirectX::XMVECTOR{DirectX::XMVector3Normalize(DirectX::XMLoadFloat3(&n))};
 		DirectX::XMStoreFloat3(&n, unitNormal);
-
 		return n;
 	}
 
 private:
-
 	std::vector<std::unique_ptr<FrameResource>> mFrameResources;
 	FrameResource* mCurrFrameResource = nullptr;
 	int mCurrFrameResourceIndex = 0;
