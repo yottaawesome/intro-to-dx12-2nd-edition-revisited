@@ -32,6 +32,7 @@ The effort is currently in progress. The following projects have been converted 
 * [14/BasicTesselation](./src/14/BasicTesselation)
 * [14/BezierPatch](./src/14/BezierPatch)
 * [16/InstancingAndCulling](./src/16/InstancingAndCulling)
+* [17/Picking](./src/17/Picking)
 
 ## Building and running
 
