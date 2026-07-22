@@ -33,6 +33,7 @@ The effort is currently in progress. The following projects have been converted 
 * [14/BezierPatch](./src/14/BezierPatch)
 * [16/InstancingAndCulling](./src/16/InstancingAndCulling)
 * [17/Picking](./src/17/Picking)
+* [18/CubeAndNormalMaps](./src/18/CubeAndNormalMaps)
 
 ## Building and running
 
