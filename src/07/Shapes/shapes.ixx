@@ -621,9 +621,9 @@ private:
             D3D12_RESOURCE_STATE_INDEX_BUFFER, &geo->IndexBufferGPU);
 
         geo->VertexByteStride = sizeof(ColorVertex);
-        geo->VertexBufferByteSize = vbByteSize;
+        geo->VertexBufferByteSize = static_cast<std::uint32_t>(vbByteSize);
         geo->IndexFormat = DXGI_FORMAT_R16_UINT;
-        geo->IndexBufferByteSize = ibByteSize;
+        geo->IndexBufferByteSize = static_cast<std::uint32_t>(ibByteSize);
 
         geo->DrawArgs["box"] = boxSubmesh;
         geo->DrawArgs["grid"] = gridSubmesh;
