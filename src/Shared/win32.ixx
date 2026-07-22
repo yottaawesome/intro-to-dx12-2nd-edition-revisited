@@ -2,6 +2,10 @@
 // Licensed under the MIT License.
 module;
 
+#ifdef _DEBUG
+#define _CRTDBG_MAP_ALLOC
+#endif
+
 #include <Windows.h>
 #include <WindowsX.h>
 #include <ppl.h>
