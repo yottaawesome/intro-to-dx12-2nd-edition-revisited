@@ -311,10 +311,12 @@ export namespace D3D12
 {
 	constexpr auto D3d12Float32Max = D3D12_FLOAT32_MAX;
 
-	inline constexpr auto DefaultShader4ComponentMapping() noexcept -> std::uint32_t
-	{
-		return D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	}
+	constexpr auto DefaultShader4ComponentMapping = UINT{D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING};
+
+	//inline constexpr auto DefaultShader4ComponentMapping() noexcept -> std::uint32_t
+	//{
+	//	return D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	//}
 
 	using
 		::CD3DX12_PIPELINE_STATE_STREAM_BLEND_DESC,

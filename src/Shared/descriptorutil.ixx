@@ -286,7 +286,7 @@ export
         auto srvDesc = D3D12::D3D12_SHADER_RESOURCE_VIEW_DESC{
             .Format = format,
             .ViewDimension = D3D12::D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE2D,
-			.Shader4ComponentMapping = D3D12::DefaultShader4ComponentMapping(),
+			.Shader4ComponentMapping = D3D12::DefaultShader4ComponentMapping,
 			.Texture2D = { 
                 .MostDetailedMip = 0, 
                 .MipLevels = mipLevels, 
@@ -308,7 +308,7 @@ export
         auto srvDesc = D3D12_SHADER_RESOURCE_VIEW_DESC{
 			.Format = format,
 			.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY,
-			.Shader4ComponentMapping = D3D12::DefaultShader4ComponentMapping(),
+			.Shader4ComponentMapping = D3D12::DefaultShader4ComponentMapping,
 			.Texture2DArray = {
 				.MostDetailedMip = 0,
 				.MipLevels = mipLevels,
@@ -331,7 +331,7 @@ export
         auto srvDesc = D3D12::D3D12_SHADER_RESOURCE_VIEW_DESC{
 			.Format = format,
 			.ViewDimension = D3D12::D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURECUBE,
-			.Shader4ComponentMapping = D3D12::DefaultShader4ComponentMapping(), 
+			.Shader4ComponentMapping = D3D12::DefaultShader4ComponentMapping, 
 			.TextureCube = {
 				.MostDetailedMip = 0,
 				.MipLevels = mipLevels,
@@ -415,7 +415,7 @@ export
         auto srvDesc = D3D12::D3D12_SHADER_RESOURCE_VIEW_DESC{
             .Format = DXGI::DXGI_FORMAT::DXGI_FORMAT_UNKNOWN, // structured buffer,
             .ViewDimension = D3D12::D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_BUFFER,
-            .Shader4ComponentMapping = D3D12::DefaultShader4ComponentMapping(),
+            .Shader4ComponentMapping = D3D12::DefaultShader4ComponentMapping,
             .Buffer = {
                 .FirstElement = firstElement,
                 .NumElements = elementCount,
