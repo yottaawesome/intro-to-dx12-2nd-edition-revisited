@@ -53,6 +53,10 @@
   <Folder Name="/17/">
     <Project Path="17/Picking/Picking.vcxproj" Id="3e20903f-1d20-4f77-93be-89074ba397d4" />
   </Folder>
+  <Folder Name="/18/">
+    <Project Path="18/CubeAndNormalMaps/CubeAndNormalMaps.vcxproj" Id="ec627830-7ef8-4b4c-b310-a5503eee2a18" />
+    <Project Path="18/DynamicCubeMap/DynamicCubeMap.vcxproj" Id="efa296d5-d84e-4f57-81a0-e7c41506a0a0" />
+  </Folder>
   <Folder Name="/Common/">
     <Project Path="Shared/Shared.vcxproj" Id="71a3731d-95eb-49ec-b69f-e0b5e166115b" />
   </Folder>
