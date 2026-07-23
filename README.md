@@ -37,6 +37,7 @@ The effort is currently in progress. The following projects have been converted 
 * [18/DynamicCubeMap](./src/18/DynamicCubeMap)
 * [19/DisplacementMapping](./src/19/DisplacementMapping)
 * [20/Shadows](./src/20/Shadows)
+* [21/Ssao](./src/21/Ssao)
 
 ## Building and running
 
