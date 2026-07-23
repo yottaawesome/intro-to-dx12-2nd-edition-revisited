@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>18.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{ec627830-7ef8-4b4c-b310-a5503eee2a18}</ProjectGuid>
-    <RootNamespace>CubeAndNormalMaps</RootNamespace>
+    <ProjectGuid>{fd35e3de-19ad-49e1-a332-38bb7d59e1a3}</ProjectGuid>
+    <RootNamespace>DisplacementMapping</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -116,10 +116,10 @@
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <BuildStlModules>true</BuildStlModules>
       <ModuleOutputFile>$(IntDir)$(RelativeDir)</ModuleOutputFile>
       <ModuleDependenciesFile>$(IntDir)$(RelativeDir)</ModuleDependenciesFile>
       <ObjectFileName>$(IntDir)$(RelativeDir)</ObjectFileName>
-      <BuildStlModules>true</BuildStlModules>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -139,10 +139,10 @@
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <BuildStlModules>true</BuildStlModules>
       <ModuleOutputFile>$(IntDir)$(RelativeDir)</ModuleOutputFile>
       <ModuleDependenciesFile>$(IntDir)$(RelativeDir)</ModuleDependenciesFile>
       <ObjectFileName>$(IntDir)$(RelativeDir)</ObjectFileName>
-      <BuildStlModules>true</BuildStlModules>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -154,7 +154,6 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="cubeandnormalmaps.ixx" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
