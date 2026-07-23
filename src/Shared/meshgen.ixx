@@ -9,11 +9,7 @@ import :meshutil;
 
 export struct MeshGenVertex
 {
-    MeshGenVertex() :
-        Position(0.0f, 0.0f, 0.0f),
-        Normal(0.0f, 0.0f, 0.0f),
-        TangentU(0.0f, 0.0f, 0.0f),
-        TexC(0.0f, 0.0f) {}
+    MeshGenVertex() = default;
     MeshGenVertex(
         const DirectX::XMFLOAT3& p,
         const DirectX::XMFLOAT3& n,
@@ -33,10 +29,10 @@ export struct MeshGenVertex
         TangentU(tx, ty, tz),
         TexC(u, v) {}
 
-    DirectX::XMFLOAT3 Position;
-    DirectX::XMFLOAT3 Normal;
-    DirectX::XMFLOAT3 TangentU;
-    DirectX::XMFLOAT2 TexC;
+    DirectX::XMFLOAT3 Position{0,0,0};
+    DirectX::XMFLOAT3 Normal{0,0,0};
+    DirectX::XMFLOAT3 TangentU{0,0,0};
+    DirectX::XMFLOAT2 TexC{0,0};
 };
 
 export struct MeshGenData
