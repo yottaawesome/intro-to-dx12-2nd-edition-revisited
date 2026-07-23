@@ -493,6 +493,7 @@ export namespace DirectX
 		::DirectX::DDS_LOADER_FLAGS,
 		::DirectX::XMVector3TransformCoord,
 		::DirectX::XMVectorMultiplyAdd,
+		::DirectX::XMMatrixOrthographicOffCenterLH,
 		::DirectX::XMVectorReplicate,
 		::DirectX::XMMatrixRotationAxis,
 		::DirectX::XMVectorSubtract,

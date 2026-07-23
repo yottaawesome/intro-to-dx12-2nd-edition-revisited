@@ -60,6 +60,9 @@
   <Folder Name="/19/">
     <Project Path="19/DisplacementMapping/DisplacementMapping.vcxproj" Id="fd35e3de-19ad-49e1-a332-38bb7d59e1a3" />
   </Folder>
+  <Folder Name="/20/">
+    <Project Path="20/Shadows/Shadows.vcxproj" Id="cfc5fa03-e62d-4322-82eb-6eac27cf9f37" />
+  </Folder>
   <Folder Name="/Common/">
     <Project Path="Shared/Shared.vcxproj" Id="71a3731d-95eb-49ec-b69f-e0b5e166115b" />
   </Folder>
