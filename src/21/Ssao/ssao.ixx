@@ -19,8 +19,8 @@ public:
         BuildResources();
     }
 
-    Ssao(const Ssao& rhs) = delete;
-    auto operator=(const Ssao& rhs) -> Ssao& = delete;
+    Ssao(const Ssao&) = delete;
+    auto operator=(const Ssao&) -> Ssao& = delete;
 
     static constexpr int MaxBlurRadius = 5;
 

@@ -87,6 +87,9 @@
     <ClCompile Include="shaderlib.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="shadowmap.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="vcpkg.json" />

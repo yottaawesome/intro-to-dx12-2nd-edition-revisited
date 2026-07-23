@@ -153,7 +153,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="frameresource.ixx" />
-    <ClCompile Include="shadowmap.ixx" />
     <ClCompile Include="shadowmapapp.ixx" />
     <ClCompile Include="shadows.ixx" />
     <ClCompile Include="main.cpp" />

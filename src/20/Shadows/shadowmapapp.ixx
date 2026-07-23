@@ -1,7 +1,6 @@
 export module shadows:shadowmapapp;
 import std;
 import shared;
-import :shadowmap;
 import :frameresource;
 
 // Lightweight structure stores parameters to draw a shape.  This will

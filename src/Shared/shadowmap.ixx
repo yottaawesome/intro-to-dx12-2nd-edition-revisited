@@ -1,8 +1,9 @@
-export module shadows:shadowmap;
+export module shared:shadowmap;
 import std;
-import shared;
+import :win32;
+import :descriptorutil;
 
-class ShadowMap
+export class ShadowMap
 {
 public:
     ShadowMap(D3D12::ID3D12Device* device, std::uint32_t width, std::uint32_t height)

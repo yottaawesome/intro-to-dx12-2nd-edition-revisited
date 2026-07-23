@@ -154,10 +154,9 @@
   <ItemGroup>
     <ClCompile Include="frameresource.ixx" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="shadowmap.ixx" />
     <ClCompile Include="ssao.ixx" />
-    <ClCompile Include="ssaodemo.ixx" />
     <ClCompile Include="ssaoapp.ixx" />
+    <ClCompile Include="ssaodemo.ixx" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

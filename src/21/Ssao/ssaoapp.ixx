@@ -2,7 +2,6 @@ export module ssaodemo:ssaoapp;
 import std;
 import shared;
 import :frameresource;
-import :shadowmap;
 import :ssao;
 
 // Lightweight structure stores parameters to draw a shape.  This will

@@ -24,9 +24,6 @@
     <ClCompile Include="frameresource.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="shadowmap.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ssaoapp.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
