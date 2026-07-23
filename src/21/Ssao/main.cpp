@@ -11,11 +11,14 @@ extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = ".\\D3D12\\
 
 import std;
 import shared;
+import ssaodemo;
 
 auto wWinMain(Win32::HINSTANCE hInstance, Win32::HINSTANCE, Win32::LPWSTR, int) -> int
 try
 {
-    return 0;
+    if constexpr (IsDebugBuild)
+        Win32::_CrtSetDbgFlag(Win32::CrtAllocMemDf | Win32::CrtLeakCheckDf);
+    return SsaoApp{ hInstance }.Run();
 }
 catch (const std::exception& ex)
 {

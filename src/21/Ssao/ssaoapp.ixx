@@ -63,34 +63,573 @@ constexpr auto CBV_SRV_UAV_HEAP_CAPACITY = 16384u;
 export class SsaoApp : public D3DApp
 {
 public:
-    SsaoApp(Win32::HINSTANCE hInstance);
-    SsaoApp(const SsaoApp& rhs) = delete;
-    SsaoApp& operator=(const SsaoApp& rhs) = delete;
-    ~SsaoApp();
+    SsaoApp(Win32::HINSTANCE hInstance)
+        : D3DApp(hInstance)
+    {
+        // Estimate the scene bounding sphere manually since we know how the scene was constructed.
+        // The grid is the "widest object" with a width of 20 and depth of 30.0f, and centered at
+        // the world space origin.  In general, you need to loop over every world space vertex
+        // position and compute the bounding sphere.
+        mSceneBounds.Center = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+        mSceneBounds.Radius = std::sqrtf(10.0f * 10.0f + 15.0f * 15.0f);
+        Initialize();
+    }
 
-    void Initialize()override;
+    ~SsaoApp()
+    {
+        if (md3dDevice != nullptr)
+            FlushCommandQueue();
+    }
+
+    SsaoApp(const SsaoApp&) = delete;
+    auto operator=(const SsaoApp&) -> SsaoApp& = delete;
 
 private:
-    void CreateRtvAndDsvDescriptorHeaps()override;
-    void OnResize()override;
-    void Update(const GameTimer& gt)override;
-    void Draw(const GameTimer& gt)override;
+    void Initialize()override
+    {
+        D3DApp::Initialize();
 
-    void UpdateImgui(const GameTimer& gt)override;
-    void OnMouseDown(WPARAM btnState, int x, int y)override;
-    void OnMouseUp(WPARAM btnState, int x, int y)override;
-    void OnMouseMove(WPARAM btnState, int x, int y)override;
+        mCamera.SetPosition(0.0f, 2.0f, -15.0f);
 
-    void OnKeyboardInput(const GameTimer& gt);
-    void AnimateMaterials(const GameTimer& gt);
-    void UpdatePerObjectCB(const GameTimer& gt);
-    void UpdateMaterialBuffer(const GameTimer& gt);
-    void UpdateShadowTransform(const GameTimer& gt);
-    void UpdateMainPassCB(const GameTimer& gt);
-    void UpdateShadowPassCB(const GameTimer& gt);
+        mShadowMap = std::make_unique<ShadowMap>(md3dDevice.Get(), 2048, 2048);
 
-    void LoadTextures();
-    void LoadGeometry();
+        mSsao = std::make_unique<Ssao>(md3dDevice.Get(), mClientWidth, mClientHeight);
+
+        // Create the singleton.
+        DirectX::GraphicsMemory::Get(md3dDevice.Get());
+
+        // We will upload on the direct queue for the book samples, but 
+        // copy queue would be better for real game.
+        mUploadBatch->Begin(D3D12_COMMAND_LIST_TYPE_DIRECT);
+
+        // Do init work that requires mUploadBatch...
+        LoadTextures();
+        LoadGeometry();
+
+        // Kick off upload work asyncronously.
+        auto result = std::future<void>{mUploadBatch->End(mCommandQueue.Get())};
+
+        // Other init work.
+        BuildRootSignature();
+        BuildCbvSrvUavDescriptorHeap();
+        BuildShadersAndInputLayout();
+        BuildMaterials();
+        BuildRenderItems();
+        BuildFrameResources();
+        BuildPSOs();
+
+        // Block until the upload work is complete.
+        result.wait();
+    }
+
+    void CreateRtvAndDsvDescriptorHeaps()override
+    {
+        mRtvHeap.Init(md3dDevice.Get(), D3D12::D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_RTV, RTV_COUNT);
+        mDsvHeap.Init(md3dDevice.Get(), D3D12::D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 2);
+    }
+
+    void OnResize()override
+    {
+        D3DApp::OnResize();
+
+        mCamera.SetLens(0.25f * MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
+
+        if (mSsao != nullptr)
+            mSsao->OnResize(mClientWidth, mClientHeight);
+
+        if (CbvSrvUavHeap::Get().IsInitialized())
+        {
+            // Depth/stencil buffer gets recreated on resize, so need to recreate the view.
+            auto& cbvSrvUavHeap = CbvSrvUavHeap::Get();
+            CreateSrv2d(md3dDevice.Get(), mDepthStencilBuffer.Get(), DXGI_FORMAT_R24_UNORM_X8_TYPELESS, 1, cbvSrvUavHeap.CpuHandle(mMainDepthBufferBindlessIndex));
+        }
+    }
+
+    void Update(const GameTimer& gt)override
+    {
+        OnKeyboardInput(gt);
+
+        // Cycle through the circular frame resource array.
+        mCurrFrameResourceIndex = (mCurrFrameResourceIndex + 1) % gNumFrameResources;
+        mCurrFrameResource = mFrameResources[mCurrFrameResourceIndex].get();
+
+        // Has the GPU finished processing the commands of the current frame resource?
+        // If not, wait until the GPU has completed commands up to this fence point.
+        if (mCurrFrameResource->Fence != 0 && mFence->GetCompletedValue() < mCurrFrameResource->Fence)
+        {
+            auto event = Event{};
+            ThrowIfFailed(mFence->SetEventOnCompletion(mCurrFrameResource->Fence, event.Get()));
+            event.Wait();
+        }
+
+        //
+        // Animate the lights (and hence shadows).
+        mLightRotationAngle += 0.1f * gt.DeltaTime();
+        auto R = DirectX::XMMATRIX{ DirectX::XMMatrixRotationY(mLightRotationAngle) };
+        for (int i = 0; i < 3; ++i)
+        {
+            auto lightDir = DirectX::XMVECTOR{ DirectX::XMLoadFloat3(&mBaseLightDirections[i]) };
+            lightDir = DirectX::XMVector3TransformNormal(lightDir, R);
+            DirectX::XMStoreFloat3(&mRotatedLightDirections[i], lightDir);
+        }
+
+        AnimateMaterials(gt);
+        UpdatePerObjectCB(gt);
+        UpdateMaterialBuffer(gt);
+        UpdateShadowTransform(gt);
+        UpdateMainPassCB(gt);
+        UpdateShadowPassCB(gt);
+
+        mSsao->SetOcclusionRadius(mOcclusionRadius);
+        mSsao->SetOcclusionFadeStart(mOcclusionFadeStart);
+        mSsao->SetOcclusionFadeEnd(mOcclusionFadeEnd);
+        mSsao->SetSurfaceEpsilon(mSurfaceEpsilon);
+    }
+
+    void Draw(const GameTimer& gt)override
+    {
+        auto& psoLib = PsoLib::GetLib();
+        auto& cbvSrvUavHeap = CbvSrvUavHeap::Get();
+        auto& samHeap = SamplerHeap::Get();
+
+        UpdateImgui(gt);
+
+        auto cmdListAlloc = mCurrFrameResource->CmdListAlloc;
+
+        // Reuse the memory associated with command recording.
+        // We can only reset when the associated command lists have finished execution on the GPU.
+        ThrowIfFailed(cmdListAlloc->Reset());
+
+        // A command list can be reset after it has been added to the command queue via ExecuteCommandList.
+        // Reusing the command list reuses memory.
+        ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), psoLib["opaque"]));
+
+        auto descriptorHeaps = std::array{ cbvSrvUavHeap.GetD3dHeap(), samHeap.GetD3dHeap() };
+        mCommandList->SetDescriptorHeaps(static_cast<std::uint32_t>(descriptorHeaps.size()), descriptorHeaps.data());
+
+        mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
+
+        // Bind all the materials used in this scene.  For structured buffers, we can bypass the heap and 
+        // set as a root descriptor.
+        auto matBuffer = mCurrFrameResource->MaterialBuffer->Resource();
+        mCommandList->SetGraphicsRootShaderResourceView(GFX_ROOT_ARG_MATERIAL_SRV, matBuffer->GetGPUVirtualAddress());
+
+        DrawSceneToShadowMap();
+
+        //
+        // Normal/depth pass.
+        DrawNormalsAndDepth();
+
+        //
+        // Compute SSAO.
+        mSsao->ComputeSsao(mCommandList.Get(), psoLib["ssao"]);
+        mSsao->BlurAmbientMap(mCommandList.Get(), psoLib["ssaoBlur"], 3);
+
+        //
+        // Main rendering pass.
+        mCommandList->RSSetViewports(1, &mScreenViewport);
+        mCommandList->RSSetScissorRects(1, &mScissorRect);
+
+        // Indicate a state transition on the resource usage.
+        auto transition = D3D12::CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
+            D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+        mCommandList->ResourceBarrier(1, &transition);
+
+        // Clear the back buffer and depth buffer.
+        mCommandList->ClearRenderTargetView(CurrentBackBufferView(), DirectX::Colors::LightSteelBlue, 0, nullptr);
+
+        if (mDrawWireframe)
+            mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12::D3D12_CLEAR_FLAGS{ D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL }, 1.0f, 0, 0, nullptr);
+
+        // WE ALREADY WROTE THE DEPTH INFO TO THE DEPTH BUFFER IN DrawNormalsAndDepth,
+        // SO DO NOT CLEAR DEPTH.
+
+        // Specify the buffers we are going to render to.
+		auto cbbv = CurrentBackBufferView();
+		auto dsv = DepthStencilView();
+        mCommandList->OMSetRenderTargets(1, &cbbv, true, &dsv);
+
+        auto passCB = mCurrFrameResource->PassCB->Resource();
+        mCommandList->SetGraphicsRootConstantBufferView(GFX_ROOT_ARG_PASS_CBV, passCB->GetGPUVirtualAddress());
+
+        mCommandList->SetPipelineState(mDrawWireframe ? psoLib["opaque_wireframe"] : psoLib["opaque_wprepass"]);
+        DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Opaque]);
+
+        mCommandList->SetPipelineState(psoLib["debug"]);
+        DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Debug]);
+
+        mCommandList->SetPipelineState(psoLib["sky"]);
+        DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Sky]);
+
+        // Draw imgui UI.
+        ImGui::ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), mCommandList.Get());
+
+        // Indicate a state transition on the resource usage.
+        transition = D3D12::CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
+            D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+        mCommandList->ResourceBarrier(1, &transition);
+
+        // Done recording commands.
+        ThrowIfFailed(mCommandList->Close());
+
+        mLinearAllocator->Commit(mCommandQueue.Get());
+
+        // Add the command list to the queue for execution.
+        auto cmdsLists = std::array{ static_cast<D3D12::ID3D12CommandList*>(mCommandList.Get()) };
+        mCommandQueue->ExecuteCommandLists(static_cast<std::uint32_t>(cmdsLists.size()), cmdsLists.data());
+
+        // Swap the back and front buffers
+        auto presentParams = DXGI::DXGI_PRESENT_PARAMETERS{ };
+        ThrowIfFailed(mSwapChain->Present1(0, 0, &presentParams));
+        mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
+
+        // Advance the fence value to mark commands up to this fence point.
+        mCurrFrameResource->Fence = ++mCurrentFence;
+
+        // Add an instruction to the command queue to set a new fence point. 
+        // Because we are on the GPU timeline, the new fence point won't be 
+        // set until the GPU finishes processing all the commands prior to this Signal().
+        mCommandQueue->Signal(mFence.Get(), mCurrentFence);
+    }
+
+    void UpdateImgui(const GameTimer& gt)override
+    {
+        D3DApp::UpdateImgui(gt);
+
+        //
+        // Define a panel to render GUI elements.
+        // 
+        ImGui::Begin("Options");
+
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
+        ImGui::Checkbox("Wireframe", &mDrawWireframe);
+        ImGui::Checkbox("NormalMaps", &mNormalMapsEnabled);
+        ImGui::Checkbox("Reflections", &mReflectionsEnabled);
+        ImGui::Checkbox("Shadows", &mShadowsEnabled);
+
+        if (ImGui::CollapsingHeader("SSAO"))
+        {
+            ImGui::Checkbox("SsaoEnabled", &mSsaoEnabled);
+            ImGui::SliderFloat("OcclusionRadius", &mOcclusionRadius, 0.1f, 2.0f);
+            ImGui::SliderFloat("OcclusionFadeStart", &mOcclusionFadeStart, 0.0f, 4.0f);
+            ImGui::SliderFloat("OcclusionFadeEnd", &mOcclusionFadeEnd, 0.0f, 4.0f);
+            ImGui::SliderFloat("SurfaceEpsilon", &mSurfaceEpsilon, 0.0f, 10.0f);
+        }
+
+        //assert(mOcclusionFadeStart < mOcclusionFadeEnd);
+
+        auto gfxMemStats = DirectX::GraphicsMemory::Get(md3dDevice.Get()).GetStatistics();
+
+        if (ImGui::CollapsingHeader("VideoMemoryInfo"))
+        {
+            static auto vidMemPollTime = 0.0f;
+            vidMemPollTime += gt.DeltaTime();
+
+            static auto videoMemInfo = DXGI::DXGI_QUERY_VIDEO_MEMORY_INFO{};
+            if (vidMemPollTime >= 1.0f) // poll every second
+            {
+                mDefaultAdapter->QueryVideoMemoryInfo(
+                    0, // assume single GPU
+                    DXGI::DXGI_MEMORY_SEGMENT_GROUP::DXGI_MEMORY_SEGMENT_GROUP_LOCAL, // interested in local GPU memory, not shared
+                    &videoMemInfo);
+
+                vidMemPollTime -= 1.0f;
+            }
+
+            ImGui::Text("Budget (bytes): %u", videoMemInfo.Budget);
+            ImGui::Text("CurrentUsage (bytes): %u", videoMemInfo.CurrentUsage);
+            ImGui::Text("AvailableForReservation (bytes): %u", videoMemInfo.AvailableForReservation);
+            ImGui::Text("CurrentReservation (bytes): %u", videoMemInfo.CurrentReservation);
+
+        }
+        if (ImGui::CollapsingHeader("GraphicsMemoryStatistics"))
+        {
+            ImGui::Text("Bytes of memory in-flight: %u", gfxMemStats.committedMemory);
+            ImGui::Text("Total bytes used: %u", gfxMemStats.totalMemory);
+            ImGui::Text("Total page count: %u", gfxMemStats.totalPages);
+        }
+
+        ImGui::End();
+
+        ImGui::Render();
+    }
+
+    void OnMouseDown(WPARAM btnState, int x, int y)override
+    {
+        if (auto& io = ImGui::GetIO(); not io.WantCaptureMouse)
+        {
+            mLastMousePos.x = x;
+            mLastMousePos.y = y;
+            Win32::SetCapture(mhMainWnd);
+        }
+    }
+
+    void OnMouseUp(WPARAM btnState, int x, int y)override
+    {
+        if (auto& io = ImGui::GetIO(); not io.WantCaptureMouse)
+            Win32::ReleaseCapture();
+    }
+
+    void OnMouseMove(WPARAM btnState, int x, int y)override
+    {
+        auto& io = ImGui::GetIO();
+        if (io.WantCaptureMouse)
+            return;
+
+        if ((btnState & Win32::MK::LButton) != 0)
+        {
+            // Make each pixel correspond to a quarter of a degree.
+            auto dx = DirectX::XMConvertToRadians(0.25f * static_cast<float>(x - mLastMousePos.x));
+            auto dy = DirectX::XMConvertToRadians(0.25f * static_cast<float>(y - mLastMousePos.y));
+            mCamera.Pitch(dy);
+            mCamera.RotateY(dx);
+        }
+
+        mLastMousePos.x = x;
+        mLastMousePos.y = y;
+    }
+
+    void OnKeyboardInput(const GameTimer& gt)
+    {
+        const auto dt = gt.DeltaTime();
+        if (Win32::GetAsyncKeyState('W') & 0x8000)
+            mCamera.Walk(10.0f * dt);
+        if (Win32::GetAsyncKeyState('S') & 0x8000)
+            mCamera.Walk(-10.0f * dt);
+        if (Win32::GetAsyncKeyState('A') & 0x8000)
+            mCamera.Strafe(-10.0f * dt);
+        if (Win32::GetAsyncKeyState('D') & 0x8000)
+            mCamera.Strafe(10.0f * dt);
+        mCamera.UpdateViewMatrix();
+    }
+    void AnimateMaterials(const GameTimer& gt) {}
+    void UpdatePerObjectCB(const GameTimer& gt)
+    {
+        // Update per object constants once per frame so the data can be shared across different render passes.
+        for (auto& ri : mAllRitems)
+        {
+            DirectX::XMStoreFloat4x4(&ri->ObjectConstants.gWorld, DirectX::XMMatrixTranspose(DirectX::XMLoadFloat4x4(&ri->World)));
+            DirectX::XMStoreFloat4x4(&ri->ObjectConstants.gTexTransform, DirectX::XMMatrixTranspose(DirectX::XMLoadFloat4x4(&ri->TexTransform)));
+            ri->ObjectConstants.gMaterialIndex = ri->Mat->MatIndex;
+            ri->ObjectConstants.gCubeMapIndex = mSkyBindlessIndex;
+            // Need to hold handle until we submit work to GPU.
+            ri->MemHandleToObjectCB = mLinearAllocator->AllocateConstant(ri->ObjectConstants);
+        }
+    }
+    void UpdateMaterialBuffer(const GameTimer& gt)
+    {
+        auto& matLib = MaterialLib::GetLib();
+
+        auto currMaterialBuffer = mCurrFrameResource->MaterialBuffer.get();
+        for (auto& e : matLib.GetCollection())
+        {
+            // Only update the cbuffer data if the constants have changed.  If the cbuffer
+            // data changes, it needs to be updated for each FrameResource.
+            auto mat = static_cast<Material*>(e.second.get());
+            if (mat->NumFramesDirty > 0)
+            {
+                auto matTransform = DirectX::XMMATRIX{DirectX::XMLoadFloat4x4(&mat->MatTransform)};
+                auto matData = MaterialData{
+                    .DiffuseAlbedo = mat->DiffuseAlbedo,
+                    .FresnelR0 = mat->FresnelR0,
+                    .Roughness = mat->Roughness,
+                    .DiffuseMapIndex = static_cast<std::uint32_t>(mat->AlbedoBindlessIndex),
+                    .NormalMapIndex = static_cast<std::uint32_t>(mat->NormalBindlessIndex),
+                    .GlossHeightAoMapIndex = static_cast<std::uint32_t>(mat->GlossHeightAoBindlessIndex)
+                };
+                DirectX::XMStoreFloat4x4(&matData.MatTransform, DirectX::XMMatrixTranspose(matTransform));
+                currMaterialBuffer->CopyData(mat->MatIndex, matData);
+
+                // Next FrameResource need to be updated too.
+                mat->NumFramesDirty--;
+            }
+        }
+    }
+
+    void UpdateShadowTransform(const GameTimer& gt)
+    {
+        // Only the first "main" light casts a shadow.
+        auto lightDir = DirectX::XMVECTOR{ DirectX::XMLoadFloat3(&mRotatedLightDirections[0]) };
+        auto lightPos = DirectX::XMVECTOR{ -2.0f * mSceneBounds.Radius * lightDir };
+        auto targetPos = DirectX::XMVECTOR{ DirectX::XMLoadFloat3(&mSceneBounds.Center) };
+        auto lightUp = DirectX::XMVECTOR{ DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f) };
+        auto lightView = DirectX::XMMATRIX{ DirectX::XMMatrixLookAtLH(lightPos, targetPos, lightUp) };
+
+        DirectX::XMStoreFloat3(&mLightPosW, lightPos);
+
+        // Transform bounding sphere to light space.
+        auto sphereCenterLS = DirectX::XMFLOAT3{};
+        DirectX::XMStoreFloat3(&sphereCenterLS, DirectX::XMVector3TransformCoord(targetPos, lightView));
+
+        // Ortho frustum in light space encloses scene.
+        auto l = sphereCenterLS.x - mSceneBounds.Radius;
+        auto b = sphereCenterLS.y - mSceneBounds.Radius;
+        auto n = sphereCenterLS.z - mSceneBounds.Radius;
+        auto r = sphereCenterLS.x + mSceneBounds.Radius;
+        auto t = sphereCenterLS.y + mSceneBounds.Radius;
+        auto f = sphereCenterLS.z + mSceneBounds.Radius;
+
+        mLightNearZ = n;
+        mLightFarZ = f;
+        auto lightProj = DirectX::XMMATRIX{ DirectX::XMMatrixOrthographicOffCenterLH(l, r, b, t, n, f) };
+
+        // Transform NDC space [-1,+1]^2 to texture space [0,1]^2
+        auto T = DirectX::XMMATRIX{
+            0.5f, 0.0f, 0.0f, 0.0f,
+            0.0f, -0.5f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            0.5f, 0.5f, 0.0f, 1.0f
+        };
+
+        auto S = DirectX::XMMATRIX{ lightView * lightProj * T };
+        DirectX::XMStoreFloat4x4(&mLightView, lightView);
+        DirectX::XMStoreFloat4x4(&mLightProj, lightProj);
+        DirectX::XMStoreFloat4x4(&mShadowTransform, S);
+    }
+
+    void UpdateMainPassCB(const GameTimer& gt)
+    {
+        auto view = DirectX::XMMATRIX{ mCamera.GetView() };
+        auto proj = DirectX::XMMATRIX{ mCamera.GetProj() };
+        auto viewProj = DirectX::XMMATRIX{ DirectX::XMMatrixMultiply(view, proj) };
+        auto detView = DirectX::XMVECTOR{ DirectX::XMMatrixDeterminant(view) };
+        auto invView = DirectX::XMMATRIX{ DirectX::XMMatrixInverse(&detView, view) };
+        auto detProj = DirectX::XMVECTOR{ DirectX::XMMatrixDeterminant(proj) };
+        auto invProj = DirectX::XMMATRIX{ DirectX::XMMatrixInverse(&detProj, proj) };
+        auto detViewProj = DirectX::XMVECTOR{ DirectX::XMMatrixDeterminant(viewProj) };
+        auto invViewProj = DirectX::XMMATRIX{ DirectX::XMMatrixInverse(&detViewProj, viewProj) };
+
+        // Transform NDC space [-1,+1]^2 to texture space [0,1]^2
+        auto T = DirectX::XMMATRIX{
+            0.5f, 0.0f, 0.0f, 0.0f,
+            0.0f, -0.5f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            0.5f, 0.5f, 0.0f, 1.0f
+        };
+
+        auto viewProjTex = DirectX::XMMATRIX{ DirectX::XMMatrixMultiply(viewProj, T) };
+        auto shadowTransform = DirectX::XMMATRIX{ DirectX::XMLoadFloat4x4(&mShadowTransform) };
+
+        DirectX::XMStoreFloat4x4(&mMainPassCB.gView, DirectX::XMMatrixTranspose(view));
+        DirectX::XMStoreFloat4x4(&mMainPassCB.gInvView, DirectX::XMMatrixTranspose(invView));
+        DirectX::XMStoreFloat4x4(&mMainPassCB.gProj, DirectX::XMMatrixTranspose(proj));
+        DirectX::XMStoreFloat4x4(&mMainPassCB.gInvProj, DirectX::XMMatrixTranspose(invProj));
+        DirectX::XMStoreFloat4x4(&mMainPassCB.gViewProj, DirectX::XMMatrixTranspose(viewProj));
+        DirectX::XMStoreFloat4x4(&mMainPassCB.gInvViewProj, DirectX::XMMatrixTranspose(invViewProj));
+        DirectX::XMStoreFloat4x4(&mMainPassCB.gShadowTransform, DirectX::XMMatrixTranspose(shadowTransform));
+        DirectX::XMStoreFloat4x4(&mMainPassCB.gViewProjTex, DirectX::XMMatrixTranspose(viewProjTex));
+
+        mMainPassCB.gEyePosW = mCamera.GetPosition3f();
+        mMainPassCB.gRenderTargetSize = DirectX::XMFLOAT2((float)mClientWidth, (float)mClientHeight);
+        mMainPassCB.gInvRenderTargetSize = DirectX::XMFLOAT2(1.0f / mClientWidth, 1.0f / mClientHeight);
+        mMainPassCB.gNearZ = 1.0f;
+        mMainPassCB.gFarZ = 1000.0f;
+        mMainPassCB.gTotalTime = gt.TotalTime();
+        mMainPassCB.gDeltaTime = gt.DeltaTime();
+        mMainPassCB.gAmbientLight = { 0.35f, 0.35f, 0.45f, 1.0f };
+        mMainPassCB.gRandomTexIndex = mRandomTexBindlessIndex;
+        mMainPassCB.gSkyBoxIndex = mSkyBindlessIndex;
+        mMainPassCB.gSunShadowMapIndex = mShadowMapBindlessIndex;
+        mMainPassCB.gSceneDepthMapIndex = mMainDepthBufferBindlessIndex;
+        mMainPassCB.gSceneNormalMapIndex = mSsao->GetNormalMapBindlessIndex();
+        mMainPassCB.gSsaoAmbientMap0Index = mSsao->GetAmbientMap0BindlessIndex();
+        mMainPassCB.gSsaoAmbientMap1Index = mSsao->GetAmbientMap1BindlessIndex();
+
+        mMainPassCB.gDebugTexIndex = mSsao->GetAmbientMap0BindlessIndex();
+
+        mMainPassCB.gNormalMapsEnabled = mNormalMapsEnabled;
+        mMainPassCB.gReflectionsEnabled = mReflectionsEnabled;
+        mMainPassCB.gShadowsEnabled = mShadowsEnabled;
+        mMainPassCB.gSsaoEnabled = mSsaoEnabled;
+
+        // Tone down the light strength a bit just to accentuate the SSAO effect.
+        mMainPassCB.gLights[0].Direction = mRotatedLightDirections[0];
+        mMainPassCB.gLights[0].Strength = { 0.5f, 0.4f, 0.4f };
+        mMainPassCB.gLights[1].Direction = mRotatedLightDirections[1];
+        mMainPassCB.gLights[1].Strength = { 0.24f, 0.24f, 0.24f };
+        mMainPassCB.gLights[2].Direction = mRotatedLightDirections[2];
+        mMainPassCB.gLights[2].Strength = { 0.12f, 0.12f, 0.12f };
+
+        auto currPassCB = mCurrFrameResource->PassCB.get();
+        currPassCB->CopyData(0, mMainPassCB);
+    }
+
+    void UpdateShadowPassCB(const GameTimer& gt)
+    {
+        auto view = DirectX::XMMATRIX{DirectX::XMLoadFloat4x4(&mLightView)};
+        auto proj = DirectX::XMMATRIX{DirectX::XMLoadFloat4x4(&mLightProj)};
+        auto viewProj = DirectX::XMMATRIX{ DirectX::XMMatrixMultiply(view, proj) };
+        auto detView = DirectX::XMVECTOR{ DirectX::XMMatrixDeterminant(view) };
+        auto invView = DirectX::XMMATRIX{ DirectX::XMMatrixInverse(&detView, view) };
+		auto detProj = DirectX::XMVECTOR{ DirectX::XMMatrixDeterminant(proj) };
+        auto invProj = DirectX::XMMATRIX{ DirectX::XMMatrixInverse(&detProj, proj) };
+		auto detViewProj = DirectX::XMVECTOR{ DirectX::XMMatrixDeterminant(viewProj) };
+        auto invViewProj = DirectX::XMMATRIX{DirectX::XMMatrixInverse(&detViewProj, viewProj) };
+
+        auto w = mShadowMap->Width();
+        auto h = mShadowMap->Height();
+
+        DirectX::XMStoreFloat4x4(&mShadowPassCB.gView, DirectX::XMMatrixTranspose(view));
+        DirectX::XMStoreFloat4x4(&mShadowPassCB.gInvView, DirectX::XMMatrixTranspose(invView));
+        DirectX::XMStoreFloat4x4(&mShadowPassCB.gProj, DirectX::XMMatrixTranspose(proj));
+        DirectX::XMStoreFloat4x4(&mShadowPassCB.gInvProj, DirectX::XMMatrixTranspose(invProj));
+        DirectX::XMStoreFloat4x4(&mShadowPassCB.gViewProj, DirectX::XMMatrixTranspose(viewProj));
+        DirectX::XMStoreFloat4x4(&mShadowPassCB.gInvViewProj, DirectX::XMMatrixTranspose(invViewProj));
+        mShadowPassCB.gEyePosW = mLightPosW;
+        mShadowPassCB.gRenderTargetSize = DirectX::XMFLOAT2((float)w, (float)h);
+        mShadowPassCB.gInvRenderTargetSize = DirectX::XMFLOAT2(1.0f / w, 1.0f / h);
+        mShadowPassCB.gNearZ = mLightNearZ;
+        mShadowPassCB.gFarZ = mLightFarZ;
+
+        auto currPassCB = mCurrFrameResource->PassCB.get();
+        currPassCB->CopyData(1, mShadowPassCB);
+    }
+
+    void LoadTextures()
+    {
+        auto& texLib = TextureLib::GetLib();
+        texLib.Init(md3dDevice.Get(), *mUploadBatch.get());
+    }
+
+    void LoadGeometry()
+    {
+        auto shapeGeo = std::unique_ptr<MeshGeometry>{ 
+            d3dUtil::BuildShapeGeometry(md3dDevice.Get(), *mUploadBatch.get()) 
+        };
+        mGeometries[shapeGeo->Name] = std::move(shapeGeo);
+
+        auto skullGeo = std::unique_ptr<MeshGeometry>{ 
+            d3dUtil::BuildSkullGeometry(md3dDevice.Get(), *mUploadBatch.get()) 
+        };
+        mGeometries[skullGeo->Name] = std::move(skullGeo);
+
+        auto columnSquare = std::unique_ptr<MeshGeometry>{ d3dUtil::LoadSimpleModelGeometry(
+            md3dDevice.Get(), *mUploadBatch.get(), "Models/columnSquare.m3d", "columnSquare")
+        };
+        mGeometries[columnSquare->Name] = std::move(columnSquare);
+
+        auto columnSquareBroken = std::unique_ptr<MeshGeometry>{ 
+            d3dUtil::LoadSimpleModelGeometry(md3dDevice.Get(), *mUploadBatch.get(), "Models/columnSquareBroken.m3d", "columnSquareBroken")
+        };
+        mGeometries[columnSquareBroken->Name] = std::move(columnSquareBroken);
+
+        auto columnRound = std::unique_ptr<MeshGeometry>{ 
+            d3dUtil::LoadSimpleModelGeometry(md3dDevice.Get(), *mUploadBatch.get(), "Models/columnRound.m3d", "columnRound")
+        };
+        mGeometries[columnRound->Name] = std::move(columnRound);
+
+        auto columnRoundBroken = std::unique_ptr<MeshGeometry>{
+            d3dUtil::LoadSimpleModelGeometry(md3dDevice.Get(), *mUploadBatch.get(), "Models/columnRoundBroken.m3d", "columnRoundBroken")
+        };
+        mGeometries[columnRoundBroken->Name] = std::move(columnRoundBroken);
+
+        auto orbBase = std::unique_ptr<MeshGeometry>{
+            d3dUtil::LoadSimpleModelGeometry(md3dDevice.Get(), *mUploadBatch.get(), "Models/orbBase.m3d", "orbBase")
+        };
+        mGeometries[orbBase->Name] = std::move(orbBase);
+    }
+
     void BuildRootSignature()
     {
         // Root parameter can be a table, root descriptor or root constants.
