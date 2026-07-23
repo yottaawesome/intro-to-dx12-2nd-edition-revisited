@@ -60,6 +60,7 @@ Microsoft Visual Studio 2026 with the _Desktop development with C++_ and _Game d
 * A back buffer state transition bug in the Blur demo is now fixed. The bug didn't crash the demo, but caused the DX12 runtime to log debug error messages.
 * A lightweight `Event` class has been added to prevent a potential memory leak in `FlushCommandQueue()`.
 * The unused struct `WaveDispatchCB` was removed from the Blur and WavesCS demos.
+* The `ShadowMap` class was duplicated across all the demos starting from `ShadowMap` one. Rather than have this duplicated, I moved it to the `Shared` library.
 * Function signatures are being updated to use trailing return type syntax, which are visually easier to navigate in classes with many methods.
 * Various class-level `static` member variables have been made `inline`, simplifying their initialisation.
 * Variable declarations are being ported to Almost Always Auto (AAA) idiom with braced or designated initialisation. AAA is easier to visually navigate, while braced initialisation guarantees left-to-right evaluation order and catches otherwise invisible narrowing conversions. Designated initialisation is much cleaner for aggregate types.
