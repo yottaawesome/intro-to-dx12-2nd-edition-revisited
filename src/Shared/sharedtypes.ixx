@@ -12,6 +12,7 @@ export
 		::PerObjectCB,
 		::BlurDispatchCB,
 		::GpuWavesCB,
-		::InstanceData
+		::InstanceData,
+		::SsaoCB
 		;
 }
