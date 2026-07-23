@@ -34,6 +34,7 @@ The effort is currently in progress. The following projects have been converted 
 * [16/InstancingAndCulling](./src/16/InstancingAndCulling)
 * [17/Picking](./src/17/Picking)
 * [18/CubeAndNormalMaps](./src/18/CubeAndNormalMaps)
+* [18/DynamicCubeMap](./src/18/DynamicCubeMap)
 
 ## Building and running
 
