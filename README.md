@@ -35,6 +35,7 @@ The effort is currently in progress. The following projects have been converted 
 * [17/Picking](./src/17/Picking)
 * [18/CubeAndNormalMaps](./src/18/CubeAndNormalMaps)
 * [18/DynamicCubeMap](./src/18/DynamicCubeMap)
+* [19/DisplacementMapping](./src/19/DisplacementMapping)
 
 ## Building and running
 
