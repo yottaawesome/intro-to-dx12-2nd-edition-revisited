@@ -22,6 +22,6 @@ try
 }
 catch (const std::exception& ex)
 {
-	Win32::MessageBoxW(nullptr, AnsiToWString(ex.what()).c_str(), L"Exception", Win32::MbOk);
-	return 0;
+	ShowErrorMessage(ex);
+	return 1;
 }

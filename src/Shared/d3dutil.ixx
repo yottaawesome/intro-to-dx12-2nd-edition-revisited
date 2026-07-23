@@ -17,6 +17,11 @@ export
     inline constexpr auto SsaoAmbientMapFormat = DXGI::DXGI_FORMAT::DXGI_FORMAT_R16_UNORM;
     inline constexpr auto SceneNormalMapFormat = DXGI::DXGI_FORMAT::DXGI_FORMAT_R16G16B16A16_FLOAT;
 
+    void ShowErrorMessage(const std::exception& ex)
+    {
+		Win32::MessageBoxA(nullptr, ex.what(), "Error", Win32::MbOk);
+    }
+
     [[nodiscard]]
     inline auto WStringToAnsi(std::wstring_view wstr) -> std::string
     {

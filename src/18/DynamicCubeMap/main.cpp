@@ -20,8 +20,8 @@ try
         Win32::_CrtSetDbgFlag(Win32::CrtAllocMemDf | Win32::CrtLeakCheckDf);
     return DynamicCubeMapApp{ hInstance }.Run();
 }
-catch (const std::exception& e)
+catch (const std::exception& ex)
 {
-    Win32::MessageBoxW(nullptr, AnsiToWString(e.what()).c_str(), L"Error", Win32::MbOk);
-    return 0;
+    ShowErrorMessage(ex);
+    return 1;
 }

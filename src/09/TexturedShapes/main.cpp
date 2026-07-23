@@ -20,8 +20,8 @@ try
         Win32::_CrtSetDbgFlag(Win32::CrtAllocMemDf | Win32::CrtLeakCheckDf);
     return TexturedShapesApp{ hInstance }.Run();
 }
-catch (const DxException& e)
+catch (const std::exception& ex)
 {
-    Win32::MessageBoxW(nullptr, e.ToString().c_str(), L"HR Failed", Win32::MbOk);
-    return 0;
+    ShowErrorMessage(ex);
+    return 1;
 }
