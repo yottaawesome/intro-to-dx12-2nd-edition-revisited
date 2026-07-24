@@ -72,6 +72,9 @@
   <Folder Name="/23/">
     <Project Path="23/SkinnedMesh/SkinnedMesh.vcxproj" Id="2d737725-8fe6-4fa4-aea6-7aa19acd2ca4" />
   </Folder>
+  <Folder Name="/24/">
+    <Project Path="24/Terrain/Terrain.vcxproj" Id="f8bcc1c9-a7a5-4b9e-a3a4-bebdf5ee7a4d" />
+  </Folder>
   <Folder Name="/Common/">
     <Project Path="E:/Code/C++/intro-to-dx12-2nd-edition-revisited/src/Shared/Shared.vcxproj" Id="71a3731d-95eb-49ec-b69f-e0b5e166115b" />
   </Folder>

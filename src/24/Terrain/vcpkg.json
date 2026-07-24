@@ -1,0 +1,11 @@
+{
+  "name": "terrain",
+  "version": "1.0.0",
+  "dependencies": [
+    "directxtk12",
+    {
+      "name": "imgui",
+      "features": [ "dx12-binding", "win32-binding" ]
+    }
+  ]
+}
