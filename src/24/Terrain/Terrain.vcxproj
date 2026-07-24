@@ -152,7 +152,9 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="frameresource.ixx" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="ssao.ixx" />
     <ClCompile Include="terrain.ixx" />
   </ItemGroup>
   <ItemGroup>
