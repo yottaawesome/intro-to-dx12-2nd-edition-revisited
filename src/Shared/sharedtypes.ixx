@@ -13,6 +13,7 @@ export
 		::BlurDispatchCB,
 		::GpuWavesCB,
 		::InstanceData,
-		::SsaoCB
+		::SsaoCB,
+		::SkinnedCB
 		;
 }

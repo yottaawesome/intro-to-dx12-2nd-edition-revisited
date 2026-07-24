@@ -23,6 +23,7 @@ module;
 #include <directxtk12/DDSTextureLoader.h>
 #include <DirectXCollision.h>
 #include <DirectXColors.h>
+#include <directxtk12/DDSTextureLoader.h>
 
 export module shared:win32;
 
@@ -487,6 +488,7 @@ export namespace DirectX
 		::DirectX::XMUINT4,
 		::DirectX::BoundingSphere,
 		::DirectX::XMUINT2,
+		::DirectX::DDS_LOADER_FLAGS,
 		::DirectX::BoundingFrustum,
 		::DirectX::GraphicsMemory,
 		::DirectX::BoundingBox,
