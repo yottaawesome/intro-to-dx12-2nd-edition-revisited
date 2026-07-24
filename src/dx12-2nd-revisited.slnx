@@ -69,6 +69,9 @@
   <Folder Name="/22/">
     <Project Path="22/QuatApp/QuatApp.vcxproj" Id="950a9d26-63d2-4181-92ee-c25173749c74" />
   </Folder>
+  <Folder Name="/23/">
+    <Project Path="23/SkinnedMesh/SkinnedMesh.vcxproj" Id="2d737725-8fe6-4fa4-aea6-7aa19acd2ca4" />
+  </Folder>
   <Folder Name="/Common/">
     <Project Path="E:/Code/C++/intro-to-dx12-2nd-edition-revisited/src/Shared/Shared.vcxproj" Id="71a3731d-95eb-49ec-b69f-e0b5e166115b" />
   </Folder>
