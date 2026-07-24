@@ -39,6 +39,7 @@ The effort is currently in progress. The following projects have been converted 
 * [20/Shadows](./src/20/Shadows)
 * [21/Ssao](./src/21/Ssao)
 * [22/QuatApp](./src/22/QuatApp)
+* [23/SkinnedMesh](./src/23/SkinnedMesh)
 
 ## Building and running
 
