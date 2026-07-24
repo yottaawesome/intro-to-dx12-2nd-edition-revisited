@@ -512,16 +512,16 @@ private:
         DirectX::XMStoreFloat3(&sphereCenterLS, DirectX::XMVector3TransformCoord(targetPos, lightView));
 
         // Ortho frustum in light space encloses scene.
-        float l = sphereCenterLS.x - mSceneBounds.Radius;
-        float b = sphereCenterLS.y - mSceneBounds.Radius;
-        float n = sphereCenterLS.z - mSceneBounds.Radius;
-        float r = sphereCenterLS.x + mSceneBounds.Radius;
-        float t = sphereCenterLS.y + mSceneBounds.Radius;
-        float f = sphereCenterLS.z + mSceneBounds.Radius;
+        auto l = float{ sphereCenterLS.x - mSceneBounds.Radius };
+        auto b = float{ sphereCenterLS.y - mSceneBounds.Radius };
+        auto n = float{ sphereCenterLS.z - mSceneBounds.Radius };
+        auto r = float{ sphereCenterLS.x + mSceneBounds.Radius };
+        auto t = float{ sphereCenterLS.y + mSceneBounds.Radius };
+        auto f = float{ sphereCenterLS.z + mSceneBounds.Radius };
 
         mLightNearZ = n;
         mLightFarZ = f;
-        auto lightProj = DirectX::XMMatrixOrthographicOffCenterLH(l, r, b, t, n, f);
+        auto lightProj = DirectX::XMMATRIX{ DirectX::XMMatrixOrthographicOffCenterLH(l, r, b, t, n, f) };
 
         // Transform NDC space [-1,+1]^2 to texture space [0,1]^2
         auto T = DirectX::XMMATRIX{
@@ -531,7 +531,7 @@ private:
             0.5f, 0.5f, 0.0f, 1.0f
         };
 
-        auto S = lightView * lightProj * T;
+        auto S = DirectX::XMMATRIX{ lightView * lightProj * T };
         DirectX::XMStoreFloat4x4(&mLightView, lightView);
         DirectX::XMStoreFloat4x4(&mLightProj, lightProj);
         DirectX::XMStoreFloat4x4(&mShadowTransform, S);
