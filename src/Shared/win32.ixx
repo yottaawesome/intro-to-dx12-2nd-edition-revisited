@@ -23,6 +23,7 @@ module;
 #include <directxtk12/DDSTextureLoader.h>
 #include <DirectXCollision.h>
 #include <DirectXColors.h>
+#include <directxtk12/directxhelpers.h>
 #include <directxtk12/DDSTextureLoader.h>
 
 export module shared:win32;
@@ -343,6 +344,7 @@ export namespace D3D12
 		::D3D12_BUFFER_UAV_FLAGS,
 		::D3D12_UAV_DIMENSION,
 		::D3D12_SRV_DIMENSION,
+		::ID3D12CommandSignature,
 		::D3D12_BUFFER_SRV_FLAGS,
 		::D3D12_SHADER_RESOURCE_VIEW_DESC,
 		::D3D12_DESCRIPTOR_HEAP_FLAGS,
@@ -494,6 +496,7 @@ export namespace DirectX
 		::DirectX::BoundingBox,
 		::DirectX::GraphicsResource,
 		::DirectX::DDS_LOADER_FLAGS,
+		::DirectX::ScopedBarrier,
 		::DirectX::XMQuaternionRotationAxis,
 		::DirectX::XMVector4Normalize,
 		::DirectX::XMVector3TransformCoord,

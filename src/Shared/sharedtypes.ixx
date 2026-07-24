@@ -14,6 +14,10 @@ export
 		::GpuWavesCB,
 		::InstanceData,
 		::SsaoCB,
-		::SkinnedCB
+		::SkinnedCB,
+		::ParticleEmitCB,
+		::Particle,
+		::ParticleDrawCB,
+		::ParticleUpdateCB
 		;
 }

@@ -1,4 +1,4 @@
-export module terrain:frameresource;
+export module terraindemo:frameresource;
 import std;
 import shared;
 

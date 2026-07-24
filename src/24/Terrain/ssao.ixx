@@ -1,4 +1,4 @@
-export module terrain:ssao;
+export module terraindemo:ssao;
 import std;
 import shared;
 import :frameresource;
