@@ -114,7 +114,7 @@ public:
     SkinnedMeshApp& operator=(const SkinnedMeshApp& rhs) = delete;
 
 private:
-    virtual void Initialize()override
+    void Initialize()override
     {
         D3DApp::Initialize();
 
@@ -152,22 +152,20 @@ private:
         result.wait();
     }
 
-    virtual void CreateRtvAndDsvDescriptorHeaps()override
+    void CreateRtvAndDsvDescriptorHeaps()override
     {
         mRtvHeap.Init(md3dDevice.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, RTV_COUNT);
         mDsvHeap.Init(md3dDevice.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 2);
     }
 
-    virtual void OnResize()override
+    void OnResize()override
     {
         D3DApp::OnResize();
 
         mCamera.SetLens(0.25f * MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
 
-        if (mSsao != nullptr)
-        {
+        if (mSsao)
             mSsao->OnResize(mClientWidth, mClientHeight);
-        }
 
         if (CbvSrvUavHeap::Get().IsInitialized())
         {
@@ -177,7 +175,7 @@ private:
         }
     }
 
-    virtual void Update(const GameTimer& gt)override
+    void Update(const GameTimer& gt)override
     {
         OnKeyboardInput(gt);
 
@@ -196,14 +194,12 @@ private:
 
         //
         // Animate the lights (and hence shadows).
-        //
-
         mLightRotationAngle += 0.1f * gt.DeltaTime();
 
-        DirectX::XMMATRIX R = DirectX::XMMatrixRotationY(mLightRotationAngle);
+        auto R = DirectX::XMMATRIX{DirectX::XMMatrixRotationY(mLightRotationAngle)};
         for (int i = 0; i < 3; ++i)
         {
-            DirectX::XMVECTOR lightDir = DirectX::XMLoadFloat3(&mBaseLightDirections[i]);
+            auto lightDir = DirectX::XMVECTOR{DirectX::XMLoadFloat3(&mBaseLightDirections[i])};
             lightDir = DirectX::XMVector3TransformNormal(lightDir, R);
             DirectX::XMStoreFloat3(&mRotatedLightDirections[i], lightDir);
         }
@@ -222,7 +218,7 @@ private:
         mSsao->SetSurfaceEpsilon(mSurfaceEpsilon);
     }
 
-    virtual void Draw(const GameTimer& gt)override
+    void Draw(const GameTimer& gt)override
     {
         auto& psoLib = PsoLib::GetLib();
         auto& cbvSrvUavHeap = CbvSrvUavHeap::Get();
@@ -331,7 +327,7 @@ private:
         mCommandQueue->Signal(mFence.Get(), mCurrentFence);
     }
 
-    virtual void UpdateImgui(const GameTimer& gt)override
+    void UpdateImgui(const GameTimer& gt)override
     {
         D3DApp::UpdateImgui(gt);
 
@@ -391,7 +387,7 @@ private:
         ImGui::Render();
     }
 
-    virtual void OnMouseDown(Win32::WPARAM btnState, int x, int y)override
+    void OnMouseDown(Win32::WPARAM btnState, int x, int y)override
     {
         if (auto& io = ImGui::GetIO();!io.WantCaptureMouse)
         {
@@ -401,13 +397,13 @@ private:
         }
     }
 
-    virtual void OnMouseUp(Win32::WPARAM btnState, int x, int y)override
+    void OnMouseUp(Win32::WPARAM btnState, int x, int y)override
     {
         if (auto& io = ImGui::GetIO(); not io.WantCaptureMouse)
             Win32::ReleaseCapture();
     }
 
-    virtual void OnMouseMove(Win32::WPARAM btnState, int x, int y)override
+    void OnMouseMove(Win32::WPARAM btnState, int x, int y)override
     {
         auto& io = ImGui::GetIO();
         if (io.WantCaptureMouse)
@@ -416,8 +412,8 @@ private:
         if ((btnState & Win32::MK::LButton) != 0)
         {
             // Make each pixel correspond to a quarter of a degree.
-            float dx = DirectX::XMConvertToRadians(0.25f * static_cast<float>(x - mLastMousePos.x));
-            float dy = DirectX::XMConvertToRadians(0.25f * static_cast<float>(y - mLastMousePos.y));
+            auto dx = DirectX::XMConvertToRadians(0.25f * static_cast<float>(x - mLastMousePos.x));
+            auto dy = DirectX::XMConvertToRadians(0.25f * static_cast<float>(y - mLastMousePos.y));
 
             mCamera.Pitch(dy);
             mCamera.RotateY(dx);
@@ -462,7 +458,7 @@ private:
         // We only have one skinned model being animated.
         mSkinnedModelInst->UpdateSkinnedAnimation(gt.DeltaTime());
 
-        SkinnedCB skinnedConstants;
+        auto skinnedConstants = SkinnedCB{};
         std::copy(
             std::begin(mSkinnedModelInst->FinalTransforms),
             std::end(mSkinnedModelInst->FinalTransforms),
@@ -481,35 +477,33 @@ private:
             // Only update the cbuffer data if the constants have changed.  If the cbuffer
             // data changes, it needs to be updated for each FrameResource.
             auto mat = static_cast<Material*>(e.second.get());
-            if (mat->NumFramesDirty > 0)
-            {
-                auto matTransform = DirectX::XMLoadFloat4x4(&mat->MatTransform);
-                auto matData = MaterialData{
-                    .DiffuseAlbedo = mat->DiffuseAlbedo,
-                    .FresnelR0 = mat->FresnelR0,
-                    .Roughness = mat->Roughness,
-                    .DiffuseMapIndex = static_cast<std::uint32_t>(mat->AlbedoBindlessIndex),
-                    .NormalMapIndex = static_cast<std::uint32_t>(mat->NormalBindlessIndex),
-                    .GlossHeightAoMapIndex = static_cast<std::uint32_t>(mat->GlossHeightAoBindlessIndex)
-                };
+            if (mat->NumFramesDirty < 1)
+                continue;
 
-                DirectX::XMStoreFloat4x4(&matData.MatTransform, DirectX::XMMatrixTranspose(matTransform));
-                currMaterialBuffer->CopyData(mat->MatIndex, matData);
-
-                // Next FrameResource need to be updated too.
-                mat->NumFramesDirty--;
-            }
+            auto matTransform = DirectX::XMLoadFloat4x4(&mat->MatTransform);
+            auto matData = MaterialData{
+                .DiffuseAlbedo = mat->DiffuseAlbedo,
+                .FresnelR0 = mat->FresnelR0,
+                .Roughness = mat->Roughness,
+                .DiffuseMapIndex = static_cast<std::uint32_t>(mat->AlbedoBindlessIndex),
+                .NormalMapIndex = static_cast<std::uint32_t>(mat->NormalBindlessIndex),
+                .GlossHeightAoMapIndex = static_cast<std::uint32_t>(mat->GlossHeightAoBindlessIndex)
+            };
+            DirectX::XMStoreFloat4x4(&matData.MatTransform, DirectX::XMMatrixTranspose(matTransform));
+            currMaterialBuffer->CopyData(mat->MatIndex, matData);
+            // Next FrameResource need to be updated too.
+            mat->NumFramesDirty--;
         }
     }
 
     void UpdateShadowTransform(const GameTimer& gt)
     {
         // Only the first "main" light casts a shadow.
-        auto lightDir = DirectX::XMLoadFloat3(&mRotatedLightDirections[0]);
-        auto lightPos = -2.0f * mSceneBounds.Radius * lightDir;
-        auto targetPos = DirectX::XMLoadFloat3(&mSceneBounds.Center);
-        auto lightUp = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-        auto lightView = DirectX::XMMatrixLookAtLH(lightPos, targetPos, lightUp);
+        auto lightDir = DirectX::XMVECTOR{ DirectX::XMLoadFloat3(&mRotatedLightDirections[0]) };
+        auto lightPos = DirectX::XMVECTOR{ -2.0f * mSceneBounds.Radius * lightDir };
+        auto targetPos = DirectX::XMVECTOR{ DirectX::XMLoadFloat3(&mSceneBounds.Center) };
+        auto lightUp = DirectX::XMVECTOR{ DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f) };
+        auto lightView = DirectX::XMMATRIX{ DirectX::XMMatrixLookAtLH(lightPos, targetPos, lightUp) };
 
         DirectX::XMStoreFloat3(&mLightPosW, lightPos);
 
@@ -545,17 +539,17 @@ private:
 
     void UpdateMainPassCB(const GameTimer& gt)
     {
-        auto view = mCamera.GetView();
-		auto detView = DirectX::XMMatrixDeterminant(view);
-		auto invView = DirectX::XMMatrixInverse(&detView, view);
+        auto view = DirectX::XMMATRIX{ mCamera.GetView() };
+		auto detView = DirectX::XMVECTOR{ DirectX::XMMatrixDeterminant(view) };
+		auto invView = DirectX::XMMATRIX{ DirectX::XMMatrixInverse(&detView, view) };
 
-        auto proj = mCamera.GetProj();
-        auto detProj = DirectX::XMMatrixDeterminant(proj);
-        auto invProj = DirectX::XMMatrixInverse(&detProj, proj);
+        auto proj = DirectX::XMMATRIX{ mCamera.GetProj() };
+        auto detProj = DirectX::XMVECTOR{ DirectX::XMMatrixDeterminant(proj) };
+        auto invProj = DirectX::XMMATRIX{ DirectX::XMMatrixInverse(&detProj, proj) };
 
-        auto viewProj = DirectX::XMMatrixMultiply(view, proj);
-		auto detViewProj = DirectX::XMMatrixDeterminant(viewProj);
-		auto invViewProj = DirectX::XMMatrixInverse(&detViewProj, viewProj);
+        auto viewProj = DirectX::XMMATRIX{ DirectX::XMMatrixMultiply(view, proj) };
+		auto detViewProj = DirectX::XMVECTOR{ DirectX::XMMatrixDeterminant(viewProj) };
+		auto invViewProj = DirectX::XMMATRIX{ DirectX::XMMatrixInverse(&detViewProj, viewProj) };
 
         // Transform NDC space [-1,+1]^2 to texture space [0,1]^2
         auto T = DirectX::XMMATRIX{
@@ -565,9 +559,8 @@ private:
             0.5f, 0.5f, 0.0f, 1.0f 
         };
 
-        auto viewProjTex = DirectX::XMMatrixMultiply(viewProj, T);
-
-        auto shadowTransform = DirectX::XMLoadFloat4x4(&mShadowTransform);
+        auto viewProjTex = DirectX::XMMATRIX{ DirectX::XMMatrixMultiply(viewProj, T) };
+        auto shadowTransform = DirectX::XMMATRIX{ DirectX::XMLoadFloat4x4(&mShadowTransform) };
 
         DirectX::XMStoreFloat4x4(&mMainPassCB.gView, DirectX::XMMatrixTranspose(view));
         DirectX::XMStoreFloat4x4(&mMainPassCB.gInvView, DirectX::XMMatrixTranspose(invView));
@@ -619,17 +612,17 @@ private:
 
     void UpdateShadowPassCB(const GameTimer& gt)
     {
-        auto view = DirectX::XMLoadFloat4x4(&mLightView);
-		auto detView = DirectX::XMMatrixDeterminant(view);
-        auto invView = DirectX::XMMatrixInverse(&detView, view);
+        auto view = DirectX::XMMATRIX{ DirectX::XMLoadFloat4x4(&mLightView) };
+		auto detView = DirectX::XMVECTOR{ DirectX::XMMatrixDeterminant(view) };
+        auto invView = DirectX::XMMATRIX{ DirectX::XMMatrixInverse(&detView, view) };
 
-        auto proj = DirectX::XMLoadFloat4x4(&mLightProj);
-		auto detProj = DirectX::XMMatrixDeterminant(proj);
-        auto invProj = DirectX::XMMatrixInverse(&detProj, proj);
+        auto proj = DirectX::XMMATRIX{ DirectX::XMLoadFloat4x4(&mLightProj) };
+		auto detProj = DirectX::XMVECTOR{ DirectX::XMMatrixDeterminant(proj) };
+        auto invProj = DirectX::XMMATRIX{ DirectX::XMMatrixInverse(&detProj, proj) };
 
-        auto viewProj = DirectX::XMMatrixMultiply(view, proj);
-		auto detViewProj = DirectX::XMMatrixDeterminant(viewProj);
-        auto invViewProj = DirectX::XMMatrixInverse(&detViewProj, viewProj);
+        auto viewProj = DirectX::XMMATRIX{ DirectX::XMMatrixMultiply(view, proj) };
+		auto detViewProj = DirectX::XMVECTOR{ DirectX::XMMatrixDeterminant(viewProj) };
+        auto invViewProj = DirectX::XMMATRIX{ DirectX::XMMatrixInverse(&detViewProj, viewProj) };
 
         auto w = mShadowMap->Width();
         auto h = mShadowMap->Height();
@@ -680,18 +673,15 @@ private:
 
         for (auto i = 0u; i < texNames.size(); ++i)
         {
-            if (texLib.Contains(texNames[i]) == false)
-            {
-                auto texMap = std::make_unique<Texture>();
-                texMap->Name = texNames[i];
-                texMap->Filename = texFilenames[i];
-
-                ThrowIfFailed(DirectX::CreateDDSTextureFromFileEx(md3dDevice.Get(), *mUploadBatch.get(),
-                    texMap->Filename.c_str(), 0, D3D12_RESOURCE_FLAG_NONE, DirectX::DDS_LOADER_FLAGS::DDS_LOADER_MIP_AUTOGEN,
-                    &texMap->Resource, nullptr, &texMap->IsCubeMap));
-
-                texLib.AddTexture(texNames[i], std::move(texMap));
-            }
+            if (texLib.Contains(texNames[i]))
+                continue;
+            auto texMap = std::make_unique<Texture>();
+            texMap->Name = texNames[i];
+            texMap->Filename = texFilenames[i];
+            ThrowIfFailed(DirectX::CreateDDSTextureFromFileEx(md3dDevice.Get(), *mUploadBatch.get(),
+                texMap->Filename.c_str(), 0, D3D12_RESOURCE_FLAG_NONE, DirectX::DDS_LOADER_FLAGS::DDS_LOADER_MIP_AUTOGEN,
+                &texMap->Resource, nullptr, &texMap->IsCubeMap));
+            texLib.AddTexture(texNames[i], std::move(texMap));
         }
     }
 
@@ -722,14 +712,14 @@ private:
     void LoadSkinnedModel()
     {
         auto vertices = std::vector<M3DLoader::SkinnedVertex>{};
-        auto indices32 = std::vector<UINT>{};
+        auto indices32 = std::vector<std::uint32_t>{};
 
         auto m3dLoader = M3DLoader{};
         if (not m3dLoader.LoadM3d(mSkinnedModelFilename, vertices, indices32, mSkinnedSubsets, mSkinnedMats, mSkinnedInfo))
             throw std::runtime_error{"Failed to load skinned model"};
 
         auto indices = std::vector<std::uint16_t>(indices32.size());
-        for (size_t i = 0; i < indices32.size(); ++i)
+        for (auto i = 0ull; i < indices32.size(); ++i)
             indices[i] = static_cast<std::uint16_t>(indices32[i]);
 
         mSkinnedModelInst = std::make_unique<SkinnedModelInstance>();
@@ -1017,9 +1007,9 @@ private:
             auto submeshName = std::format("sm_{}", i);
             auto ritem = std::make_unique<RenderItem>();
             // Reflect to change coordinate system from the RHS the data was exported out as.
-            auto modelScale = DirectX::XMMatrixScaling(0.05f, 0.05f, -0.05f);
-            auto modelRot = DirectX::XMMatrixRotationY(DirectX::Pi);
-            auto modelOffset = DirectX::XMMatrixTranslation(0.0f, 0.0f, -5.0f);
+            auto modelScale = DirectX::XMMATRIX{ DirectX::XMMatrixScaling(0.05f, 0.05f, -0.05f) };
+            auto modelRot = DirectX::XMMATRIX{ DirectX::XMMatrixRotationY(DirectX::Pi) };
+            auto modelOffset = DirectX::XMMATRIX{ DirectX::XMMatrixTranslation(0.0f, 0.0f, -5.0f) };
             DirectX::XMStoreFloat4x4(&ritem->World, modelScale * modelRot * modelOffset);
 
             ritem->TexTransform = MathHelper::Identity4x4;
@@ -1110,7 +1100,7 @@ private:
 
     void DrawNormalsAndDepth()
     {
-        PsoLib& psoLib = PsoLib::GetLib();
+        auto& psoLib = PsoLib::GetLib();
 
         mCommandList->RSSetViewports(1, &mScreenViewport);
         mCommandList->RSSetScissorRects(1, &mScissorRect);
@@ -1147,8 +1137,8 @@ private:
             D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_GENERIC_READ);
         mCommandList->ResourceBarrier(1, &transition);
     }
-private:
 
+private:
     std::vector<std::unique_ptr<FrameResource>> mFrameResources;
     FrameResource* mCurrFrameResource = nullptr;
     int mCurrFrameResourceIndex = 0;
