@@ -38,6 +38,7 @@ The effort is currently in progress. The following projects have been converted 
 * [19/DisplacementMapping](./src/19/DisplacementMapping)
 * [20/Shadows](./src/20/Shadows)
 * [21/Ssao](./src/21/Ssao)
+* [22/QuatApp](./src/22/QuatApp)
 
 ## Building and running
 
