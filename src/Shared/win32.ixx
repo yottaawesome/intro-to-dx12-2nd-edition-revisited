@@ -492,6 +492,7 @@ export namespace DirectX
 		::DirectX::BoundingBox,
 		::DirectX::GraphicsResource,
 		::DirectX::DDS_LOADER_FLAGS,
+		::DirectX::XMQuaternionRotationAxis,
 		::DirectX::XMVector4Normalize,
 		::DirectX::XMVector3TransformCoord,
 		::DirectX::XMVectorMultiplyAdd,

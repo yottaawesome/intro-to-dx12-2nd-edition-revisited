@@ -20,6 +20,7 @@ export namespace ImGui
 		IMGUI_CHECKVERSION();
 	}
 	using 
+		::ImGuiTreeNodeFlags_,
 		::ImGui_ImplDX12_NewFrame,
 		::ImGui_ImplWin32_NewFrame,
 		::ImGui_ImplDX12_Init,

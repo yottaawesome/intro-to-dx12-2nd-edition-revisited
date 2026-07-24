@@ -66,6 +66,9 @@
   <Folder Name="/21/">
     <Project Path="21/Ssao/Ssao.vcxproj" Id="ee80e869-5e4e-46bf-b07b-7585cc4b39ea" />
   </Folder>
+  <Folder Name="/22/">
+    <Project Path="22/QuatApp/QuatApp.vcxproj" Id="950a9d26-63d2-4181-92ee-c25173749c74" />
+  </Folder>
   <Folder Name="/Common/">
     <Project Path="E:/Code/C++/intro-to-dx12-2nd-edition-revisited/src/Shared/Shared.vcxproj" Id="71a3731d-95eb-49ec-b69f-e0b5e166115b" />
   </Folder>

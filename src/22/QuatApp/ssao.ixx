@@ -1,4 +1,4 @@
-export module ssaodemo:ssao;
+export module quats:ssao;
 import std;
 import shared;
 import :frameresource;
