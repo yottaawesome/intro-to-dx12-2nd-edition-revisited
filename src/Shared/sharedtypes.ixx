@@ -18,6 +18,9 @@ export
 		::ParticleEmitCB,
 		::Particle,
 		::ParticleDrawCB,
-		::ParticleUpdateCB
+		::ParticleUpdateCB,
+		::PerTerrainCB
 		;
+
+	constexpr auto MaximumTerrainLayers = MaxTerrainLayers;
 }
