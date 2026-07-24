@@ -68,6 +68,7 @@ Microsoft Visual Studio 2026 with the _Desktop development with C++_ and _Game d
 * `MeshGen::CreateBox()` has been updated to use `std::begin()` and `std::end()` in the `assign()` calls. The previous code did a direct index past the end of the range, which interestingly triggered a debug check, even though it's technically safe.
 * Replacement of certain raw arrays with `std::array`, which also removes the need for the non-standard `_countof()` extension.
 * `Texture::Info()` returned a reference to a temporary, which was undefined behaviour. This has been fixed.
+* `SkinnedMesh::LoadSkinnedModel()` now throws an exception if it fails to load the model, instead of returning `false`.
 * The use of `!` is being with replaced with the more obvious `not`.
 * Use of certain macros and preprocessor checks such as `#if defined(DEBUG)` have been replaced with `if constexpr(...)` checks, which are far less uglier.
 * `DxException` has been cleaned up, with the reliance on macros for lines and file numbers replaced by the standard `std::source_location` object.
