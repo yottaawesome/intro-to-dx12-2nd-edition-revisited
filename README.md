@@ -4,7 +4,7 @@
 
 This is an ongoing effort at revisiting the source code for [Frank D. Luna's](https://www.d3dcoder.net/default.htm) second edition of [*Introduction to 3D Game Programming with DirectX 12*](https://www.d3dcoder.net/d3d12_v2.htm). Luna's books on DX12 (and its predecessors) are considered the de facto standard reference for learning DX12, and the primary intent here is not so much a revision per se, but to simplify and make the codebase easier to study (at least for me) by adapting the codebase to modern C++ standards and best practices. DirectX 12 is already a very difficult API to work with, and any way we can make it easier to understand is a good thing. It goes without saying that just like the original source code, in order to understand and learn from the revisited source code, you _must_ own the book, and this repo in no way changes that.
 
-I began this effort with the original book, but have since moved on to the second edition after I discovered its existence.
+I originally began this effort with the first edition of the book, but have since moved on to the second edition after I discovered its existence.
 
 ## Status
 
