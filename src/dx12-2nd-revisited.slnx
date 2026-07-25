@@ -75,6 +75,9 @@
   <Folder Name="/24/">
     <Project Path="24/Terrain/Terrain.vcxproj" Id="f8bcc1c9-a7a5-4b9e-a3a4-bebdf5ee7a4d" />
   </Folder>
+  <Folder Name="/25/">
+    <Project Path="25/ParticlesCS/ParticlesCS.vcxproj" Id="cbe9588d-2a76-43ab-a4dc-9a14dadfaaef" />
+  </Folder>
   <Folder Name="/Common/">
     <Project Path="E:/Code/C++/intro-to-dx12-2nd-edition-revisited/src/Shared/Shared.vcxproj" Id="71a3731d-95eb-49ec-b69f-e0b5e166115b" />
   </Folder>
