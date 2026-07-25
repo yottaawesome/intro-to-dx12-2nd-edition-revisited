@@ -152,7 +152,11 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="frameresource.ixx" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="particlescsapp.ixx" />
+    <ClCompile Include="particlescs.ixx" />
+    <ClCompile Include="particlesystem.ixx" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Direct3D.D3D12" />
