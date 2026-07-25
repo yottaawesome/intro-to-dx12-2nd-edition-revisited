@@ -34,6 +34,11 @@ public:
         return Random{}.Uniform(a, b);
     }
 
+	static auto Rand(unsigned a, unsigned b) -> unsigned
+	{
+		return Random{}.Uniform(a, b);
+	}
+
     template<typename T>
     static auto Lerp(const T& a, const T& b, float t) -> T
     {

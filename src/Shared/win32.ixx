@@ -427,6 +427,12 @@ export namespace D3D12
 		::ID3D12CommandQueue,
 		::ID3D12CommandAllocator,
 		::ID3D12GraphicsCommandList6,
+		::D3D12_INDIRECT_ARGUMENT_DESC,
+		::D3D12_INDIRECT_ARGUMENT_TYPE,
+		::D3D12_COMMAND_SIGNATURE_DESC,
+		::D3D12_DISPATCH_ARGUMENTS,
+		::D3D12_DRAW_ARGUMENTS,
+		::D3D12_DRAW_INDEXED_ARGUMENTS,
 		::D3D12SerializeRootSignature,
 		::D3D12GetDebugInterface,
 		::D3D12CreateDevice
@@ -440,7 +446,11 @@ export
 	using 
 		::DirectX::operator+,
 		::DirectX::operator-,
-		::DirectX::operator*
+		::DirectX::operator*,
+		::DirectX::SimpleMath::operator*,
+		::DirectX::SimpleMath::operator+,
+		::DirectX::SimpleMath::operator-,
+		::DirectX::SimpleMath::operator/
 		;
 }
 

@@ -14,6 +14,12 @@ public:
 		return dist(_mt);
 	}
 
+	auto Uniform(unsigned a, unsigned b) -> unsigned
+	{
+		auto dist = std::uniform_int_distribution<unsigned>{ a, b };
+		return dist(_mt);
+	}
+
 	auto Uniform(float a, float b) -> float
 	{
 		auto dist = std::uniform_real_distribution<float>{ a, b };
