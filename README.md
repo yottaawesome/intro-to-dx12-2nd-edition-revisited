@@ -40,7 +40,7 @@ The effort is currently in progress. The following projects have been converted 
 * [21/Ssao](./src/21/Ssao)
 * [22/QuatApp](./src/22/QuatApp)
 * [23/SkinnedMesh](./src/23/SkinnedMesh)
-* [24/SkinnedMesh](./src/24/Terrain)
+* [24/Terrain](./src/24/Terrain)
 
 ## Building and running
 
