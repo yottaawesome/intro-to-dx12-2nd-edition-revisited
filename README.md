@@ -40,6 +40,7 @@ The effort is currently in progress. The following projects have been converted 
 * [21/Ssao](./src/21/Ssao)
 * [22/QuatApp](./src/22/QuatApp)
 * [23/SkinnedMesh](./src/23/SkinnedMesh)
+* [24/Terrain](./src/24/Terrain)
 
 ## Building and running
 
@@ -72,6 +73,7 @@ Microsoft Visual Studio 2026 with the _Desktop development with C++_ and _Game d
 * `SkinnedMesh::LoadSkinnedModel()` now throws an exception if it fails to load the model, instead of returning `false`.
 * The use of `!` is being with replaced with the more obvious `not`.
 * Use of certain macros and preprocessor checks such as `#if defined(DEBUG)` have been replaced with `if constexpr(...)` checks, which are far less uglier.
+* Add an `unsigned` overload to `MathHelper::Rand()`.
 * `DxException` has been cleaned up, with the reliance on macros for lines and file numbers replaced by the standard `std::source_location` object.
 * `D3DApp`'s `Initialize()`, `InitMainWindow()`, and `InitDirect3D()` were a mix of exception throwing and returning `bool`s on error. The `bool` return has been removed and now exceptions are thrown consistently. This also eliminates the need to check the return value of `Initialize()`.
 * Use of `FLT_MAX` has been removed in favour of the standard `std::numeric_limits<float>::max()`.
