@@ -543,8 +543,8 @@ private:
         if ((mTimer.TotalTime() - t_base) >= 0.25f)
         {
             t_base += 0.25f;
-            auto i = MathHelper::Rand(4, mWaves->RowCount() - 5);
-            auto j = MathHelper::Rand(4, mWaves->ColumnCount() - 5);
+            auto i = MathHelper::Rand(4u, mWaves->RowCount() - 5);
+            auto j = MathHelper::Rand(4u, mWaves->ColumnCount() - 5);
             auto r = MathHelper::RandF(1.0f, 2.0f);
             mWaves->Disturb(mCommandList.Get(), mComputeRootSignature.Get(), passCB, mPSOs["wavesDisturb"].Get(), i, j, r);
         }

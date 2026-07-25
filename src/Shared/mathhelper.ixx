@@ -180,6 +180,7 @@ public:
     // Order: left, right, bottom, top, near, far.
     static void ExtractFrustumPlanes(const Matrix& M, DirectX::XMFLOAT4 outPlanes[6])
     {
+		// Plane is unfortunately a non-aggregate type, so no designated initializers.
         auto planes = std::array<Plane, 6>{};
 
         //
@@ -281,10 +282,10 @@ public:
         // Point on far plane (top-right).
         const auto Q = Vector3{ corners[5] };
 
-        float n = subfrustum.Near;
-        float f = subfrustum.Far;
+        auto n = subfrustum.Near;
+        auto f = subfrustum.Far;
 
-        float s = (Q.Dot(Q) - P.Dot(P)) / (2.0f * (f - n));
+        auto s = (Q.Dot(Q) - P.Dot(P)) / (2.0f * (f - n));
 
         auto result = DirectX::BoundingSphere{};
 
