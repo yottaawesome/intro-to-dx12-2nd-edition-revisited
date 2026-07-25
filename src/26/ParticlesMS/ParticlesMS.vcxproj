@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>18.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{cbe9588d-2a76-43ab-a4dc-9a14dadfaaef}</ProjectGuid>
-    <RootNamespace>ParticlesCS</RootNamespace>
+    <ProjectGuid>{becaa402-bad7-4d92-94ba-fe7d1402412c}</ProjectGuid>
+    <RootNamespace>ParticlesMS</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -116,10 +116,10 @@
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <BuildStlModules>true</BuildStlModules>
       <ModuleOutputFile>$(IntDir)$(RelativeDir)</ModuleOutputFile>
       <ModuleDependenciesFile>$(IntDir)$(RelativeDir)</ModuleDependenciesFile>
       <ObjectFileName>$(IntDir)$(RelativeDir)</ObjectFileName>
+      <BuildStlModules>true</BuildStlModules>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -139,10 +139,10 @@
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <BuildStlModules>true</BuildStlModules>
       <ModuleOutputFile>$(IntDir)$(RelativeDir)</ModuleOutputFile>
       <ModuleDependenciesFile>$(IntDir)$(RelativeDir)</ModuleDependenciesFile>
       <ObjectFileName>$(IntDir)$(RelativeDir)</ObjectFileName>
+      <BuildStlModules>true</BuildStlModules>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -154,22 +154,19 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="frameresource.ixx" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="particlescsapp.ixx" />
-    <ClCompile Include="particlescs.ixx" />
-    <ClCompile Include="particlesystem.ixx" />
+    <ClCompile Include="particlesms.ixx" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Direct3D.D3D12" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="vcpkg.json" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\..\Shared\Shared.vcxproj">
       <Project>{71a3731d-95eb-49ec-b69f-e0b5e166115b}</Project>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="vcpkg.json" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

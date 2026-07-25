@@ -15,29 +15,35 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="frameresource.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="particlesystem.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ssao.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="terrain.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="terraindemo.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="terrainapp.ixx">
+    <ClInclude Include="framework.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ParticlesMS.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ParticlesMS.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="vcpkg.json" />
+    <ResourceCompile Include="ParticlesMS.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="small.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="ParticlesMS.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>
