@@ -83,7 +83,7 @@ Microsoft Visual Studio 2026 with the _Desktop development with C++_ and _Game d
 
 ## License and copyright
 
-I've preserved the relevant copyright notices for Luna's code. It's unclear what license applies to Luna's code, as no notices are posted anywhere including on the official site, but given there are various longstanding copies/remixes of Luna's code on Github, I assume the author is OK so long as they retain the copyright notices.
+I've preserved the relevant copyright notices for Luna's code. It's unclear what license applies to Luna's code, as no notices are posted anywhere including on the official site, but given there are various longstanding copies/remixes of Luna's code on Github, I assume the author is OK so long as they retain the copyright notices. The notices are not consistently shown across the files or demos in the original source code, so I've copied and pasted the closest existing notice and its publish date to those files.
 
 Code files I've exclusively authored (identifiable by the banner) are licensed under the MIT license.
 
