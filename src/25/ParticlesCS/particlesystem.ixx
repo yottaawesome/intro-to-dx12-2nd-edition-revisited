@@ -1,3 +1,7 @@
+//***************************************************************************************
+// ParticleSystem.cpp by Frank Luna (C) 2011 All Rights Reserved.
+//***************************************************************************************
+
 export module particlescs:particlesystem;
 import shared;
 import std;

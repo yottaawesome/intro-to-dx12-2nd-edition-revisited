@@ -1,3 +1,7 @@
+//***************************************************************************************
+// ShadowMapApp.cpp by Frank Luna (C) 2015 All Rights Reserved.
+//***************************************************************************************
+
 export module shadows:shadowmapapp;
 import std;
 import shared;

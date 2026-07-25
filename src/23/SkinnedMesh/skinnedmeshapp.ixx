@@ -1,3 +1,7 @@
+//***************************************************************************************
+// SkinnedMeshApp.cpp by Frank Luna (C) 2015 All Rights Reserved.
+//***************************************************************************************
+
 export module skinnedmesh:skinnedmeshapp;
 import std;
 import shared;
