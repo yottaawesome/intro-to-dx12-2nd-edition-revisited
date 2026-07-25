@@ -29,6 +29,7 @@ public:
 
 public:
 	Terrain(D3D12::ID3D12Device* device, DirectX::ResourceUploadBatch& uploadBatch, const InitInfo& initInfo)
+		: md3dDevice(device), mInfo(initInfo)
 	{
 		// Divide heightmap into patches such that each patch has CellsPerPatch.
 		mNumPatchVertRows = ((mInfo.HeightmapHeight - 1) / CellsPerPatch) + 1;

@@ -32,6 +32,7 @@ export namespace ImGui
 		::ImGui_ImplDX12_InitInfo,
 		::ImGuiIO,
 		::ImGuiStyle,
+		::ImGui::SliderFloat3,
 		::ImGui::Checkbox,
 		::ImGui::BeginChild,
 		::ImGui::GetDrawData,

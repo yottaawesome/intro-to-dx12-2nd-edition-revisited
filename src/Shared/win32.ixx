@@ -173,7 +173,8 @@ export namespace Win32
 	};
 	enum VK
 	{
-		Escape = VK_ESCAPE
+		Escape = VK_ESCAPE,
+		Shift = VK_SHIFT,
 	};
 	enum MK
 	{
