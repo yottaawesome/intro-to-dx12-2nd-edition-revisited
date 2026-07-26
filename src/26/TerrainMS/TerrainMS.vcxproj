@@ -158,6 +158,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="particlesystem.ixx" />
     <ClCompile Include="terrainms.ixx" />
+    <ClCompile Include="terrainmsdemo.ixx" />
     <ClCompile Include="terrainmsapp.ixx" />
   </ItemGroup>
   <ItemGroup>

@@ -2,7 +2,7 @@
 // ParticleSystem.cpp by Frank Luna (C) 2011 All Rights Reserved.
 //***************************************************************************************
 
-export module terrainms:particlesystem;
+export module terrainmsdemo:particlesystem;
 import shared;
 import std;
 import :frameresource;

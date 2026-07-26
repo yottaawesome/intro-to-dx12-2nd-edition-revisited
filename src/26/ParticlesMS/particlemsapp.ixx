@@ -61,7 +61,7 @@ enum DsvOffsets
 
 constexpr std::uint32_t CBV_SRV_UAV_HEAP_CAPACITY = 16384u;
 
-class ParticlesMsApp : public D3DApp
+export class ParticlesMsApp : public D3DApp
 {
 public:
     ParticlesMsApp(HINSTANCE hInstance);
