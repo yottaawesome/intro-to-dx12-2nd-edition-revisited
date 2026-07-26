@@ -156,7 +156,9 @@
   <ItemGroup>
     <ClCompile Include="frameresource.ixx" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="particlesystem.ixx" />
     <ClCompile Include="terrainms.ixx" />
+    <ClCompile Include="terrainmsapp.ixx" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Direct3D.D3D12" />

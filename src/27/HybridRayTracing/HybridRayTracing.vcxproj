@@ -155,7 +155,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="frameresource.ixx" />
+    <ClCompile Include="hybridraytracer.ixx" />
     <ClCompile Include="hybridraytracing.ixx" />
+    <ClCompile Include="hybridraytracingapp.ixx" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>

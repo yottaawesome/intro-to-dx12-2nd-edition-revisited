@@ -156,6 +156,8 @@
   <ItemGroup>
     <ClCompile Include="frameresource.ixx" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="proceduralraytracer.ixx" />
+    <ClCompile Include="raytracingintroapp.ixx" />
     <ClCompile Include="raytracingintro.ixx" />
   </ItemGroup>
   <ItemGroup>
