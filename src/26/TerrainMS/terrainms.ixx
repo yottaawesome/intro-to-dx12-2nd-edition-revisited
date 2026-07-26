@@ -3,7 +3,7 @@ import std;
 import shared; 
 import :frameresource;
 
-export class TerrainMS
+class TerrainMS
 {
 public:
 	//using Vector2 = DirectX::SimpleMath::Vector2;
@@ -65,7 +65,7 @@ public:
 		CreateSrv2d(md3dDevice, mHeightMapTexture.Get(), DXGI_FORMAT_R32_FLOAT, 1, heap.CpuHandle(mHeightMapSrvIndex));
 
 		CreateBufferSrv(md3dDevice, 0, mNumPatchVertRows * mNumPatchVertCols, sizeof(DirectX::XMFLOAT4), mQuadPatchVB.Get(), heap.CpuHandle(mTerrainVerticesSrvIndex));
-		CreateBufferSrv(md3dDevice, 0, mGroupBounds.size(), sizeof(DirectX::BoundingBox), mQuadGroupBoundsBuffer.Get(), heap.CpuHandle(mTerrainGroupBoundsSrvIndex));
+		CreateBufferSrv(md3dDevice, 0, static_cast<std::uint32_t>(mGroupBounds.size()), sizeof(DirectX::BoundingBox), mQuadGroupBoundsBuffer.Get(), heap.CpuHandle(mTerrainGroupBoundsSrvIndex));
 	}
 
 	void SetMaterialLayers(std::initializer_list<Material*> layers,
@@ -448,7 +448,7 @@ private:
 	std::uint32_t mNumAmplificationGroupsY = 0;
 
 	// TODO: weird undefined symbol error, I think it's a compiler bug, but will need to confirm
-	//DirectX::SimpleMath::Matrix mWorld = DirectX::SimpleMath::Matrix::Identity; 
+	//DirectX::SimpleMath::Matrix mWorld2 = DirectX::SimpleMath::Matrix::Identity; 
 	DirectX::SimpleMath::Matrix mWorld = 
 		DirectX::SimpleMath::Matrix{ 
 			1.0f, 0.0f, 0.0f, 0.0f,
