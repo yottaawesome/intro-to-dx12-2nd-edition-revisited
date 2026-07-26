@@ -11,6 +11,7 @@ extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = ".\\D3D12\\
 
 import std;
 import shared;
+import terrainmsdemo;
 
 auto wWinMain(Win32::HINSTANCE instance, Win32::HINSTANCE, Win32::LPWSTR, int) -> int
 try

@@ -3,7 +3,7 @@ import std;
 import shared; 
 import :frameresource;
 
-class TerrainMS
+export class TerrainMS
 {
 public:
 	//using Vector2 = DirectX::SimpleMath::Vector2;
@@ -448,7 +448,7 @@ private:
 	std::uint32_t mNumAmplificationGroupsY = 0;
 
 	// TODO: weird undefined symbol error, I think it's a compiler bug, but will need to confirm
-	//DirectX::SimpleMath::Matrix::Identity; 
+	//DirectX::SimpleMath::Matrix mWorld = DirectX::SimpleMath::Matrix::Identity; 
 	DirectX::SimpleMath::Matrix mWorld = 
 		DirectX::SimpleMath::Matrix{ 
 			1.0f, 0.0f, 0.0f, 0.0f,
