@@ -18,7 +18,7 @@ try
 {
     if constexpr (IsDebugBuild)
         Win32::_CrtSetDbgFlag(Win32::CrtAllocMemDf | Win32::CrtLeakCheckDf);
-    return 0;
+    return TerrainMSApp{ instance }.Run();
 }
 catch (const std::exception& ex)
 {
