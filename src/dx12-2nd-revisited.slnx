@@ -82,6 +82,10 @@
     <Project Path="26/ParticlesMS/ParticlesMS.vcxproj" Id="becaa402-bad7-4d92-94ba-fe7d1402412c" />
     <Project Path="26/TerrainMS/TerrainMS.vcxproj" Id="fd4371f9-1af7-4895-9e95-6d76322affc3" />
   </Folder>
+  <Folder Name="/27/">
+    <Project Path="27/HybridRayTracing/HybridRayTracing.vcxproj" Id="a8158ad5-a4af-44cd-9e78-851b3d034fae" />
+    <Project Path="27/RayTracingIntro/RayTracingIntro.vcxproj" Id="c813fcc2-938d-4cbf-8fb8-cebbda0377cf" />
+  </Folder>
   <Folder Name="/Common/">
     <Project Path="E:/Code/C++/intro-to-dx12-2nd-edition-revisited/src/Shared/Shared.vcxproj" Id="71a3731d-95eb-49ec-b69f-e0b5e166115b" />
   </Folder>

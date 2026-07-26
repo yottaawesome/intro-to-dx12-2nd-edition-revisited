@@ -518,7 +518,7 @@ private:
 			verts[i].TexC = DirectX::XMFLOAT2(0.0f, 0.0f);
 			verts[i].TangentU = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
 		}
-		currWavesVB->CopyData(verts.data(), verts.size());
+		currWavesVB->CopyData(verts.data(), static_cast<std::uint32_t>(verts.size()));
 
 		// Set the dynamic VB of the wave renderitem to the current frame VB.
 		mWavesRitem->Geo->VertexBufferGPU = currWavesVB->Resource();
@@ -774,7 +774,7 @@ private:
 			&geo->IndexBufferGPU);
 
 		geo->VertexByteStride = sizeof(ModelVertex);
-		geo->VertexBufferByteSize = vbByteSize;
+		geo->VertexBufferByteSize = static_cast<std::uint32_t>(vbByteSize);
 		geo->IndexFormat = DXGI_FORMAT_R16_UINT;
 		geo->IndexBufferByteSize = ibByteSize;
 
