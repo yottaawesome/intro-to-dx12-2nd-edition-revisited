@@ -11,8 +11,11 @@ export
 		::MaterialData,
 		::PerObjectCB,
 		::BlurDispatchCB,
+		::ShadowRayPayload,
+		::ColorRayPayload,
 		::GpuWavesCB,
 		::InstanceData,
+		::GeoAttributes,
 		::SsaoCB,
 		::SkinnedCB,
 		::ParticleEmitCB,
@@ -24,4 +27,5 @@ export
 		;
 
 	constexpr auto MaximumTerrainLayers = MaxTerrainLayers;
+	constexpr auto MaxRecursionDepth = MAX_RECURSION_DEPTH;
 }

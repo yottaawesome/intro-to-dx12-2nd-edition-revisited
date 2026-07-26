@@ -154,6 +154,7 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="directxraytracinghelper.ixx" />
     <ClCompile Include="frameresource.ixx" />
     <ClCompile Include="hybridraytracer.ixx" />
     <ClCompile Include="hybridraytracing.ixx" />
