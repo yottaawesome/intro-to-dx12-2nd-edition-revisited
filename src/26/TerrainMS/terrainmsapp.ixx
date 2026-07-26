@@ -95,7 +95,81 @@ private:
 
     void LoadTextures();
     void LoadGeometry();
-    void BuildRootSignatures();
+
+    void BuildRootSignatures()
+    {
+        // Root parameter can be a table, root descriptor or root constants.
+        auto gfxRootParameters = std::array<D3D12::CD3DX12_ROOT_PARAMETER, GFX_ROOT_ARG_COUNT>{};
+
+        // Perfomance TIP: Order from most frequent to least frequent.
+        gfxRootParameters[GFX_ROOT_ARG_OBJECT_CBV].InitAsConstantBufferView(0);
+        gfxRootParameters[GFX_ROOT_ARG_PASS_CBV].InitAsConstantBufferView(1);
+        gfxRootParameters[GFX_ROOT_ARG_SKINNED_CBV].InitAsConstantBufferView(2);
+        gfxRootParameters[GFX_ROOT_ARG_MATERIAL_SRV].InitAsShaderResourceView(0);
+        gfxRootParameters[GFX_ROOT_ARG_INSTANCEDATA_SRV].InitAsShaderResourceView(1);
+
+        auto gfxRootSigDesc = D3D12::CD3DX12_ROOT_SIGNATURE_DESC{
+            GFX_ROOT_ARG_COUNT, 
+            gfxRootParameters.data(),
+            0, 
+            nullptr, // static samplers
+            D3D12::D3D12_ROOT_SIGNATURE_FLAGS{
+                D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
+                D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED |
+                D3D12_ROOT_SIGNATURE_FLAG_SAMPLER_HEAP_DIRECTLY_INDEXED
+            }
+        };
+
+        auto serializedRootSig = Microsoft::WRL::ComPtr<D3D::ID3DBlob>{};
+        auto errorBlob = Microsoft::WRL::ComPtr<D3D::ID3DBlob>{};
+        auto hr = D3D12::D3D12SerializeRootSignature(&gfxRootSigDesc, D3D_ROOT_SIGNATURE_VERSION_1,
+            serializedRootSig.GetAddressOf(), errorBlob.GetAddressOf());
+
+        if (errorBlob != nullptr)
+            Win32::OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+        ThrowIfFailed(hr);
+
+        ThrowIfFailed(md3dDevice->CreateRootSignature(0,
+            serializedRootSig->GetBufferPointer(),
+            serializedRootSig->GetBufferSize(),
+            __uuidof(D3D12::ID3D12RootSignature),
+            reinterpret_cast<void**>(mGfxRootSignature.GetAddressOf())));
+
+
+        // Root parameter can be a table, root descriptor or root constants.
+        auto computeRootParameters = std::array<D3D12::CD3DX12_ROOT_PARAMETER, COMPUTE_ROOT_ARG_COUNT>{};
+
+        // Perfomance TIP: Order from most frequent to least frequent.
+        computeRootParameters[COMPUTE_ROOT_ARG_DISPATCH_CBV].InitAsConstantBufferView(0);
+        computeRootParameters[COMPUTE_ROOT_ARG_PASS_CBV].InitAsConstantBufferView(1);
+        computeRootParameters[COMPUTE_ROOT_ARG_PASS_EXTRA_CBV].InitAsConstantBufferView(2);
+
+        // A root signature is an array of root parameters.
+        auto computeRootSigDesc = D3D12::CD3DX12_ROOT_SIGNATURE_DESC{
+            COMPUTE_ROOT_ARG_COUNT, 
+            computeRootParameters.data(),
+            0, 
+            nullptr, // static samplers
+            D3D12::D3D12_ROOT_SIGNATURE_FLAGS{
+                D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED |
+                D3D12_ROOT_SIGNATURE_FLAG_SAMPLER_HEAP_DIRECTLY_INDEXED
+            }
+        };
+
+        hr = D3D12SerializeRootSignature(&computeRootSigDesc, D3D_ROOT_SIGNATURE_VERSION_1,
+            serializedRootSig.GetAddressOf(), errorBlob.GetAddressOf());
+
+        if (errorBlob != nullptr)
+            Win32::OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+        ThrowIfFailed(hr);
+
+        ThrowIfFailed(md3dDevice->CreateRootSignature(0,
+            serializedRootSig->GetBufferPointer(),
+            serializedRootSig->GetBufferSize(),
+			__uuidof(D3D12::ID3D12RootSignature), 
+            reinterpret_cast<void**>(mComputeRootSignature.GetAddressOf())));
+    }
+
     void BuildCommandSignatures()
     {
         // Since the particle system is updated on the GPU, we do not know how many particles are 
