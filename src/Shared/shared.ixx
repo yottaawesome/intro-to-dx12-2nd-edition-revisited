@@ -25,3 +25,4 @@ export import :camera;
 export import :psolib;
 export import :shaderlib;
 export import :shadowmap;
+export import :prepass;
