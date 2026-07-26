@@ -15,6 +15,7 @@ export
 		::ColorRayPayload,
 		::GpuWavesCB,
 		::InstanceData,
+		::RTVertex,
 		::GeoAttributes,
 		::SsaoCB,
 		::SkinnedCB,

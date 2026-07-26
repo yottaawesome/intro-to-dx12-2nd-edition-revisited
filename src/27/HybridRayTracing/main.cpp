@@ -11,13 +11,14 @@ extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = ".\\D3D12\\
 
 import std;
 import shared;
+import hybridraytracing;
 
 auto wWinMain(Win32::HINSTANCE instance, Win32::HINSTANCE, Win32::LPWSTR, int) -> int
 try
 {
     if constexpr (IsDebugBuild)
         Win32::_CrtSetDbgFlag(Win32::CrtAllocMemDf | Win32::CrtLeakCheckDf);
-    return 0;
+    return HybridRayTracingApp{instance}.Run();
 }
 catch (const std::exception& ex)
 {
