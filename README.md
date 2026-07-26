@@ -42,6 +42,7 @@ The effort is currently in progress. The following projects have been converted 
 * [23/SkinnedMesh](./src/23/SkinnedMesh)
 * [24/Terrain](./src/24/Terrain)
 * [25/ParticlesCS](./src/25/ParticlesCS)
+* [26/ParticlesMS](./src/26/ParticlesMS)
 
 ## Building and running
 
