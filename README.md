@@ -44,6 +44,7 @@ The effort is currently in progress. The following projects have been converted 
 * [25/ParticlesCS](./src/25/ParticlesCS)
 * [26/ParticlesMS](./src/26/ParticlesMS)
 * [26/TerrainMS](./src/26/TerrainMS)
+* [27/HybridRayTracing](./src/27/HybridRayTracing)
 
 ## Building and running
 
