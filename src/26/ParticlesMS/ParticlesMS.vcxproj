@@ -154,6 +154,7 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="frameresource.ixx" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="particlesms.ixx" />
   </ItemGroup>
