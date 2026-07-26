@@ -1,3 +1,7 @@
+//***************************************************************************************
+// HybridRayTracer.cpp by Frank Luna (C) 2023 All Rights Reserved.
+//***************************************************************************************
+
 export module hybridraytracing:hybridraytracer;
 import std;
 import shared;
