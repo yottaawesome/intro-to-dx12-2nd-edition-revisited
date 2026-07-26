@@ -568,13 +568,19 @@ export namespace DirectX
 
 	namespace SimpleMath
 	{
-		using 
+		using
 			::DirectX::SimpleMath::Vector2,
 			::DirectX::SimpleMath::Vector3,
 			::DirectX::SimpleMath::Vector4,
 			::DirectX::SimpleMath::Plane,
-			::DirectX::SimpleMath::Matrix
+			::DirectX::SimpleMath::Matrix;
 		;
+
+		auto constexpr IdentityMatrix() noexcept -> DirectX::SimpleMath::Matrix
+		{
+			static auto x = DirectX::SimpleMath::Matrix::Identity;
+			return x;
+		}
 	}
 
 	namespace PackedVector

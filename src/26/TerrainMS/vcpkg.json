@@ -1,5 +1,5 @@
 {
-  "name": "terraincs",
+  "name": "terrainms",
   "version": "1.0.0",
   "dependencies": [
     "directxtk12",
