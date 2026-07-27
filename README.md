@@ -89,9 +89,9 @@ Microsoft Visual Studio 2026 with the _Desktop development with C++_ and _Game d
 
 ## License and copyright
 
-I've preserved the relevant copyright notices for Luna's code. It's unclear what license applies to Luna's code, as no notices are posted anywhere including on the official site, but given there are various longstanding copies/remixes of Luna's code on Github, I assume the author is OK so long as they retain the copyright notices. The notices are not consistently shown across the files or demos in the original source code, so I've copied and pasted the closest existing notice and its publish date to those files.
+Most of the code is copyrighted by Frank D. Luna, with the exception of some of the code extracted from Microsoft samples and included in Luna's samples, such as the code contained `directxraytracinghelper.ixx`. I've preserved the relevant copyright notices for the source code. However, some of the source code has no notice, or the notices (particularly dates) don't match up between header and source file pairs, so it's not exact.
 
-Code files I've exclusively authored (identifiable by the banner) are licensed under the MIT license.
+It's unclear what license applies to Luna's code, as no notices are posted anywhere including on the official site, but given there are various longstanding copies/remixes of Luna's code on Github, I assume the author is OK so long as they retain the copyright notices. Code files I've exclusively authored are copyrighted by me and licensed under the MIT license.
 
 ## Additional resources
 
