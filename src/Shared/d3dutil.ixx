@@ -9,6 +9,7 @@ import :mathhelper;
 import :meshutil;
 import :meshgen;
 import :loadm3d;
+import :build;
 
 export
 {
@@ -226,7 +227,7 @@ export
             const std::vector<Win32::LPCWSTR>& compileArgs
         ) -> Microsoft::WRL::ComPtr<DXC::IDxcBlob>
         {
-            if (!std::filesystem::exists(filename))
+            if (not std::filesystem::exists(filename))
             {
                 auto msg = std::format(L"{} not found.", filename);
                 Win32::OutputDebugStringW(msg.c_str());
@@ -237,23 +238,23 @@ export
             static auto [utils, compiler, defaultIncludeHandler] = 
 				[] static -> std::tuple<ComPtr<DXC::IDxcUtils>, ComPtr<DXC::IDxcCompiler3>, ComPtr<DXC::IDxcIncludeHandler>>
                 {
-                    auto result = HRESULT{};
                     auto utils = ComPtr<DXC::IDxcUtils>{};
-                    result = DXC::DxcCreateInstance(DXC::CLSID_DxcUtils, __uuidof(DXC::IDxcUtils), &utils);
-                    ThrowIfFailed(result);
+					if (auto result = DXC::DxcCreateInstance(DXC::CLSID_DxcUtils, __uuidof(DXC::IDxcUtils), &utils); Win32::Failed(result))
+						throw DxException{ result };
                     auto compiler = ComPtr<DXC::IDxcCompiler3>{};
-                    result = DXC::DxcCreateInstance(DXC::CLSID_DxcCompiler, __uuidof(DXC::IDxcCompiler3), &compiler);
-                    ThrowIfFailed(result);
+                    if (auto result = DXC::DxcCreateInstance(DXC::CLSID_DxcCompiler, __uuidof(DXC::IDxcCompiler3), &compiler); Win32::Failed(result))
+                        throw DxException{ result };
                     auto defaultIncludeHandler = ComPtr<DXC::IDxcIncludeHandler>{};
-                    result = utils->CreateDefaultIncludeHandler(&defaultIncludeHandler);
-                    ThrowIfFailed(result);
+                    if (auto result = utils->CreateDefaultIncludeHandler(&defaultIncludeHandler); Win32::Failed(result))
+                        throw DxException{ result };
                     return std::make_tuple(utils, compiler, defaultIncludeHandler);
                 }();
 
             // Use IDxcUtils to load the text file.
             auto codePage = std::uint32_t{ Win32::CpUtf8 };
             auto sourceBlob = Microsoft::WRL::ComPtr<DXC::IDxcBlobEncoding>{};
-            ThrowIfFailed(utils->LoadFile(filename.c_str(), &codePage, &sourceBlob));
+            if (auto hr = utils->LoadFile(filename.c_str(), &codePage, &sourceBlob); Win32::Failed(hr))
+                throw DxException{ hr };
 
             auto sourceBuffer = DXC::DxcBuffer{
                 .Ptr = sourceBlob->GetBufferPointer(),
@@ -271,64 +272,41 @@ export
                     __uuidof(DXC::IDxcResult),
                     &result // output
                 )};
-
             if (Win32::Succeeded(hr))
                 result->GetStatus(&hr);
 
             // Get errors and output them if any.
             auto errorMsgs = Microsoft::WRL::ComPtr<DXC::IDxcBlobUtf8>{};
-            result->GetOutput(
-                DXC::DXC_OUT_KIND::DXC_OUT_ERRORS,
-				__uuidof(DXC::IDxcBlobUtf8), 
-                &errorMsgs, 
-                nullptr
-            );
+            result->GetOutput(DXC::DXC_OUT_KIND::DXC_OUT_ERRORS, __uuidof(DXC::IDxcBlobUtf8), &errorMsgs, nullptr);
 
-            if (errorMsgs && errorMsgs->GetStringLength())
+            if (errorMsgs and errorMsgs->GetStringLength())
             {
                 auto errorText = AnsiToWString(errorMsgs->GetStringPointer());
-
                 // replace the hlsl.hlsl placeholder in the error string with the shader filename.
                 auto dummyFilename = std::wstring{L"hlsl.hlsl"};
                 errorText.replace(errorText.find(dummyFilename), dummyFilename.length(), filename);
-
-                OutputDebugStringW(errorText.c_str());
+                Win32::OutputDebugStringW(errorText.c_str());
                 ThrowIfFailed(Win32::HRCodes::Fail);
             }
 
             // Get the DX intermediate language, which the GPU driver will translate
             // into native GPU code.
             auto dxil = Microsoft::WRL::ComPtr<DXC::IDxcBlob>{};
-            ThrowIfFailed(
-                result->GetOutput(
-                    DXC::DXC_OUT_KIND::DXC_OUT_OBJECT,
-                    __uuidof(DXC::IDxcBlob),
-                    &dxil, 
-                    nullptr
-                ));
+            if (auto hr = result->GetOutput(DXC::DXC_OUT_KIND::DXC_OUT_OBJECT, __uuidof(DXC::IDxcBlob), &dxil, nullptr); Win32::Failed(hr))
+                throw DxException{ hr }; 
 
-#if defined(DEBUG) || defined(_DEBUG)  
             // Write PDB data for PIX debugging.
-            const auto pdbDirectory = std::string{ "HLSL PDB/" };
-            if (!std::filesystem::exists(pdbDirectory))
+            if constexpr (IsDebugBuild)
             {
-                std::filesystem::create_directory(pdbDirectory);
+                constexpr auto pdbDirectory = "HLSL PDB/";
+                if (not std::filesystem::exists(pdbDirectory))
+                    std::filesystem::create_directory(pdbDirectory);
+                auto pdbData = Microsoft::WRL::ComPtr<DXC::IDxcBlob>{};
+                auto pdbPathFromCompiler = Microsoft::WRL::ComPtr<DXC::IDxcBlobUtf16>{};
+                if (auto hr = result->GetOutput(DXC::DXC_OUT_KIND::DXC_OUT_PDB, __uuidof(DXC::IDxcBlob), &pdbData, &pdbPathFromCompiler); Win32::Failed(hr))
+                    throw DxException{ hr };
+                WriteBinaryToFile(pdbData.Get(), AnsiToWString(pdbDirectory) + std::wstring(pdbPathFromCompiler->GetStringPointer()));
             }
-
-            auto pdbData = Microsoft::WRL::ComPtr<DXC::IDxcBlob>{};
-            auto pdbPathFromCompiler = Microsoft::WRL::ComPtr<DXC::IDxcBlobUtf16>{};
-            ThrowIfFailed(
-                result->GetOutput(
-                    DXC::DXC_OUT_KIND::DXC_OUT_PDB, 
-                    __uuidof(DXC::IDxcBlob),
-                    &pdbData, 
-                    &pdbPathFromCompiler
-                ));
-            WriteBinaryToFile(
-                pdbData.Get(),
-                AnsiToWString(pdbDirectory) + std::wstring(pdbPathFromCompiler->GetStringPointer())
-            );
-#endif
             // Return the data blob containing the DXIL code.
             return dxil;
         }
