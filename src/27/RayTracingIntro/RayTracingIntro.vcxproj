@@ -154,6 +154,7 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="directxraytracinghelper.ixx" />
     <ClCompile Include="frameresource.ixx" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="proceduralraytracer.ixx" />

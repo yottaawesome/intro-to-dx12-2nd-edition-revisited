@@ -1,4 +1,4 @@
-export module hybridraytracing:directxraytracinghelper;
+export module raytracingintro:directxraytracinghelper;
 import std;
 import shared;
 

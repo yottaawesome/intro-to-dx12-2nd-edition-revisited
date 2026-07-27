@@ -29,4 +29,15 @@ export
 
 	constexpr auto MaximumTerrainLayers = MaxTerrainLayers;
 	constexpr auto MaxRecursionDepth = MAX_RECURSION_DEPTH;
+
+	namespace GeoType
+	{
+		enum
+		{
+			Box = GEO_TYPE_BOX,
+			Cylinder = GEO_TYPE_CYLINDER,
+			Disk = GEO_TYPE_DISK,
+			Sphere = GEO_TYPE_SPHERE
+		};
+	}
 }
