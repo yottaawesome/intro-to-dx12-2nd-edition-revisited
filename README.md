@@ -2,13 +2,13 @@
 
 ## Introduction
 
-This is an ongoing effort at revisiting the source code for [Frank D. Luna's](https://www.d3dcoder.net/default.htm) second edition of [*Introduction to 3D Game Programming with DirectX 12*](https://www.d3dcoder.net/d3d12_v2.htm). Luna's books on DX12 (and its predecessors) are considered the de facto standard reference for learning DX12, and the primary intent here is not so much a revision per se, but to simplify and make the codebase easier to study (at least for me) by adapting the codebase to modern C++ standards and best practices. DirectX 12 is already a very difficult API to work with, and any way we can make it easier to understand is a good thing. It goes without saying that just like the original source code, in order to understand and learn from the revisited source code, you _must_ own the book, and this repo in no way changes that.
+This is an effort at revisiting the source code for [Frank D. Luna's](https://www.d3dcoder.net/default.htm) second edition of [*Introduction to 3D Game Programming with DirectX 12*](https://www.d3dcoder.net/d3d12_v2.htm). Luna's books on DX12 (and its predecessors) are considered the de facto standard reference for learning DX12, and the primary intent here is not so much a revision per se, but to simplify and make the codebase easier to study (at least for me) by adapting the codebase to modern C++ standards and best practices. DirectX 12 is already a very difficult API to work with, and any way we can make it easier to understand is a good thing. It goes without saying that just like the original source code, in order to understand and learn from the revisited source code, you _must_ own the book, and this repo in no way changes that.
 
 I originally began this effort with the first edition of the book, but have since moved on to the second edition after I discovered its existence.
 
 ## Status
 
-The effort is currently in progress. The following projects have been converted and are functional.
+All projects have been successfully updated and are functional. There are likely some small style changes I've missed here and there, and I'll clean those up as I further review the code and expore the samples.
 
 * [Common](./src/Shared)
 * [01/XMVECTOR](./src/01/XMVECTOR)
@@ -45,6 +45,7 @@ The effort is currently in progress. The following projects have been converted 
 * [26/ParticlesMS](./src/26/ParticlesMS)
 * [26/TerrainMS](./src/26/TerrainMS)
 * [27/HybridRayTracing](./src/27/HybridRayTracing)
+* [27/RayTracingIntro](./src/27/RayTracingIntro)
 
 ## Building and running
 
