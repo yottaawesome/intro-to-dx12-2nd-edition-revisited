@@ -64,6 +64,8 @@ Microsoft Visual Studio 2026 with the _Desktop development with C++_ and _Game d
 * Removal of macros like `CALLBACK` and `WINAPI`, these are ignored for x64 builds and add visual noise.
 * The original code used an obsolete version of `imgui`. Newer versions of `imgui` require the application to provide SRV allocation/deallocation functions; this is now done in the `D3DApp` superclass.
 * Multiprocessor compilation has been enabled in the project settings.
+* Use of the `ZeroMemory` macro was replaced with simpler empty initialisers. Some types also used `ZeroMemory` in their constructor to zero themselves out, I replaced this with inline member initialisers.
+* The code was a mixture of `UINT` and `std::uint32_t` use for unsigned ints, I'm standardising it to use `std::uint32_t` only. On a similar note, I'm also replacing `UINT64` with `std::uint64_t`.
 * A back buffer state transition bug in the Blur demo is now fixed. The bug didn't crash the demo, but caused the DX12 runtime to log debug error messages.
 * A lightweight `Event` class has been added to prevent a potential memory leak in `FlushCommandQueue()`.
 * The unused struct `WaveDispatchCB` was removed from the Blur and WavesCS demos.
