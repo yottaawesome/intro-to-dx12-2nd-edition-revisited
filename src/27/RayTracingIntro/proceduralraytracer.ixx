@@ -92,9 +92,9 @@ public:
 		// The cylinder is centered at the origin, aligned with +y axis, has radius 1 and length 2 in local space.
 		auto inst = RTInstance{
 			.Transform = worldTransform,
-			.TexScale = texScale,
 			.MaterialIndex = materialIndex,
-			.PrimitiveType = GeoType::Cylinder
+			.PrimitiveType = GeoType::Cylinder,
+			.TexScale = texScale,
 		};
 
 		mInstances.push_back(inst);
