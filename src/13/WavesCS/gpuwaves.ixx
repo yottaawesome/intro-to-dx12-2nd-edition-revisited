@@ -1,3 +1,11 @@
+//***************************************************************************************
+// GpuWaves.h by Frank Luna (C) 2011 All Rights Reserved.
+//
+// Performs the calculations for the wave simulation using the ComputeShader on the GPU.  
+// The solution is saved to a floating-point texture.  The client must then set this 
+// texture as a SRV and do the displacement mapping in the vertex shader over a grid.
+//***************************************************************************************
+
 export module wavescs:gpuwaves;
 import std;
 import shared;

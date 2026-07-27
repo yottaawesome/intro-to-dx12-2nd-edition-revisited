@@ -1,3 +1,7 @@
+//***************************************************************************************
+// RayTracingIntroApp.cpp by Frank Luna (C) 2015 All Rights Reserved.
+//***************************************************************************************
+
 export module raytracingintro:raytracingintroapp;
 import std;
 import shared;

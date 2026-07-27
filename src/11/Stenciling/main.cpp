@@ -13,6 +13,8 @@ import std;
 import shared;
 import stenciling;
 
+// Use keys 'A', 'D', 'W', 'S' to move the skull.
+
 auto wWinMain(Win32::HINSTANCE hInstance, Win32::HINSTANCE, Win32::LPWSTR, int) -> int
 try
 {
