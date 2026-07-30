@@ -97,9 +97,8 @@ private:
         // Too big, but OK for demo. For large terrain, need something like Cascaded Shadow Maps.
         mShadowMap = std::make_unique<ShadowMap>(md3dDevice.Get(), 2 * 4096, 2 * 4096);
 
-
         // Create the singleton.
-        // GraphicsMemory::Get(md3dDevice.Get());
+        // DirectX::GraphicsMemory::Get(md3dDevice.Get());
 
         // We will upload on the direct queue for the book samples, but 
         // copy queue would be better for real game.
@@ -112,15 +111,15 @@ private:
         mRainParticleSystem = std::make_unique<ParticleSystem>(md3dDevice.Get(), *mUploadBatch.get(), MaxRainParticleCount, false);
         mExplosionParticleSystem = std::make_unique<ParticleSystem>(md3dDevice.Get(), *mUploadBatch.get(), MaxExplosionParticleCount, false);
 
-        Terrain::InitInfo terrainInitInfo;
-        terrainInitInfo.HeightMapFilename = L"Textures/terrain/heightmap4097.raw";
-        terrainInitInfo.HeightScale = 100.0f;
-        terrainInitInfo.HeightOffset = -50.0f;
-        terrainInitInfo.HeightmapWidth = 4097;
-        terrainInitInfo.HeightmapHeight = 4097;
-        terrainInitInfo.CellSpacing = 0.125f;
-        terrainInitInfo.NumLayers = 7;
-
+        auto terrainInitInfo = Terrain::InitInfo{
+            .HeightMapFilename = L"Textures/terrain/heightmap4097.raw",
+            .HeightScale = 100.0f,
+            .HeightOffset = -50.0f,
+            .HeightmapWidth = 4097,
+            .HeightmapHeight = 4097,
+            .CellSpacing = 0.125f,
+            .NumLayers = 7,
+        };
         mTerrain = std::make_unique<Terrain>(md3dDevice.Get(), *mUploadBatch.get(), terrainInitInfo);
 
         // Kick off upload work asyncronously.
@@ -373,7 +372,6 @@ private:
         mTerrain->SetUseTerrainHeightMap(mUseTerrainHeightMap);
         mTerrain->SetUseMaterialHeightMaps(mUseMaterialHeightMaps);
 
-
         auto gfxMemStats = DirectX::GraphicsMemory::Get(md3dDevice.Get()).GetStatistics();
 
         if (ImGui::CollapsingHeader("VideoMemoryInfo"))
@@ -462,23 +460,17 @@ private:
     void OnKeyboardInput(const GameTimer& gt)
     {
         const auto dt = gt.DeltaTime();
-
         auto cameraSpeed = 10.0f;
         if (Win32::GetAsyncKeyState(Win32::VK::Shift) & 0x8000)
             cameraSpeed = 100.0f;
-
         if (Win32::GetAsyncKeyState('W') & 0x8000)
             mCamera.Walk(cameraSpeed * dt);
-
         if (Win32::GetAsyncKeyState('S') & 0x8000)
             mCamera.Walk(-cameraSpeed * dt);
-
         if (Win32::GetAsyncKeyState('A') & 0x8000)
             mCamera.Strafe(-cameraSpeed * dt);
-
         if (Win32::GetAsyncKeyState('D') & 0x8000)
             mCamera.Strafe(cameraSpeed * dt);
-
         mCamera.UpdateViewMatrix();
     }
     
@@ -511,26 +503,23 @@ private:
             // Only update the cbuffer data if the constants have changed.  If the cbuffer
             // data changes, it needs to be updated for each FrameResource.
             auto mat = static_cast<Material*>(e.second.get());
-            if (mat->NumFramesDirty > 0)
-            {
-                auto matTransform = DirectX::XMMATRIX{DirectX::XMLoadFloat4x4(&mat->MatTransform)};
+            if (mat->NumFramesDirty < 1)
+                continue;
 
-                auto matData = MaterialData{
-                    .DiffuseAlbedo = mat->DiffuseAlbedo,
-                    .FresnelR0 = mat->FresnelR0,
-                    .Roughness = mat->Roughness,
-                    .DisplacementScale = mat->DisplacementScale,
-                    .DiffuseMapIndex = static_cast<std::uint32_t>(mat->AlbedoBindlessIndex),
-                    .NormalMapIndex = static_cast<std::uint32_t>(mat->NormalBindlessIndex),
-                    .GlossHeightAoMapIndex = static_cast<std::uint32_t>(mat->GlossHeightAoBindlessIndex)
-                };
-
-                DirectX::XMStoreFloat4x4(&matData.MatTransform, DirectX::XMMatrixTranspose(matTransform));
-                currMaterialBuffer->CopyData(mat->MatIndex, matData);
-
-                // Next FrameResource need to be updated too.
-                mat->NumFramesDirty--;
-            }
+            auto matTransform = DirectX::XMMATRIX{DirectX::XMLoadFloat4x4(&mat->MatTransform)};
+            auto matData = MaterialData{
+                .DiffuseAlbedo = mat->DiffuseAlbedo,
+                .FresnelR0 = mat->FresnelR0,
+                .Roughness = mat->Roughness,
+                .DisplacementScale = mat->DisplacementScale,
+                .DiffuseMapIndex = static_cast<std::uint32_t>(mat->AlbedoBindlessIndex),
+                .NormalMapIndex = static_cast<std::uint32_t>(mat->NormalBindlessIndex),
+                .GlossHeightAoMapIndex = static_cast<std::uint32_t>(mat->GlossHeightAoBindlessIndex)
+            };
+            DirectX::XMStoreFloat4x4(&matData.MatTransform, DirectX::XMMatrixTranspose(matTransform));
+            currMaterialBuffer->CopyData(mat->MatIndex, matData);
+            // Next FrameResource need to be updated too.
+            mat->NumFramesDirty--;
         }
     }
 
@@ -585,7 +574,7 @@ private:
         auto detProj = DirectX::XMVECTOR{ DirectX::XMMatrixDeterminant(proj) };
         auto invProj = DirectX::XMMATRIX{ DirectX::XMMatrixInverse(&detProj, proj) };
 
-        auto viewProj = DirectX::XMMatrixMultiply(view, proj);
+        auto viewProj = DirectX::XMMATRIX{ DirectX::XMMatrixMultiply(view, proj) };
         auto detViewProj = DirectX::XMVECTOR{ DirectX::XMMatrixDeterminant(viewProj) };
         auto invViewProj = DirectX::XMMATRIX{ DirectX::XMMatrixInverse(&detViewProj, viewProj) };
 
@@ -671,15 +660,12 @@ private:
 
     void EmitExplosionParticles(const GameTimer& gt)
     {
-        auto& texLib = TextureLib::GetLib();
-
-        auto spawnPos =  MathHelper::Vector3{mWorldRayPos} + MathHelper::Vector3{mWorldRayDir} * MathHelper::RandF(5.0f, 20.0f);
-
-        auto numParticlesEmitted = MathHelper::Rand(2000u, 3000u);
-
         if (not mSpawnExplosion)
             return;
 
+        auto& texLib = TextureLib::GetLib();
+        auto spawnPos =  MathHelper::Vector3{mWorldRayPos} + MathHelper::Vector3{mWorldRayDir} * MathHelper::RandF(5.0f, 20.0f);
+        auto numParticlesEmitted = MathHelper::Rand(2000u, 3000u);
         auto explosionParticles = ParticleEmitCB{
             .gEmitBoxMin = spawnPos + MathHelper::Vector3(-0.1f, -0.1f, -0.1f),
             .gMinLifetime = 0.3f,
@@ -704,51 +690,44 @@ private:
         };
 
         mExplosionParticleSystem->Emit(explosionParticles);
-
         mSpawnExplosion = false;
     }
 
     void EmitRainParticles(const GameTimer& gt)
     {
-        auto& texLib = TextureLib::GetLib();
-
-        auto camPos = MathHelper::Vector3{mCamera.GetPosition()};
-
         static auto rainParticlesToEmit = 0.0f;
         rainParticlesToEmit += gt.DeltaTime() * mRainEmitRate;
-
         // Wait until we have enough particles to fill one thread group.
-        if (rainParticlesToEmit > 128.0f)
-        {
-            auto numParticlesEmitted = static_cast<std::uint32_t>(rainParticlesToEmit);
+        if (rainParticlesToEmit <= 128.0f)
+            return;
 
-            auto rainParticles = ParticleEmitCB{
-                .gEmitBoxMin = camPos + MathHelper::Vector3(-40.0f, 8.0f, -40.0f),
-                .gMinLifetime = 2.5f,
-                .gEmitBoxMax = camPos + MathHelper::Vector3(+40.0f, 10.0f, +40.0f),
-                .gMaxLifetime = 3.5f,
-                .gEmitDirectionMin = MathHelper::Vector3(-1.0f, -4.0f, -1.0f),
-                .gMinInitialSpeed = 0.0f,
-                .gEmitDirectionMax = MathHelper::Vector3(+1.0f, -3.0f, +1.0f),
-                .gMaxInitialSpeed = 0.0f,
-                .gEmitColorMin = MathHelper::Vector4(1.0f, 1.0f, 1.0f, 1.0f),
-                .gEmitColorMax = MathHelper::Vector4(1.0f, 1.0f, 1.0f, 1.0f),
-                .gMinRotation = 0.0f,
-                .gMaxRotation = 0.0f,
-                .gMinRotationSpeed = 0.0f,
-                .gMaxRotationSpeed = 0.0f,
-                .gMinScale = mRainScale * MathHelper::Vector2(0.1f, 0.2f),
-                .gMaxScale = mRainScale * MathHelper::Vector2(0.2f, 0.3f),
-                .gDragScale = 0.0f,
-                .gEmitCount = numParticlesEmitted,
-                .gBindlessTextureIndex = static_cast<std::uint32_t>(texLib["rainParticle"]->BindlessIndex),
-                .gEmitRandomValues = MathHelper::Vector4(MathHelper::RandF(), MathHelper::RandF(), MathHelper::RandF(), MathHelper::RandF())
-            };
-
-            mRainParticleSystem->Emit(rainParticles);
-
-            rainParticlesToEmit -= numParticlesEmitted;
-        }
+        auto& texLib = TextureLib::GetLib();
+        auto camPos = MathHelper::Vector3{mCamera.GetPosition()};
+        auto numParticlesEmitted = static_cast<std::uint32_t>(rainParticlesToEmit);
+        auto rainParticles = ParticleEmitCB{
+            .gEmitBoxMin = camPos + MathHelper::Vector3(-40.0f, 8.0f, -40.0f),
+            .gMinLifetime = 2.5f,
+            .gEmitBoxMax = camPos + MathHelper::Vector3(+40.0f, 10.0f, +40.0f),
+            .gMaxLifetime = 3.5f,
+            .gEmitDirectionMin = MathHelper::Vector3(-1.0f, -4.0f, -1.0f),
+            .gMinInitialSpeed = 0.0f,
+            .gEmitDirectionMax = MathHelper::Vector3(+1.0f, -3.0f, +1.0f),
+            .gMaxInitialSpeed = 0.0f,
+            .gEmitColorMin = MathHelper::Vector4(1.0f, 1.0f, 1.0f, 1.0f),
+            .gEmitColorMax = MathHelper::Vector4(1.0f, 1.0f, 1.0f, 1.0f),
+            .gMinRotation = 0.0f,
+            .gMaxRotation = 0.0f,
+            .gMinRotationSpeed = 0.0f,
+            .gMaxRotationSpeed = 0.0f,
+            .gMinScale = mRainScale * MathHelper::Vector2(0.1f, 0.2f),
+            .gMaxScale = mRainScale * MathHelper::Vector2(0.2f, 0.3f),
+            .gDragScale = 0.0f,
+            .gEmitCount = numParticlesEmitted,
+            .gBindlessTextureIndex = static_cast<std::uint32_t>(texLib["rainParticle"]->BindlessIndex),
+            .gEmitRandomValues = MathHelper::Vector4(MathHelper::RandF(), MathHelper::RandF(), MathHelper::RandF(), MathHelper::RandF())
+        };
+        mRainParticleSystem->Emit(rainParticles);
+        rainParticlesToEmit -= numParticlesEmitted;
     }
 
     void ReadParticleCounts(const GameTimer& gt)
@@ -761,7 +740,7 @@ private:
 
         mCurrFrameResource->RainParticleCountReadbackBuffer->Unmap(0, nullptr);
 
-        static float particleCountPollTime = 0.0f;
+        static auto particleCountPollTime = 0.0f;
         particleCountPollTime += gt.DeltaTime();
 
         // For display, do not update every frame as it is hard to read text changing that fast :)
