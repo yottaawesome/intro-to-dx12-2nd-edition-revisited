@@ -157,55 +157,55 @@ public:
 	{
 		cmdList->SetPipelineState(drawTerrainPso);
 
-		D3D12::D3D12_INDEX_BUFFER_VIEW ibv;
-		ibv.BufferLocation = mQuadPatchIB->GetGPUVirtualAddress();
-		ibv.Format = DXGI_FORMAT_R32_UINT;
-		ibv.SizeInBytes = mNumPatchQuadFaces * 4 * sizeof(std::uint32_t);
-
-		D3D12::D3D12_VERTEX_BUFFER_VIEW vbv;
-		vbv.BufferLocation = mQuadPatchVB->GetGPUVirtualAddress();
-		vbv.StrideInBytes = sizeof(DirectX::XMFLOAT4);
-		vbv.SizeInBytes = mNumPatchVertRows * mNumPatchVertCols * sizeof(DirectX::XMFLOAT4);
+		auto ibv = D3D12::D3D12_INDEX_BUFFER_VIEW{
+			.BufferLocation = mQuadPatchIB->GetGPUVirtualAddress(),
+			.SizeInBytes = mNumPatchQuadFaces * 4 * sizeof(std::uint32_t),
+			.Format = DXGI_FORMAT_R32_UINT,
+		};
+		auto vbv = D3D12::D3D12_VERTEX_BUFFER_VIEW{
+			.BufferLocation = mQuadPatchVB->GetGPUVirtualAddress(),
+			.SizeInBytes = mNumPatchVertRows * mNumPatchVertCols * sizeof(DirectX::XMFLOAT4),
+			.StrideInBytes = sizeof(DirectX::XMFLOAT4),
+		};
 
 		cmdList->IASetVertexBuffers(0, 1, &vbv);
 		cmdList->IASetIndexBuffer(&ibv);
 		cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST);
 
-		PerTerrainCB drawCB;
-		drawCB.gTerrainWorld = mWorld;
-
-		std::uint32_t matIndices[MaximumTerrainLayers] = { 0 };
+		auto matIndices = std::array<std::uint32_t, MaximumTerrainLayers>{};
 
 		for (std::uint32_t i = 0; i < mInfo.NumLayers; ++i)
 		{
 			matIndices[i] = mLayerMaterials[i]->MatIndex;
 		}
 
-		drawCB.gTerrainLayerMaterialIndices[0] = DirectX::XMUINT4(matIndices[0], matIndices[1], matIndices[2], matIndices[3]);
-		drawCB.gTerrainLayerMaterialIndices[1] = DirectX::XMUINT4(matIndices[4], matIndices[5], matIndices[6], matIndices[7]);
-
-
-		drawCB.gTerrainWorldCellSpacing = DirectX::XMFLOAT2(mInfo.CellSpacing, mInfo.CellSpacing);
-		drawCB.gTerrainWorldSize = DirectX::XMFLOAT2(GetWidth(), GetDepth());
-
-		drawCB.gTerrainHeightMapSize.x = static_cast<float>(mInfo.HeightmapWidth);
-		drawCB.gTerrainHeightMapSize.y = static_cast<float>(mInfo.HeightmapHeight);
-
-		drawCB.gTerrainTexelSizeUV.x = 1.0f / static_cast<float>(mInfo.HeightmapWidth);
-		drawCB.gTerrainTexelSizeUV.y = 1.0f / static_cast<float>(mInfo.HeightmapHeight);
-
-		drawCB.gTerrainMinTessDist = mMinTessDist;
-		drawCB.gTerrainMaxTessDist = mMaxTessDist;
-		drawCB.gTerrainMinTess = 0.0f;
-		drawCB.gTerrainMaxTess = mMaxTess;
-
-		drawCB.gBlendMap0SrvIndex = mBlendMap0SrvIndex;
-		drawCB.gBlendMap1SrvIndex = mBlendMap1SrvIndex;
-		drawCB.gHeightMapSrvIndex = mHeightMapSrvIndex;
-		drawCB.gNumTerrainLayers = mInfo.NumLayers;
-
-		drawCB.gUseTerrainHeightMap = mUseTerrainHeightMap ? 1 : 0;
-		drawCB.gUseMaterialHeightMaps = mUseMaterialHeightMaps ? 1 : 0;
+		auto drawCB = PerTerrainCB{
+			.gTerrainWorld = mWorld,
+			.gTerrainWorldCellSpacing = DirectX::XMFLOAT2(mInfo.CellSpacing, mInfo.CellSpacing),
+			.gTerrainWorldSize = DirectX::XMFLOAT2(GetWidth(), GetDepth()),
+			.gTerrainHeightMapSize{
+				static_cast<float>(mInfo.HeightmapWidth),
+				static_cast<float>(mInfo.HeightmapHeight),
+			},
+			.gTerrainTexelSizeUV = DirectX::XMFLOAT2{
+				1.0f / static_cast<float>(mInfo.HeightmapWidth), 
+				1.0f / static_cast<float>(mInfo.HeightmapHeight)
+			},
+			.gTerrainMinTessDist = mMinTessDist,
+			.gTerrainMaxTessDist = mMaxTessDist,
+			.gTerrainMinTess = 0.0f,
+			.gTerrainMaxTess = mMaxTess,
+			.gBlendMap0SrvIndex = mBlendMap0SrvIndex,
+			.gBlendMap1SrvIndex = mBlendMap1SrvIndex,
+			.gHeightMapSrvIndex = mHeightMapSrvIndex,
+			.gNumTerrainLayers = mInfo.NumLayers,
+			.gTerrainLayerMaterialIndices = {
+				DirectX::XMUINT4(matIndices[0], matIndices[1], matIndices[2], matIndices[3]), 
+				DirectX::XMUINT4(matIndices[4], matIndices[5], matIndices[6], matIndices[7]) 
+			},
+			.gUseTerrainHeightMap = mUseTerrainHeightMap ? 1u : 0u,
+			.gUseMaterialHeightMaps = mUseMaterialHeightMaps ? 1u : 0u
+		};
 
 		auto& linearAllocator = DirectX::GraphicsMemory::Get(md3dDevice);
 		mDrawConstants = linearAllocator.AllocateConstant(drawCB);
