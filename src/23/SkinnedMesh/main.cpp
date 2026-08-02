@@ -16,8 +16,7 @@ import skinnedmesh;
 auto wWinMain(Win32::HINSTANCE hInstance, Win32::HINSTANCE, Win32::LPWSTR, int) -> int
 try
 {
-    if constexpr (IsDebugBuild)
-        Win32::_CrtSetDbgFlag(Win32::CrtAllocMemDf | Win32::CrtLeakCheckDf);
+    Win32::SetDebugBuildCrtFlag(Win32::CrtAllocMemDf | Win32::CrtLeakCheckDf);
     return SkinnedMeshApp{hInstance}.Run();
 }
 catch (const std::exception& ex)

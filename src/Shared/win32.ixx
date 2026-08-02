@@ -45,7 +45,6 @@ export namespace Win32
 	constexpr auto CrtAllocMemDf = _CRTDBG_ALLOC_MEM_DF;
 	constexpr auto CrtLeakCheckDf = _CRTDBG_LEAK_CHECK_DF;
 	using
-		::_CrtSetDbgFlag,
 		::OutputDebugStringA,
 		::UINT,
 		::LARGE_INTEGER,
@@ -106,6 +105,14 @@ export namespace Win32
 		::QueryPerformanceCounter,
 		::QueryPerformanceFrequency
 		;
+
+	// Enable run-time debug checks for debug builds. No effect in release builds.
+	constexpr auto SetDebugBuildCrtFlag(int flag) noexcept
+	{
+#ifdef _DEBUG
+		_CrtSetDbgFlag(flag); // This is not defined in release builds, so we need to guard it with _DEBUG
+#endif
+	}
 
 	constexpr auto MbOk = MB_OK;
 	constexpr auto PmRemove = PM_REMOVE;
