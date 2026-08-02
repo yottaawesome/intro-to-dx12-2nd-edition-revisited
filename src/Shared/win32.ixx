@@ -24,7 +24,6 @@ module;
 #include <DirectXCollision.h>
 #include <DirectXColors.h>
 #include <directxtk12/directxhelpers.h>
-#include <directxtk12/DDSTextureLoader.h>
 
 export module shared:win32;
 

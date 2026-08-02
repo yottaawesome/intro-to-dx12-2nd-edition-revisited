@@ -3,86 +3,86 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Folder Name="/01/">
+  <Folder Name="/01 - Vector Algebra/">
     <Project Path="01/XMVECTOR/XMVECTOR.vcxproj" Id="d03f2093-5723-460a-a897-66c22a787d7a" />
   </Folder>
-  <Folder Name="/02/">
+  <Folder Name="/02 - Matrix Algebra/">
     <Project Path="02/XMMATRIX/XMMATRIX.vcxproj" Id="c826f0f3-2830-484c-81e5-b5696cb764fd" />
   </Folder>
-  <Folder Name="/04/">
+  <Folder Name="/04 - Direct3D Initialization/">
     <Project Path="04/InitDirect3D/InitDirect3D.vcxproj" Id="0cc79b67-ae50-4016-8888-ed3d2cc901d0" />
   </Folder>
-  <Folder Name="/06/">
+  <Folder Name="/06 - Drawing in Direct3D/">
     <Project Path="06/Box/Box.vcxproj" Id="d8c7642c-defd-47b7-aaa1-0f5a354b2d75" />
     <Project Path="06/BoxGrid/BoxGrid.vcxproj" Id="0ce0cef8-2729-498f-ac85-a194d60a5b8f" />
   </Folder>
-  <Folder Name="/07/">
+  <Folder Name="/07 - Drawing in Direct3D II/">
     <Project Path="07/Shapes/Shapes.vcxproj" Id="bd87c376-828e-4f9f-a44a-a37fa8e94117" />
     <Project Path="07/Waves/Waves.vcxproj" Id="dc7ffbce-5c71-4874-8f39-3af5317cea63" />
   </Folder>
-  <Folder Name="/08/">
+  <Folder Name="/08 - Lighting/">
     <Project Path="08/LitShapes/LitShapes.vcxproj" Id="1409380d-f311-4aa2-b3f6-f6121d697286" />
     <Project Path="08/LitWaves/LitWaves.vcxproj" Id="b9400550-d544-4272-a5ad-450b690c576f" />
   </Folder>
-  <Folder Name="/09/">
+  <Folder Name="/09 - texturing/">
     <Project Path="09/Crate/Crate.vcxproj" Id="23c54a47-c3c4-4e97-b6be-56a2b9143de2" />
     <Project Path="09/TexturedShapes/TexturedShapes.vcxproj" Id="b0cdd49b-5010-49c3-b2c8-959bd7fc0ee2" />
     <Project Path="09/TexWaves/TexWaves.vcxproj" Id="5d7fe72f-24d2-4ca5-bf4b-4d46ee287cf8" />
   </Folder>
-  <Folder Name="/10/">
+  <Folder Name="/10 - Blending/">
     <Project Path="10/BlendDemo/BlendDemo.vcxproj" Id="6c9c5d36-f777-479b-8dcf-a2ea1e29bc06" />
   </Folder>
-  <Folder Name="/11/">
+  <Folder Name="/11 - Stenciling/">
     <Project Path="11/Stenciling/Stenciling.vcxproj" Id="cc9267ad-7df6-4ed7-bd13-8f80a528ebf1" />
   </Folder>
-  <Folder Name="/12/">
+  <Folder Name="/12 - The Geometry Shader/">
     <Project Path="12/BillboardGS/BillboardGS.vcxproj" Id="e94cb326-3f24-4ec3-924b-fe8d48123342" />
   </Folder>
-  <Folder Name="/13/">
+  <Folder Name="/13 - The Compute Shader/">
     <Project Path="13/Blur/Blur.vcxproj" Id="81c2d240-246d-425c-aa28-89ca71d4c6be" />
     <Project Path="13/VecAddCS/VecAddCS.vcxproj" Id="4619c9f2-c51e-483d-8379-9131eebd6328" />
     <Project Path="13/WavesCS/WavesCS.vcxproj" Id="bb5ffd7f-8799-4172-b5db-388bfcd61b14" />
   </Folder>
-  <Folder Name="/14/">
+  <Folder Name="/14 - The Tesselation Stages/">
     <Project Path="14/BasicTesselation/BasicTesselation.vcxproj" Id="c51e942d-654f-4a64-b199-b53d4dd2c5e0" />
     <Project Path="14/BezierPatch/BezierPatch.vcxproj" Id="2040d3e9-51d8-4b01-aeb2-54d7193d36f8" />
   </Folder>
-  <Folder Name="/16/">
+  <Folder Name="/16 - Instancing and Frustum Culling/">
     <Project Path="16/InstancingAndCulling/InstancingAndCulling.vcxproj" Id="6391c3ab-4b5a-4c2c-87f0-369f67d8ac42" />
   </Folder>
-  <Folder Name="/17/">
+  <Folder Name="/17 - Picking/">
     <Project Path="17/Picking/Picking.vcxproj" Id="3e20903f-1d20-4f77-93be-89074ba397d4" />
   </Folder>
-  <Folder Name="/18/">
+  <Folder Name="/18 - Cube Mapping/">
     <Project Path="18/CubeAndNormalMaps/CubeAndNormalMaps.vcxproj" Id="ec627830-7ef8-4b4c-b310-a5503eee2a18" />
     <Project Path="18/DynamicCubeMap/DynamicCubeMap.vcxproj" Id="efa296d5-d84e-4f57-81a0-e7c41506a0a0" />
   </Folder>
-  <Folder Name="/19/">
+  <Folder Name="/19 - Normal Mapping/">
     <Project Path="19/DisplacementMapping/DisplacementMapping.vcxproj" Id="fd35e3de-19ad-49e1-a332-38bb7d59e1a3" />
   </Folder>
-  <Folder Name="/20/">
+  <Folder Name="/20 - Shadow Mapping/">
     <Project Path="20/Shadows/Shadows.vcxproj" Id="cfc5fa03-e62d-4322-82eb-6eac27cf9f37" />
   </Folder>
-  <Folder Name="/21/">
+  <Folder Name="/21 - Ambient Occlusion/">
     <Project Path="21/Ssao/Ssao.vcxproj" Id="ee80e869-5e4e-46bf-b07b-7585cc4b39ea" />
   </Folder>
-  <Folder Name="/22/">
+  <Folder Name="/22 - Quaternions/">
     <Project Path="22/QuatApp/QuatApp.vcxproj" Id="950a9d26-63d2-4181-92ee-c25173749c74" />
   </Folder>
-  <Folder Name="/23/">
+  <Folder Name="/23 - Character Animation/">
     <Project Path="23/SkinnedMesh/SkinnedMesh.vcxproj" Id="2d737725-8fe6-4fa4-aea6-7aa19acd2ca4" />
   </Folder>
-  <Folder Name="/24/">
+  <Folder Name="/24 - Terrain Rendering/">
     <Project Path="24/Terrain/Terrain.vcxproj" Id="f8bcc1c9-a7a5-4b9e-a3a4-bebdf5ee7a4d" />
   </Folder>
-  <Folder Name="/25/">
+  <Folder Name="/25 - Particle Systems/">
     <Project Path="25/ParticlesCS/ParticlesCS.vcxproj" Id="cbe9588d-2a76-43ab-a4dc-9a14dadfaaef" />
   </Folder>
-  <Folder Name="/26/">
+  <Folder Name="/26 - Amplification and Mesh Shaders/">
     <Project Path="26/ParticlesMS/ParticlesMS.vcxproj" Id="becaa402-bad7-4d92-94ba-fe7d1402412c" />
     <Project Path="26/TerrainMS/TerrainMS.vcxproj" Id="fd4371f9-1af7-4895-9e95-6d76322affc3" />
   </Folder>
-  <Folder Name="/27/">
+  <Folder Name="/27 - Ray Tracing/">
     <Project Path="27/HybridRayTracing/HybridRayTracing.vcxproj" Id="a8158ad5-a4af-44cd-9e78-851b3d034fae" />
     <Project Path="27/RayTracingIntro/RayTracingIntro.vcxproj" Id="c813fcc2-938d-4cbf-8fb8-cebbda0377cf" />
   </Folder>

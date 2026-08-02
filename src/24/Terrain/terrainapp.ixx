@@ -682,7 +682,6 @@ private:
             .gMaxRotationSpeed = 5.0f,
             .gMinScale = MathHelper::Vector2(0.5f),
             .gMaxScale = MathHelper::Vector2(1.5f),
-
             .gDragScale = 0.75f,
             .gEmitCount = numParticlesEmitted,
             .gBindlessTextureIndex = static_cast<std::uint32_t>(texLib["explosionParticle"]->BindlessIndex),
@@ -748,7 +747,6 @@ private:
         {
             mDisplayedRainParticleCount = mRainParticleCount;
             particleCountPollTime -= 0.5f;
-
             // TODO: Why is this here?
             //if (mDisplayedRainParticleCount == 0)
             //    MessageBox(0, 0, 0, 0);
