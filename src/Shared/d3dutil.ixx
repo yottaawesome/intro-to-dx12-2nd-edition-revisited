@@ -325,25 +325,24 @@ export
             DXC::IDxcBlob* pixelShader
         ) -> D3D12::D3D12_GRAPHICS_PIPELINE_STATE_DESC
         {
-            auto psoDesc = D3D12::D3D12_GRAPHICS_PIPELINE_STATE_DESC{};
-
-            psoDesc.InputLayout = { inputLayout.data(), static_cast<Win32::UINT>(inputLayout.size()) };
-            psoDesc.pRootSignature = rootSig;
-            psoDesc.VS = ByteCodeFromBlob(vertexShader);
-            psoDesc.PS = ByteCodeFromBlob(pixelShader);
-
-            psoDesc.RasterizerState = D3D12::CD3DX12_RASTERIZER_DESC(D3D12::D3D12_DEFAULT);
-            psoDesc.BlendState = D3D12::CD3DX12_BLEND_DESC(D3D12::D3D12_DEFAULT);
-            psoDesc.DepthStencilState = D3D12::CD3DX12_DEPTH_STENCIL_DESC(D3D12::D3D12_DEFAULT);
-            psoDesc.SampleMask = Win32::UIntMax;
-            psoDesc.PrimitiveTopologyType = D3D12::D3D12_PRIMITIVE_TOPOLOGY_TYPE::D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-            psoDesc.NumRenderTargets = 1;
-            psoDesc.RTVFormats[0] = rtvFormat;
-            psoDesc.SampleDesc.Count = 1;
-            psoDesc.SampleDesc.Quality = 0;
-            psoDesc.DSVFormat = dsvFormat;
-
-            return psoDesc;
+            return {
+                .pRootSignature = rootSig,
+                .VS = ByteCodeFromBlob(vertexShader),
+                .PS = ByteCodeFromBlob(pixelShader),
+                .BlendState = D3D12::CD3DX12_BLEND_DESC(D3D12::D3D12_DEFAULT),
+                .SampleMask = std::numeric_limits<std::uint32_t>::max(),
+                .RasterizerState = D3D12::CD3DX12_RASTERIZER_DESC(D3D12::D3D12_DEFAULT),
+                .DepthStencilState = D3D12::CD3DX12_DEPTH_STENCIL_DESC(D3D12::D3D12_DEFAULT),
+                .InputLayout = {
+                    inputLayout.data(), 
+                    static_cast<std::uint32_t>(inputLayout.size()) 
+                },
+                .PrimitiveTopologyType = D3D12::D3D12_PRIMITIVE_TOPOLOGY_TYPE::D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
+                .NumRenderTargets = 1,
+                .RTVFormats = { rtvFormat },
+                .DSVFormat = dsvFormat,
+                .SampleDesc = { .Count = 1, .Quality = 0 },
+            };
         }
 
         static auto CreateRandomTexture(
@@ -353,27 +352,27 @@ export
             size_t height
         ) -> Microsoft::WRL::ComPtr<D3D12::ID3D12Resource>
         {
-            std::vector<DirectX::PackedVector::XMCOLOR> initData(width * height);
-            for (int i = 0; i < height; ++i)
+            auto initData = std::vector<DirectX::PackedVector::XMCOLOR>(width * height);
+            for (auto i = 0; i < height; ++i)
             {
-                for (int j = 0; j < width; ++j)
+                for (auto j = 0; j < width; ++j)
                 {
                     // Random vector in [0,1).
-                    DirectX::XMFLOAT4 v(
+                    auto v = DirectX::XMFLOAT4{
                         MathHelper::RandF(),
                         MathHelper::RandF(),
                         MathHelper::RandF(),
-                        MathHelper::RandF());
-
+                        MathHelper::RandF()
+                    };
                     initData[i * width + j] = DirectX::PackedVector::XMCOLOR(v.x, v.y, v.z, v.w);
                 }
             }
-
-            D3D12::D3D12_SUBRESOURCE_DATA subResourceData = {};
-            subResourceData.pData = initData.data();
-            subResourceData.RowPitch = width * sizeof(DirectX::PackedVector::XMCOLOR);
-            subResourceData.SlicePitch = subResourceData.RowPitch * width;
-
+            auto subResourceData = D3D12::D3D12_SUBRESOURCE_DATA{
+                .pData = initData.data(),
+                .RowPitch = static_cast<std::uint32_t>(width * sizeof(DirectX::PackedVector::XMCOLOR)),
+                .SlicePitch = static_cast<std::uint32_t>(width * width * sizeof(DirectX::PackedVector::XMCOLOR))
+            };
+            
             Microsoft::WRL::ComPtr<D3D12::ID3D12Resource> randomTex;
             ThrowIfFailed(DirectX::CreateTextureFromMemory(device,
                 resourceUpload,
@@ -391,27 +390,27 @@ export
             bool useIndex32 = false
         ) -> std::unique_ptr<MeshGeometry>
         {
-            MeshGen meshGen;
-            MeshGenData box = meshGen.CreateBox(1.0f, 1.0f, 1.0f, 3);
-            MeshGenData grid = meshGen.CreateGrid(20.0f, 30.0f, 30, 20);
-            MeshGenData sphere = meshGen.CreateSphere(0.5f, 20, 20);
-            MeshGenData cylinder = meshGen.CreateCylinder(0.5f, 0.3f, 3.0f, 20, 20);
-            MeshGenData quad = meshGen.CreateQuad(0.0f, 0.0f, 1.0f, 1.0f, 0.0f);
+            auto meshGen = MeshGen{};
+            auto box = meshGen.CreateBox(1.0f, 1.0f, 1.0f, 3);
+            auto grid = meshGen.CreateGrid(20.0f, 30.0f, 30, 20);
+            auto sphere = meshGen.CreateSphere(0.5f, 20, 20);
+            auto cylinder = meshGen.CreateCylinder(0.5f, 0.3f, 3.0f, 20, 20);
+            auto quad = meshGen.CreateQuad(0.0f, 0.0f, 1.0f, 1.0f, 0.0f);
 
             //
             // We are concatenating all the geometry into one big vertex/index buffer.  So
             // define the regions in the buffer each submesh covers.
             //
-            MeshGenData compositeMesh;
-            SubmeshGeometry boxSubmesh = compositeMesh.AppendSubmesh(box);
-            SubmeshGeometry gridSubmesh = compositeMesh.AppendSubmesh(grid);
-            SubmeshGeometry sphereSubmesh = compositeMesh.AppendSubmesh(sphere);
-            SubmeshGeometry cylinderSubmesh = compositeMesh.AppendSubmesh(cylinder);
-            SubmeshGeometry quadSubmesh = compositeMesh.AppendSubmesh(quad);
+            auto compositeMesh = MeshGenData{};
+            auto boxSubmesh = compositeMesh.AppendSubmesh(box);
+            auto gridSubmesh = compositeMesh.AppendSubmesh(grid);
+            auto sphereSubmesh = compositeMesh.AppendSubmesh(sphere);
+            auto cylinderSubmesh = compositeMesh.AppendSubmesh(cylinder);
+            auto quadSubmesh = compositeMesh.AppendSubmesh(quad);
 
             // Extract the vertex elements we are interested into our vertex buffer. 
-            std::vector<ModelVertex> vertices(compositeMesh.Vertices.size());
-            for (size_t i = 0; i < compositeMesh.Vertices.size(); ++i)
+            auto vertices = std::vector<ModelVertex>(compositeMesh.Vertices.size());
+            for (auto i = 0ull; i < compositeMesh.Vertices.size(); ++i)
             {
                 vertices[i].Pos = compositeMesh.Vertices[i].Position;
                 vertices[i].Normal = compositeMesh.Vertices[i].Normal;
@@ -419,15 +418,15 @@ export
                 vertices[i].TangentU = compositeMesh.Vertices[i].TangentU;
             }
 
-            const uint32_t indexCount = (UINT)compositeMesh.Indices32.size();
+            const auto indexCount = static_cast<std::uint32_t>(compositeMesh.Indices32.size());
 
-            const UINT indexElementByteSize = useIndex32 ? sizeof(uint32_t) : sizeof(uint16_t);
-            const UINT vbByteSize = (UINT)vertices.size() * sizeof(ModelVertex);
-            const UINT ibByteSize = indexCount * indexElementByteSize;
+            const auto indexElementByteSize = static_cast<std::uint32_t>(useIndex32 ? sizeof(std::uint32_t) : sizeof(std::uint16_t));
+            const auto vbByteSize = static_cast<std::uint32_t>(vertices.size() * sizeof(ModelVertex));
+            const auto ibByteSize = static_cast<std::uint32_t>(indexCount * indexElementByteSize);
 
-            const byte* indexData = useIndex32 ?
-                reinterpret_cast<byte*>(compositeMesh.Indices32.data()) :
-                reinterpret_cast<byte*>(compositeMesh.GetIndices16().data());
+            const auto indexData = useIndex32 ?
+                reinterpret_cast<Win32::byte*>(compositeMesh.Indices32.data()) :
+                reinterpret_cast<Win32::byte*>(compositeMesh.GetIndices16().data());
 
             auto geo = std::make_unique<MeshGeometry>();
             geo->Name = "shapeGeo";
@@ -460,60 +459,54 @@ export
             return geo;
         }
 
-        static auto BuildSkullGeometry(
-            ID3D12Device* device, 
-            DirectX::ResourceUploadBatch& uploadBatch
-        ) -> std::unique_ptr<MeshGeometry>
+        static auto BuildSkullGeometry(D3D12::ID3D12Device* device, DirectX::ResourceUploadBatch& uploadBatch) -> std::unique_ptr<MeshGeometry>
         {
-            std::ifstream fin("Models/skull.txt");
+            auto fin = std::ifstream("Models/skull.txt");
 
-            if (!fin)
-            {
-                Win32::MessageBoxW(0, L"Models/skull.txt not found.", 0, 0);
-                return nullptr;
-            }
+            if (not fin)
+                throw std::runtime_error{"Models/skull.txt not found."};
 
-            UINT vcount = 0;
-            UINT tcount = 0;
-            std::string ignore;
+            auto vcount = 0u;
+            auto tcount = 0u;
+            auto ignore = std::string{};
 
             fin >> ignore >> vcount;
             fin >> ignore >> tcount;
             fin >> ignore >> ignore >> ignore >> ignore;
 
-            DirectX::XMFLOAT3 vMinf3(+MathHelper::Infinity, +MathHelper::Infinity, +MathHelper::Infinity);
-            DirectX::XMFLOAT3 vMaxf3(-MathHelper::Infinity, -MathHelper::Infinity, -MathHelper::Infinity);
+            auto vMinf3 = DirectX::XMFLOAT3(+MathHelper::Infinity, +MathHelper::Infinity, +MathHelper::Infinity);
+            auto vMaxf3 = DirectX::XMFLOAT3(-MathHelper::Infinity, -MathHelper::Infinity, -MathHelper::Infinity);
 
-            DirectX::XMVECTOR vMin = DirectX::XMLoadFloat3(&vMinf3);
-            DirectX::XMVECTOR vMax = DirectX::XMLoadFloat3(&vMaxf3);
+            auto vMin = DirectX::XMLoadFloat3(&vMinf3);
+            auto vMax = DirectX::XMLoadFloat3(&vMaxf3);
 
-            std::vector<ModelVertex> vertices(vcount);
-            for (UINT i = 0; i < vcount; ++i)
+            auto vertices = std::vector<ModelVertex>(vcount);
+            for (auto i = 0u; i < vcount; ++i)
             {
                 fin >> vertices[i].Pos.x >> vertices[i].Pos.y >> vertices[i].Pos.z;
                 fin >> vertices[i].Normal.x >> vertices[i].Normal.y >> vertices[i].Normal.z;
 
-                DirectX::XMVECTOR P = DirectX::XMLoadFloat3(&vertices[i].Pos);
+                auto P = DirectX::XMLoadFloat3(&vertices[i].Pos);
 
                 // Project point onto unit sphere and generate spherical texture coordinates.
-                DirectX::XMFLOAT3 spherePos;
+                auto spherePos = DirectX::XMFLOAT3{};
                 DirectX::XMStoreFloat3(&spherePos, DirectX::XMVector3Normalize(P));
 
-                DirectX::XMVECTOR N = DirectX::XMLoadFloat3(&vertices[i].Normal);
+                auto N = DirectX::XMLoadFloat3(&vertices[i].Normal);
 
                 // Generate a tangent vector so normal mapping works.  We aren't applying
                 // a texture map to the skull, so we just need any tangent vector so that
                 // the math works out to give us the original interpolated vertex normal.
-                DirectX::XMVECTOR up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+                auto up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
                 if (std::fabsf(DirectX::XMVectorGetX(DirectX::XMVector3Dot(N, up))) < 1.0f - 0.001f)
                 {
-                    DirectX::XMVECTOR T = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(up, N));
+                    auto T = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(up, N));
                     DirectX::XMStoreFloat3(&vertices[i].TangentU, T);
                 }
                 else
                 {
                     up = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-                    DirectX::XMVECTOR T = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(N, up));
+                    auto T = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(N, up));
                     DirectX::XMStoreFloat3(&vertices[i].TangentU, T);
                 }
 
@@ -524,16 +517,16 @@ export
                 // distortion from this transformation, but it gives reasonable 
                 // texture coordinates when we have none.
 
-                float theta = std::atan2(spherePos.z, spherePos.x);
+                auto theta = std::atan2(spherePos.z, spherePos.x);
 
                 // Put in [0, 2pi].
                 if (theta < 0.0f)
                     theta += DirectX::TwoPi;
 
-                float phi = std::acos(spherePos.y);
+                auto phi = std::acos(spherePos.y);
 
-                float u = theta / (2.0f * DirectX::Pi);
-                float v = phi / DirectX::Pi;
+                auto u = theta / (2.0f * DirectX::Pi);
+                auto v = phi / DirectX::Pi;
 
                 vertices[i].TexC = { u, v };
 
@@ -541,7 +534,7 @@ export
                 vMax = DirectX::XMVectorMax(vMax, P);
             }
 
-            DirectX::BoundingBox bounds;
+            auto bounds = DirectX::BoundingBox{};
             DirectX::XMStoreFloat3(&bounds.Center, 0.5f * (vMin + vMax));
             DirectX::XMStoreFloat3(&bounds.Extents, 0.5f * (vMax - vMin));
 
@@ -549,18 +542,15 @@ export
             fin >> ignore;
             fin >> ignore;
 
-            std::vector<std::int32_t> indices(3 * tcount);
-            for (UINT i = 0; i < tcount; ++i)
+            auto indices = std::vector<std::int32_t>(3 * tcount);
+            for (auto i = 0u; i < tcount; ++i)
             {
                 fin >> indices[i * 3 + 0] >> indices[i * 3 + 1] >> indices[i * 3 + 2];
             }
-
             fin.close();
 
-
-            const UINT vbByteSize = (UINT)vertices.size() * sizeof(ModelVertex);
-
-            const UINT ibByteSize = (UINT)indices.size() * sizeof(std::int32_t);
+            const auto vbByteSize = static_cast<std::uint32_t>(vertices.size() * sizeof(ModelVertex));
+            const auto ibByteSize = static_cast<std::uint32_t>(indices.size() * sizeof(std::int32_t));
 
             auto geo = std::make_unique<MeshGeometry>();
             geo->Name = "skullGeo";
@@ -571,26 +561,38 @@ export
             geo->IndexBufferCPU.resize(ibByteSize);
             std::memcpy(geo->IndexBufferCPU.data(), indices.data(), ibByteSize);
 
-            DirectX::CreateStaticBuffer(device, uploadBatch,
-                vertices.data(), vertices.size(), sizeof(ModelVertex),
-                D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, &geo->VertexBufferGPU);
+            DirectX::CreateStaticBuffer(
+                device, 
+                uploadBatch,
+                vertices.data(), 
+                vertices.size(), 
+                sizeof(ModelVertex),
+                D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, 
+                &geo->VertexBufferGPU
+            );
 
-            DirectX::CreateStaticBuffer(device, uploadBatch,
-                indices.data(), indices.size(), sizeof(std::uint32_t),
-                D3D12_RESOURCE_STATE_INDEX_BUFFER, &geo->IndexBufferGPU);
+            DirectX::CreateStaticBuffer(
+                device, 
+                uploadBatch,
+                indices.data(), 
+                indices.size(), 
+                sizeof(std::uint32_t),
+                D3D12_RESOURCE_STATE_INDEX_BUFFER, 
+                &geo->IndexBufferGPU
+            );
 
             geo->VertexByteStride = sizeof(ModelVertex);
             geo->VertexBufferByteSize = vbByteSize;
             geo->IndexFormat = DXGI_FORMAT_R32_UINT;
             geo->IndexBufferByteSize = ibByteSize;
 
-            SubmeshGeometry submesh;
-            submesh.IndexCount = (UINT)indices.size();
-            submesh.StartIndexLocation = 0;
-            submesh.BaseVertexLocation = 0;
-            submesh.VertexCount = (UINT)vertices.size();
-            submesh.Bounds = bounds;
-
+            auto submesh = SubmeshGeometry{
+                .IndexCount = static_cast<std::uint32_t>(indices.size()),
+                .StartIndexLocation = 0,
+                .BaseVertexLocation = 0,
+                .VertexCount = static_cast<std::uint32_t>(vertices.size()),
+                .Bounds = bounds
+            };
             geo->DrawArgs["skull"] = submesh;
 
             return geo;
@@ -598,7 +600,7 @@ export
 
         //loadm3d.h <- SkinnedData.h
         static auto LoadSimpleModelGeometry(
-            ID3D12Device* device,
+            D3D12::ID3D12Device* device,
             DirectX::ResourceUploadBatch& uploadBatch,
             const std::string& filename,
             const std::string& geoName,
