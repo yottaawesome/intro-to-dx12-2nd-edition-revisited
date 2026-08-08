@@ -25,4 +25,10 @@
   <ItemGroup>
     <None Include="vcpkg.json" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\Shaders\BasicBlend.hlsl" />
+    <None Include="..\..\Shaders\Common.hlsl" />
+    <None Include="..\..\Shaders\LightingUtil.hlsl" />
+    <None Include="..\..\Shaders\TreeSprite.hlsl" />
+  </ItemGroup>
 </Project>

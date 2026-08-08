@@ -31,4 +31,13 @@
   <ItemGroup>
     <None Include="vcpkg.json" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\Shaders\Common.hlsl" />
+    <None Include="..\..\Shaders\DebugTex.hlsl" />
+    <None Include="..\..\Shaders\DefaultGeo.hlsl" />
+    <None Include="..\..\Shaders\DefaultPS.hlsl" />
+    <None Include="..\..\Shaders\LightingUtil.hlsl" />
+    <None Include="..\..\Shaders\Shadows.hlsl" />
+    <None Include="..\..\Shaders\Sky.hlsl" />
+  </ItemGroup>
 </Project>

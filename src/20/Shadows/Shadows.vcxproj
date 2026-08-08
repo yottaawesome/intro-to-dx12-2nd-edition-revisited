@@ -173,4 +173,27 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <ItemGroup>
+    <None Include="..\..\Shaders\Common.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\..\Shaders\DebugTex.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\..\Shaders\DefaultGeo.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\..\Shaders\DefaultPS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\..\Shaders\LightingUtil.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\..\Shaders\Shadows.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\..\Shaders\Sky.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
 </Project>

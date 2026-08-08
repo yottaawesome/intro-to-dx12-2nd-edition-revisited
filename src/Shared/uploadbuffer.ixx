@@ -11,7 +11,7 @@ export template<typename T>
 class UploadBuffer
 {
 public:
-    UploadBuffer(D3D12::ID3D12Device* device, Win32::UINT elementCount, bool isConstantBuffer) :
+    UploadBuffer(D3D12::ID3D12Device* device, std::uint32_t elementCount, bool isConstantBuffer) :
         mIsConstantBuffer(isConstantBuffer)
     {
         mElementByteSize = sizeof(T);
@@ -72,6 +72,6 @@ public:
 private:
     Microsoft::WRL::ComPtr<D3D12::ID3D12Resource> mUploadBuffer;
     Win32::BYTE* mMappedData = nullptr;
-    Win32::UINT mElementByteSize = 0;
+    std::uint32_t mElementByteSize = 0;
     bool mIsConstantBuffer = false;
 };

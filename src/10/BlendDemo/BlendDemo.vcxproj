@@ -171,4 +171,15 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <ItemGroup>
+    <None Include="..\..\Shaders\BasicBlend.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\..\Shaders\Common.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\..\Shaders\LightingUtil.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
 </Project>

@@ -168,6 +168,11 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Direct3D.D3D12" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\Shaders\BasicColor.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

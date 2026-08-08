@@ -19,8 +19,8 @@ enum ROOT_ARG
 	ROOT_ARG_COUNT
 };
 
-constexpr auto BOX_GRID_SIZE = 3u;
-constexpr auto BOX_COUNT = BOX_GRID_SIZE * BOX_GRID_SIZE;
+constexpr auto BoxGridSize = 3u;
+constexpr auto BoxCount = BoxGridSize * BoxGridSize;
 
 constexpr auto CBV_SRV_UAV_HEAP_CAPACITY = 16384u;
 
@@ -68,14 +68,14 @@ private:
 
 		// Position boxes in a grid in xz-plane.
 		constexpr auto boxSpacing = 5.0f;
-		for (auto i = 0u; i < BOX_GRID_SIZE; ++i)
+		for (auto i = 0u; i < BoxGridSize; ++i)
 		{
-			for (auto j = 0u; j < BOX_GRID_SIZE; ++j)
+			for (auto j = 0u; j < BoxGridSize; ++j)
 			{
 				auto x = -boxSpacing + j * boxSpacing;
 				auto z = +boxSpacing - i * boxSpacing;
 				auto W = DirectX::XMMatrixTranslation(x, 0.0f, z);
-				DirectX::XMStoreFloat4x4(&mWorld[i * BOX_GRID_SIZE + j], W);
+				DirectX::XMStoreFloat4x4(&mWorld[i * BoxGridSize + j], W);
 			}
 		}
 
@@ -114,7 +114,7 @@ private:
 		DirectX::XMStoreFloat4x4(&mView, view);
 
 		// Update the per-object buffer with the latest world matrix.
-		for (auto i = 0u; i < BOX_COUNT; ++i)
+		for (auto i = 0u; i < BoxCount; ++i)
 		{
 			auto world = DirectX::XMLoadFloat4x4(&mWorld[i]);
 
@@ -185,7 +185,7 @@ private:
 		mCommandList->IASetIndexBuffer(&ibv);
 		mCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-		for (auto i = 0u; i < BOX_COUNT; ++i)
+		for (auto i = 0u; i < BoxCount; ++i)
 		{
 			mCommandList->SetGraphicsRootDescriptorTable(
 				ROOT_ARG_OBJECT_CBV,
@@ -344,14 +344,14 @@ private:
 		//
 		mObjectCB = std::make_unique<UploadBuffer<ObjectConstants>>(
 			md3dDevice.Get(),
-			BOX_COUNT,
+			BoxCount,
 			isConstantBuffer);
 
 		// Constant buffers must be a multiple of the
 		// minimum hardware allocation size (usually 256 bytes).
 		auto objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
 
-		for (auto cbObjIndex = 0u; cbObjIndex < BOX_COUNT; ++cbObjIndex)
+		for (auto cbObjIndex = 0u; cbObjIndex < BoxCount; ++cbObjIndex)
 		{
 			auto objCBAddress = D3D12::D3D12_GPU_VIRTUAL_ADDRESS{
 				mObjectCB->Resource()->GetGPUVirtualAddress() + cbObjIndex * objCBByteSize
@@ -570,7 +570,7 @@ private:
 private:
 	Microsoft::WRL::ComPtr<D3D12::ID3D12RootSignature> mRootSignature{};
 
-	uint32_t mBoxCBHeapIndex[BOX_COUNT];
+	uint32_t mBoxCBHeapIndex[BoxCount];
 	std::unique_ptr<UploadBuffer<ObjectConstants>> mObjectCB{};
 
 	uint32_t mPassCBHeapIndex = -1;
@@ -585,7 +585,7 @@ private:
 	Microsoft::WRL::ComPtr<D3D12::ID3D12PipelineState> mSolidPSO{};
 	Microsoft::WRL::ComPtr<D3D12::ID3D12PipelineState> mWireframePSO{};
 
-	DirectX::XMFLOAT4X4 mWorld[BOX_COUNT];
+	DirectX::XMFLOAT4X4 mWorld[BoxCount];
 	DirectX::XMFLOAT4X4 mView = MathHelper::Identity4x4;
 	DirectX::XMFLOAT4X4 mProj = MathHelper::Identity4x4;
 

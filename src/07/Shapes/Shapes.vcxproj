@@ -171,4 +171,9 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <ItemGroup>
+    <None Include="..\..\Shaders\BasicColor.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
 </Project>

@@ -170,4 +170,15 @@
       <Project>{71a3731d-95eb-49ec-b69f-e0b5e166115b}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\Shaders\BasicLit.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\..\Shaders\Common.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\..\Shaders\LightingUtil.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
 </Project>

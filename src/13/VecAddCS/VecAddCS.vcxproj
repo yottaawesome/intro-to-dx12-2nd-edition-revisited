@@ -171,4 +171,18 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <ItemGroup>
+    <None Include="..\..\Shaders\BasicTex.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\..\Shaders\Common.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\..\Shaders\LightingUtil.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\..\Shaders\VecAdd.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
 </Project>
