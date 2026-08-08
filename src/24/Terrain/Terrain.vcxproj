@@ -177,34 +177,251 @@
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
   <ItemGroup>
-    <None Include="..\..\Shaders\Common.hlsl">
+    <None Include="Shaders\Common.hlsl">
       <FileType>Document</FileType>
     </None>
-    <None Include="..\..\Shaders\DebugTex.hlsl">
+    <None Include="Shaders\DebugTex.hlsl">
       <FileType>Document</FileType>
     </None>
-    <None Include="..\..\Shaders\DefaultGeo.hlsl">
+    <None Include="Shaders\DefaultGeo.hlsl">
       <FileType>Document</FileType>
     </None>
-    <None Include="..\..\Shaders\DefaultPS.hlsl">
+    <None Include="Shaders\DefaultPS.hlsl">
       <FileType>Document</FileType>
     </None>
-    <None Include="..\..\Shaders\DrawParticles.hlsl">
+    <None Include="Shaders\DrawParticles.hlsl">
       <FileType>Document</FileType>
     </None>
-    <None Include="..\..\Shaders\LightingUtil.hlsl">
+    <None Include="Shaders\LightingUtil.hlsl">
       <FileType>Document</FileType>
     </None>
-    <None Include="..\..\Shaders\ParticlesCS.hlsl">
+    <None Include="Shaders\ParticlesCS.hlsl">
       <FileType>Document</FileType>
     </None>
-    <None Include="..\..\Shaders\Shadows.hlsl">
+    <None Include="Shaders\Shadows.hlsl">
       <FileType>Document</FileType>
     </None>
-    <None Include="..\..\Shaders\Sky.hlsl">
+    <None Include="Shaders\Sky.hlsl">
       <FileType>Document</FileType>
     </None>
-    <None Include="..\..\Shaders\Terrain.hlsl">
+    <None Include="Shaders\Terrain.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Models\columnRound.m3d">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Models\columnRoundBroken.m3d">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Models\columnSquare.m3d">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Models\columnSquareBroken.m3d">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Models\orbBase.m3d">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Models\skull.txt">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Shaders\SharedTypes.h">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\bolt.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\bricks0_color.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\bricks0_gloss_height_ao.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\bricks0_normal.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\checkboard.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\cubemaps\cubemap_sunset2.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\default_glossHeightAoMap.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\default_nmap.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\explosion.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\grass.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\ice.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\models\columnRound_diffuse.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\models\columnRound_gloss_height_ao.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\models\columnRound_normal.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\models\columnSquare_diffuse.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\models\columnSquare_gloss_height_ao.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\models\columnSquare_normal.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\models\orbBase_diffuse.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\models\orbBase_gloss_height_ao.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\models\orbBase_normal.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\raindrop.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\stonefloor1_diffuse.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\stonefloor1_gloss_height_ao.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\stonefloor1_normal.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\terrain\blendmap0.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\terrain\blendmap1.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\terrain\dirt0_color.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\terrain\dirt0_gloss_height_ao.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\terrain\dirt0_normal.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\terrain\dirt1_color.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\terrain\dirt1_gloss_height_ao.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\terrain\dirt1_normal.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\terrain\grass0_color.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\terrain\grass0_gloss_height_ao.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\terrain\grass0_normal.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\terrain\gravel0_color.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\terrain\gravel0_gloss_height_ao.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\terrain\gravel0_normal.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\terrain\heightmap4097.raw">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\terrain\rock0_color.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\terrain\rock0_gloss_height_ao.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\terrain\rock0_normal.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\terrain\rock1_color.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\terrain\rock1_gloss_height_ao.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\terrain\rock1_normal.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\terrain\sand0_color.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\terrain\sand0_gloss_height_ao.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\terrain\sand0_normal.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\tile0.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\treeArray2.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\water1.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\white1x1.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\WireFence.dds">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Textures\WoodCrate01.dds">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\DefaultHybridRT.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Shaders\DrawNormals.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Shaders\HelixParticlesMS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Shaders\HybridReflections.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Shaders\Intersections.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Shaders\Raytracing.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Shaders\Ssao.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Shaders\SsaoBlur.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Shaders\TerrainMS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Shaders\TessGeo.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

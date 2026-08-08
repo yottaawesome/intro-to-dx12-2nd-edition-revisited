@@ -26,6 +26,6 @@
     <None Include="vcpkg.json" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\Shaders\BasicColor.hlsl" />
+    <None Include="Shaders\BasicColor.hlsl" />
   </ItemGroup>
 </Project>

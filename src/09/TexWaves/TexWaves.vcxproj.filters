@@ -26,8 +26,64 @@
     <None Include="vcpkg.json" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\Shaders\BasicTex.hlsl" />
-    <None Include="..\..\Shaders\Common.hlsl" />
-    <None Include="..\..\Shaders\LightingUtil.hlsl" />
+    <None Include="Shaders\BasicTex.hlsl" />
+    <None Include="Shaders\Common.hlsl" />
+    <None Include="Shaders\LightingUtil.hlsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\SharedTypes.h" />
+    <None Include="Textures\bolt.dds" />
+    <None Include="Textures\bricks0_color.dds" />
+    <None Include="Textures\bricks0_gloss_height_ao.dds" />
+    <None Include="Textures\bricks0_normal.dds" />
+    <None Include="Textures\checkboard.dds" />
+    <None Include="Textures\cubemaps\cubemap_sunset2.dds" />
+    <None Include="Textures\default_glossHeightAoMap.dds" />
+    <None Include="Textures\default_nmap.dds" />
+    <None Include="Textures\explosion.dds" />
+    <None Include="Textures\grass.dds" />
+    <None Include="Textures\ice.dds" />
+    <None Include="Textures\models\columnRound_diffuse.dds" />
+    <None Include="Textures\models\columnRound_gloss_height_ao.dds" />
+    <None Include="Textures\models\columnRound_normal.dds" />
+    <None Include="Textures\models\columnSquare_diffuse.dds" />
+    <None Include="Textures\models\columnSquare_gloss_height_ao.dds" />
+    <None Include="Textures\models\columnSquare_normal.dds" />
+    <None Include="Textures\models\orbBase_diffuse.dds" />
+    <None Include="Textures\models\orbBase_gloss_height_ao.dds" />
+    <None Include="Textures\models\orbBase_normal.dds" />
+    <None Include="Textures\raindrop.dds" />
+    <None Include="Textures\stonefloor1_diffuse.dds" />
+    <None Include="Textures\stonefloor1_gloss_height_ao.dds" />
+    <None Include="Textures\stonefloor1_normal.dds" />
+    <None Include="Textures\terrain\blendmap0.dds" />
+    <None Include="Textures\terrain\blendmap1.dds" />
+    <None Include="Textures\terrain\dirt0_color.dds" />
+    <None Include="Textures\terrain\dirt0_gloss_height_ao.dds" />
+    <None Include="Textures\terrain\dirt0_normal.dds" />
+    <None Include="Textures\terrain\dirt1_color.dds" />
+    <None Include="Textures\terrain\dirt1_gloss_height_ao.dds" />
+    <None Include="Textures\terrain\dirt1_normal.dds" />
+    <None Include="Textures\terrain\grass0_color.dds" />
+    <None Include="Textures\terrain\grass0_gloss_height_ao.dds" />
+    <None Include="Textures\terrain\grass0_normal.dds" />
+    <None Include="Textures\terrain\gravel0_color.dds" />
+    <None Include="Textures\terrain\gravel0_gloss_height_ao.dds" />
+    <None Include="Textures\terrain\gravel0_normal.dds" />
+    <None Include="Textures\terrain\rock0_color.dds" />
+    <None Include="Textures\terrain\rock0_gloss_height_ao.dds" />
+    <None Include="Textures\terrain\rock0_normal.dds" />
+    <None Include="Textures\terrain\rock1_color.dds" />
+    <None Include="Textures\terrain\rock1_gloss_height_ao.dds" />
+    <None Include="Textures\terrain\rock1_normal.dds" />
+    <None Include="Textures\terrain\sand0_color.dds" />
+    <None Include="Textures\terrain\sand0_gloss_height_ao.dds" />
+    <None Include="Textures\terrain\sand0_normal.dds" />
+    <None Include="Textures\tile0.dds" />
+    <None Include="Textures\treeArray2.dds" />
+    <None Include="Textures\water1.dds" />
+    <None Include="Textures\white1x1.dds" />
+    <None Include="Textures\WireFence.dds" />
+    <None Include="Textures\WoodCrate01.dds" />
   </ItemGroup>
 </Project>

@@ -835,8 +835,8 @@ private:
             bool isLeftColumnBroken = false;
             bool isRightColumnBroken = (i == 0 || i == 4);
 
-            std::string columnNameLeft = isLeftColumnBroken ? std::string{"columnSquareBroken"} : std::string{"columnSquare"};
-            std::string columnNameRight = isRightColumnBroken ? std::string{"columnSquareBroken"} : std::string{"columnSquare"};
+            auto columnNameLeft = isLeftColumnBroken ? std::string{"columnSquareBroken"} : std::string{"columnSquare"};
+            auto columnNameRight = isRightColumnBroken ? std::string{"columnSquareBroken"} : std::string{"columnSquare"};
 
             DirectX::XMStoreFloat4x4(&texTransform, DirectX::XMMatrixScaling(1.0f, 1.0f, 1.0f));
             DirectX::XMStoreFloat4x4(&worldTransform, DirectX::XMMatrixTranslation(-5.0f, 0.0f, -10.0f + i * 5.0f));
@@ -881,15 +881,12 @@ private:
         for (auto i = 0ull; i < ritems.size(); ++i)
         {
             auto ri = ritems[i];
-
 			auto vbv = ri->Geo->VertexBufferView();
 			auto ibv = ri->Geo->IndexBufferView();
             cmdList->IASetVertexBuffers(0, 1, &vbv);
             cmdList->IASetIndexBuffer(&ibv);
             cmdList->IASetPrimitiveTopology(ri->PrimitiveType);
-
             cmdList->SetGraphicsRootConstantBufferView(GFX_ROOT_ARG_OBJECT_CBV, ri->MemHandleToObjectCB.GpuAddress());
-
             cmdList->DrawIndexedInstanced(ri->IndexCount, 1, ri->StartIndexLocation, ri->BaseVertexLocation, 0);
         }
     }
@@ -908,7 +905,7 @@ private:
             D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE);
         mCommandList->ResourceBarrier(1, &transition);
 
-        UINT passCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(PerPassCB));
+        auto passCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(PerPassCB));
 
         // Clear the back buffer and depth buffer.
         mCommandList->ClearDepthStencilView(mShadowMap->Dsv(),

@@ -26,8 +26,11 @@
     <None Include="vcpkg.json" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\Shaders\BasicLit.hlsl" />
-    <None Include="..\..\Shaders\Common.hlsl" />
-    <None Include="..\..\Shaders\LightingUtil.hlsl" />
+    <None Include="Shaders\BasicLit.hlsl" />
+    <None Include="Shaders\Common.hlsl" />
+    <None Include="Shaders\LightingUtil.hlsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\SharedTypes.h" />
   </ItemGroup>
 </Project>

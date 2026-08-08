@@ -172,13 +172,21 @@
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
   <ItemGroup>
-    <None Include="..\..\Shaders\BasicLit.hlsl">
+    <None Include="Shaders\BasicLit.hlsl">
       <FileType>Document</FileType>
     </None>
-    <None Include="..\..\Shaders\Common.hlsl">
+    <None Include="Shaders\Common.hlsl">
       <FileType>Document</FileType>
     </None>
-    <None Include="..\..\Shaders\LightingUtil.hlsl">
+    <None Include="Shaders\LightingUtil.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Models\skull.txt">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Shaders\SharedTypes.h">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>
