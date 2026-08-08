@@ -62,7 +62,7 @@ Microsoft Visual Studio 2026 with the _Desktop development with C++_ and _Game d
 * The DirectX Agility SDK has been updated to version 619.
 * `MathHelper`'s `Min()`, `Max()` and `Clamp()` functions have been replaced with `std::min()`, `std::max()` and `std::clamp()` respectively.
 * The `Waves` class was repeated across multiple demos. Rather than have copies of it in the different projects, I've consolidated it into Shared to reduce the noise.
-* The relevant HLSL files used in each sample have been added as non-build files to each MSVC project, allowing you to view them quickly when studying each sample.
+* The relevant resources files used in each sample have been added as non-build symlinks to each MSVC project, allowing you to view them quickly when studying each sample.
 * Removal of macros like `CALLBACK` and `WINAPI`, these are ignored for x64 builds and add visual noise.
 * The original code used an obsolete version of `imgui`. Newer versions of `imgui` require the application to provide SRV allocation/deallocation functions; this is now done in the `D3DApp` superclass.
 * Multiprocessor compilation has been enabled in the project settings.
