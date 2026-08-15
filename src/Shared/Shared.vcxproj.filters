@@ -75,9 +75,6 @@
     <ClCompile Include="waves.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="hr.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="camera.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>

@@ -63,28 +63,28 @@ export struct BoneAnimation
 		{
 			for (auto i = 0u; i < Keyframes.size() - 1; ++i)
 			{
-				if (t >= Keyframes[i].TimePos && t <= Keyframes[i + 1].TimePos)
-				{
-					auto lerpPercent = (t - Keyframes[i].TimePos) / (Keyframes[i + 1].TimePos - Keyframes[i].TimePos);
+				if (t < Keyframes[i].TimePos or t > Keyframes[i + 1].TimePos)
+					continue;
 
-					auto s0 = DirectX::XMVECTOR{DirectX::XMLoadFloat3(&Keyframes[i].Scale)};
-					auto s1 = DirectX::XMVECTOR{DirectX::XMLoadFloat3(&Keyframes[i + 1].Scale)};
+				auto lerpPercent = (t - Keyframes[i].TimePos) / (Keyframes[i + 1].TimePos - Keyframes[i].TimePos);
 
-					auto p0 = DirectX::XMVECTOR{DirectX::XMLoadFloat3(&Keyframes[i].Translation)};
-					auto p1 = DirectX::XMVECTOR{DirectX::XMLoadFloat3(&Keyframes[i + 1].Translation)};
+				auto s0 = DirectX::XMVECTOR{DirectX::XMLoadFloat3(&Keyframes[i].Scale)};
+				auto s1 = DirectX::XMVECTOR{DirectX::XMLoadFloat3(&Keyframes[i + 1].Scale)};
 
-					auto q0 = DirectX::XMVECTOR{DirectX::XMLoadFloat4(&Keyframes[i].RotationQuat)};
-					auto q1 = DirectX::XMVECTOR{DirectX::XMLoadFloat4(&Keyframes[i + 1].RotationQuat)};
+				auto p0 = DirectX::XMVECTOR{DirectX::XMLoadFloat3(&Keyframes[i].Translation)};
+				auto p1 = DirectX::XMVECTOR{DirectX::XMLoadFloat3(&Keyframes[i + 1].Translation)};
 
-					auto S = DirectX::XMVECTOR{DirectX::XMVectorLerp(s0, s1, lerpPercent)};
-					auto P = DirectX::XMVECTOR{DirectX::XMVectorLerp(p0, p1, lerpPercent)};
-					auto Q = DirectX::XMVECTOR{DirectX::XMQuaternionSlerp(q0, q1, lerpPercent)};
+				auto q0 = DirectX::XMVECTOR{DirectX::XMLoadFloat4(&Keyframes[i].RotationQuat)};
+				auto q1 = DirectX::XMVECTOR{DirectX::XMLoadFloat4(&Keyframes[i + 1].RotationQuat)};
 
-					auto zero = DirectX::XMVECTOR{DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f)};
-					DirectX::XMStoreFloat4x4(&M, DirectX::XMMatrixAffineTransformation(S, zero, Q, P));
+				auto S = DirectX::XMVECTOR{DirectX::XMVectorLerp(s0, s1, lerpPercent)};
+				auto P = DirectX::XMVECTOR{DirectX::XMVectorLerp(p0, p1, lerpPercent)};
+				auto Q = DirectX::XMVECTOR{DirectX::XMQuaternionSlerp(q0, q1, lerpPercent)};
 
-					break;
-				}
+				auto zero = DirectX::XMVECTOR{DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f)};
+				DirectX::XMStoreFloat4x4(&M, DirectX::XMMatrixAffineTransformation(S, zero, Q, P));
+
+				break;
 			}
 		}
 	}

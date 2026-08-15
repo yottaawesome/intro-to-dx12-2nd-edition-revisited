@@ -91,15 +91,15 @@ public:
         // Particles
         //
         auto csUpdateParticlesArgs = std::vector{ L"-E", L"ParticlesUpdateCS", L"-T", L"cs_6_6" COMMA_DEBUG_ARGS };
-        auto csEmitParticlesArgs = std::vector{ L"-E", L"ParticlesEmitCS", L"-T", L"cs_6_6" COMMA_DEBUG_ARGS };
-        auto csPostUpdateParticlesArgs = std::vector{ L"-E", L"PostUpdateCS", L"-T", L"cs_6_6" COMMA_DEBUG_ARGS };
         mShaders["updateParticlesCS"] = d3dUtil::CompileShader(L"Shaders\\ParticlesCS.hlsl", csUpdateParticlesArgs);
+        auto csEmitParticlesArgs = std::vector{ L"-E", L"ParticlesEmitCS", L"-T", L"cs_6_6" COMMA_DEBUG_ARGS };
         mShaders["emitParticlesCS"] = d3dUtil::CompileShader(L"Shaders\\ParticlesCS.hlsl", csEmitParticlesArgs);
+        auto csPostUpdateParticlesArgs = std::vector{ L"-E", L"PostUpdateCS", L"-T", L"cs_6_6" COMMA_DEBUG_ARGS };
         mShaders["postUpdateParticlesCS"] = d3dUtil::CompileShader(L"Shaders\\ParticlesCS.hlsl", csPostUpdateParticlesArgs);
         auto psParticlesAddBlend = std::vector{ L"-E", L"PSAddBlend", L"-T", L"ps_6_6" COMMA_DEBUG_ARGS };
-        auto psParticlesTransparencyBlend = std::vector{ L"-E", L"PSTransparencyBlend", L"-T", L"ps_6_6" COMMA_DEBUG_ARGS };
-        mShaders["drawParticlesVS"] = d3dUtil::CompileShader(L"Shaders\\DrawParticles.hlsl", vsArgs);
         mShaders["drawParticlesAddBlendPS"] = d3dUtil::CompileShader(L"Shaders\\DrawParticles.hlsl", psParticlesAddBlend);
+        mShaders["drawParticlesVS"] = d3dUtil::CompileShader(L"Shaders\\DrawParticles.hlsl", vsArgs);
+        auto psParticlesTransparencyBlend = std::vector{ L"-E", L"PSTransparencyBlend", L"-T", L"ps_6_6" COMMA_DEBUG_ARGS };
         mShaders["drawParticlesTransparencyBlendPS"] = d3dUtil::CompileShader(L"Shaders\\DrawParticles.hlsl", psParticlesTransparencyBlend);
 
         // 
