@@ -116,9 +116,9 @@
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <ModuleOutputFile>$(IntDir)$(RelativeDir)</ModuleOutputFile>
-      <ModuleDependenciesFile>$(IntDir)$(RelativeDir)</ModuleDependenciesFile>
-      <ObjectFileName>$(IntDir)$(RelativeDir)</ObjectFileName>
+      <ModuleOutputFile>$(IntDir)%(RelativeDir)</ModuleOutputFile>
+      <ModuleDependenciesFile>$(IntDir)%(RelativeDir)</ModuleDependenciesFile>
+      <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
       <BuildStlModules>true</BuildStlModules>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
@@ -139,9 +139,9 @@
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <ModuleOutputFile>$(IntDir)$(RelativeDir)</ModuleOutputFile>
-      <ModuleDependenciesFile>$(IntDir)$(RelativeDir)</ModuleDependenciesFile>
-      <ObjectFileName>$(IntDir)$(RelativeDir)</ObjectFileName>
+      <ModuleOutputFile>$(IntDir)%(RelativeDir)</ModuleOutputFile>
+      <ModuleDependenciesFile>$(IntDir)%(RelativeDir)</ModuleDependenciesFile>
+      <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
       <BuildStlModules>true</BuildStlModules>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>

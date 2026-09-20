@@ -18,6 +18,9 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="cubeandnormalmaps.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Common.hlsl" />
@@ -26,6 +29,7 @@
     <None Include="Shaders\DefaultPS.hlsl" />
     <None Include="Shaders\LightingUtil.hlsl" />
     <None Include="Shaders\Sky.hlsl" />
+    <None Include="vcpkg.json" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Models\columnRound.m3d" />

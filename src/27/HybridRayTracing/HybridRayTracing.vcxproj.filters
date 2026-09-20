@@ -15,36 +15,24 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="framework.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="targetver.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Resource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="HybridRayTracing.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="HybridRayTracing.cpp">
+    <ClCompile Include="directxraytracinghelper.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="HybridRayTracing.rc">
-      <Filter>Resource Files</Filter>
-    </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="small.ico">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="HybridRayTracing.ico">
-      <Filter>Resource Files</Filter>
-    </Image>
+    <ClCompile Include="frameresource.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="hybridraytracer.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="hybridraytracing.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="hybridraytracingapp.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Common.hlsl" />
@@ -56,6 +44,7 @@
     <None Include="Shaders\HybridReflections.hlsl" />
     <None Include="Shaders\LightingUtil.hlsl" />
     <None Include="Shaders\Sky.hlsl" />
+    <None Include="vcpkg.json" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Models\columnRound.m3d" />
