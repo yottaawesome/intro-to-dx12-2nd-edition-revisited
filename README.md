@@ -2,7 +2,9 @@
 
 ## Introduction
 
-This is an effort at revisiting the source code for [Frank D. Luna's](https://www.d3dcoder.net/default.htm) second edition of [*Introduction to 3D Game Programming with DirectX 12*](https://www.d3dcoder.net/d3d12_v2.htm). Luna's books on DX12 (and its predecessors) are considered the de facto standard reference for learning DX12, and the primary intent here is not so much a revision per se, but to simplify and make the codebase easier to study by adapting the codebase to modern C++ standards and best practices. DirectX 12 is already a very difficult API to work with, and any way we can make it easier to understand is a good thing. It goes without saying that just like the original source code, in order to understand and learn from the revisited source code, you _must_ own the book, and this repo in no way changes that.
+This is an effort at revisiting the source code for [Frank D. Luna's](https://www.d3dcoder.net/default.htm) second edition of [*Introduction to 3D Game Programming with DirectX 12*](https://www.d3dcoder.net/d3d12_v2.htm). Luna's books on DX12 (and its predecessors) are considered the de facto standard reference for learning DX12, and the primary intent here is not so much a revision per se, but to simplify and make the codebase easier to study by adapting the codebase to modern C++ standards and best practices. DirectX 12 is already a very difficult API to work with, and any way we can make it easier to understand is a good thing.
+
+It goes without saying that you _must_ own the book to understand the samples -- the samples are complex (because DX12 is complex) and this is not a "tutorialised" version of the book's source code. Having a baseline level of understanding of modern C++ is also helpful.
 
 I originally began this effort with the first edition of the book, but have since moved on to the second edition after I discovered its existence.
 
@@ -86,6 +88,7 @@ Microsoft Visual Studio 2026 with the _Desktop development with C++_ and _Game d
 * `D3DApp`'s `Initialize()`, `InitMainWindow()`, and `InitDirect3D()` were a mix of exception throwing and returning `bool`s on error. The `bool` return has been removed and now exceptions are thrown consistently. This also eliminates the need to check the return value of `Initialize()`.
 * Use of `FLT_MAX` has been removed in favour of the standard `std::numeric_limits<float>::max()`.
 * `main()` code has been ported to function-try-block syntax.
+* Converted the statics-only type `MathHelper` to a namespace. 
 * General code cleanup. This includes removal of redundant conditionals, improvements to static initialisation, improvements to the `Random` class, and removal of declared but undefined functions that were found to not be used anywhere.
 
 ## License and copyright
