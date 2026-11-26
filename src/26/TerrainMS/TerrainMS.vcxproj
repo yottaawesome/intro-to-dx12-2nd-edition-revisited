@@ -154,12 +154,12 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="frameresource.ixx" />
+    <ClCompile Include="FrameResource.ixx" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="particlesystem.ixx" />
-    <ClCompile Include="terrainms.ixx" />
-    <ClCompile Include="terrainmsdemo.ixx" />
-    <ClCompile Include="terrainmsapp.ixx" />
+    <ClCompile Include="ParticleSystem.ixx" />
+    <ClCompile Include="TerrainMS.ixx" />
+    <ClCompile Include="TerrainMSDemo.ixx" />
+    <ClCompile Include="TerrainMSApp.ixx" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Direct3D.D3D12" />

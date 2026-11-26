@@ -15,79 +15,79 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="shared.ixx">
+    <ClCompile Include="Shared.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="gametimer.ixx">
+    <ClCompile Include="GameTimer.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="win32.ixx">
+    <ClCompile Include="Win32.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="d3dutil.ixx">
+    <ClCompile Include="D3DUtil.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="mathhelper.ixx">
+    <ClCompile Include="MathHelper.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="random.ixx">
+    <ClCompile Include="Random.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="meshutil.ixx">
+    <ClCompile Include="MeshUtil.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="meshgen.ixx">
+    <ClCompile Include="MeshGen.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="skinneddata.ixx">
+    <ClCompile Include="SkinnedData.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="loadm3d.ixx">
+    <ClCompile Include="LoadM3D.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="d3dapp.ixx">
+    <ClCompile Include="D3DApp.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="descriptorutil.ixx">
+    <ClCompile Include="DescriptorUtil.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="imgui.ixx">
+    <ClCompile Include="Imgui.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="uploadbuffer.ixx">
+    <ClCompile Include="UploadBuffer.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="build.ixx">
+    <ClCompile Include="Build.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="event.ixx">
+    <ClCompile Include="Event.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="sharedtypes.ixx">
+    <ClCompile Include="SharedTypes.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="materiallib.ixx">
+    <ClCompile Include="MaterialLib.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="texturelib.ixx">
+    <ClCompile Include="TextureLib.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="waves.ixx">
+    <ClCompile Include="Waves.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="camera.ixx">
+    <ClCompile Include="Camera.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="psolib.ixx">
+    <ClCompile Include="PSOLib.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="shaderlib.ixx">
+    <ClCompile Include="ShaderLib.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="shadowmap.ixx">
+    <ClCompile Include="ShadowMap.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="prepass.ixx">
+    <ClCompile Include="Prepass.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

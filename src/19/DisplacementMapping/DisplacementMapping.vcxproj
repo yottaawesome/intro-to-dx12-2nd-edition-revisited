@@ -154,7 +154,7 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="displacementmapping.ixx" />
+    <ClCompile Include="DisplacementMapping.ixx" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>

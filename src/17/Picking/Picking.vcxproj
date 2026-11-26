@@ -155,7 +155,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="picking.ixx" />
+    <ClCompile Include="Picking.ixx" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Direct3D.D3D12" />

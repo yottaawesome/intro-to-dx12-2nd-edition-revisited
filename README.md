@@ -55,7 +55,7 @@ Microsoft Visual Studio 2026 with the _Desktop development with C++_ and _Game d
 
 ## Running summary of changes
 
-* The common code has been moved into a shared library `Shared`, which exports the `shared` module, and which is consumed by the samples. Previously, the common files were included in each project via VCPROJ links, leading to unnecessarily increased build times when building all samples.
+* The common code has been moved into a shared library `Shared`, which exports the `Shared` module, and which is consumed by the samples. Previously, the common files were included in each project via VCPROJ links, leading to unnecessarily increased build times when building all samples.
 * Ported compiler settings from `c++17` to `c++latest`. This required fixing some compiler errors present in `c++20` and onward, mainly to do with temporaries being passed as arguments to functions.
 * The code has been ported to C++20 modules (with the exception of the first DirectX math related ones), with platform and dependecies exported via modules. This has eliminated the need for separate header and source files, which has improved the code locality and significantly reduced the total LoC.
 * `vcpkg` (in manifest mode) has been used to manage dependencies such as the `DirectX12 Toolkit` ([dx12tk](https://github.com/microsoft/directxtk12)) and `imgui` ([imgui](https://github.com/ocornut/imgui)). This has resulted in the removal of these files being bundled with the sample projects, which makes it more obvious what is sample code and what's dependency code.
@@ -93,7 +93,7 @@ Microsoft Visual Studio 2026 with the _Desktop development with C++_ and _Game d
 
 ## License and copyright
 
-Most of the code is copyrighted by Frank D. Luna, with the exception of some of the code extracted from Microsoft samples and included in Luna's samples, such as the code contained `directxraytracinghelper.ixx`. I've preserved the relevant copyright notices for the source code. However, some of the source code has no notice, or the notices (particularly dates) don't match up between header and source file pairs, so it's not exact.
+Most of the code is copyrighted by Frank D. Luna, with the exception of some of the code extracted from Microsoft samples and included in Luna's samples, such as the code contained `DirectXRayTracingHelper.ixx`. I've preserved the relevant copyright notices for the source code. However, some of the source code has no notice, or the notices (particularly dates) don't match up between header and source file pairs, so it's not exact.
 
 It's unclear what license applies to Luna's code, as no notices are posted anywhere including on the official site, but given there are various longstanding copies/remixes of Luna's code on Github, I assume the author is OK so long as they retain the copyright notices. Code files I've exclusively authored are copyrighted by me and licensed under the MIT license.
 

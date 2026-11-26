@@ -154,7 +154,7 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="boxgridapp.ixx" />
+    <ClCompile Include="BoxGridApp.ixx" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>

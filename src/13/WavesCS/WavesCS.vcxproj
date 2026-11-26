@@ -154,12 +154,12 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="wavescsapp.ixx" />
-    <ClCompile Include="computerootarg.ixx" />
-    <ClCompile Include="frameresource.ixx" />
-    <ClCompile Include="gpuwaves.ixx" />
+    <ClCompile Include="WavesCSApp.ixx" />
+    <ClCompile Include="ComputeRootArg.ixx" />
+    <ClCompile Include="FrameResource.ixx" />
+    <ClCompile Include="GPUWaves.ixx" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="wavescs.ixx" />
+    <ClCompile Include="WavesCS.ixx" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Direct3D.D3D12" />

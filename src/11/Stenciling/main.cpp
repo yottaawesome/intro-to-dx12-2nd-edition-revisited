@@ -10,8 +10,8 @@ extern "C" { __declspec(dllexport) extern const unsigned int D3D12SDKVersion = 6
 extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = ".\\D3D12\\"; }
 
 import std;
-import shared;
-import stenciling;
+import Shared;
+import Stenciling;
 
 // Use keys 'A', 'D', 'W', 'S' to move the skull.
 

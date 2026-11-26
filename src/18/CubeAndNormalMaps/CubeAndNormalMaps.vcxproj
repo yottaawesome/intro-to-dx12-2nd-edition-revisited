@@ -154,7 +154,7 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="cubeandnormalmaps.ixx" />
+    <ClCompile Include="CubeAndNormalMaps.ixx" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -154,9 +154,9 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="frameresource.ixx" />
-    <ClCompile Include="shadowmapapp.ixx" />
-    <ClCompile Include="shadows.ixx" />
+    <ClCompile Include="FrameResource.ixx" />
+    <ClCompile Include="ShadowMapApp.ixx" />
+    <ClCompile Include="Shadows.ixx" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>

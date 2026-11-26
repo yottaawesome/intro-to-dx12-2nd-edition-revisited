@@ -18,16 +18,16 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="dynamiccubemap.ixx">
+    <ClCompile Include="DynamicCubeMap.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="cuberendertarget.ixx">
+    <ClCompile Include="CubeRenderTarget.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="frameresource.ixx">
+    <ClCompile Include="FrameResource.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="dynamiccubemapapp.ixx">
+    <ClCompile Include="DynamicCubeMapApp.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

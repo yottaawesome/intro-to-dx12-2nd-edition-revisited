@@ -155,7 +155,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="stenciling.ixx" />
+    <ClCompile Include="Stenciling.ixx" />
   </ItemGroup>
   <ItemGroup>
     <None Include="vcpkg.json" />

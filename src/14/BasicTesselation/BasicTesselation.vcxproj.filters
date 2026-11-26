@@ -18,7 +18,7 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="basictesselation.ixx">
+    <ClCompile Include="BasicTesselation.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

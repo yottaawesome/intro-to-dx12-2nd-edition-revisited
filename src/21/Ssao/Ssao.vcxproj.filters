@@ -18,16 +18,16 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ssaodemo.ixx">
+    <ClCompile Include="SsaoDemo.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="frameresource.ixx">
+    <ClCompile Include="FrameResource.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ssaoapp.ixx">
+    <ClCompile Include="SsaoApp.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ssao.ixx">
+    <ClCompile Include="Ssao.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

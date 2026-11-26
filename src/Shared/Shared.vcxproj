@@ -166,31 +166,31 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="build.ixx" />
-    <ClCompile Include="camera.ixx" />
-    <ClCompile Include="d3dapp.ixx" />
-    <ClCompile Include="d3dutil.ixx" />
-    <ClCompile Include="descriptorutil.ixx" />
-    <ClCompile Include="event.ixx" />
-    <ClCompile Include="gametimer.ixx" />
-    <ClCompile Include="imgui.ixx" />
-    <ClCompile Include="loadm3d.ixx" />
-    <ClCompile Include="materiallib.ixx" />
-    <ClCompile Include="mathhelper.ixx" />
-    <ClCompile Include="meshgen.ixx" />
-    <ClCompile Include="meshutil.ixx" />
-    <ClCompile Include="prepass.ixx" />
-    <ClCompile Include="psolib.ixx" />
-    <ClCompile Include="random.ixx" />
-    <ClCompile Include="shaderlib.ixx" />
-    <ClCompile Include="shadowmap.ixx" />
-    <ClCompile Include="shared.ixx" />
-    <ClCompile Include="sharedtypes.ixx" />
-    <ClCompile Include="skinneddata.ixx" />
-    <ClCompile Include="texturelib.ixx" />
-    <ClCompile Include="uploadbuffer.ixx" />
-    <ClCompile Include="waves.ixx" />
-    <ClCompile Include="win32.ixx" />
+    <ClCompile Include="Build.ixx" />
+    <ClCompile Include="Camera.ixx" />
+    <ClCompile Include="D3DApp.ixx" />
+    <ClCompile Include="D3DUtil.ixx" />
+    <ClCompile Include="DescriptorUtil.ixx" />
+    <ClCompile Include="Event.ixx" />
+    <ClCompile Include="GameTimer.ixx" />
+    <ClCompile Include="Imgui.ixx" />
+    <ClCompile Include="LoadM3D.ixx" />
+    <ClCompile Include="MaterialLib.ixx" />
+    <ClCompile Include="MathHelper.ixx" />
+    <ClCompile Include="MeshGen.ixx" />
+    <ClCompile Include="MeshUtil.ixx" />
+    <ClCompile Include="Prepass.ixx" />
+    <ClCompile Include="PSOLib.ixx" />
+    <ClCompile Include="Random.ixx" />
+    <ClCompile Include="ShaderLib.ixx" />
+    <ClCompile Include="ShadowMap.ixx" />
+    <ClCompile Include="Shared.ixx" />
+    <ClCompile Include="SharedTypes.ixx" />
+    <ClCompile Include="SkinnedData.ixx" />
+    <ClCompile Include="TextureLib.ixx" />
+    <ClCompile Include="UploadBuffer.ixx" />
+    <ClCompile Include="Waves.ixx" />
+    <ClCompile Include="Win32.ixx" />
   </ItemGroup>
   <ItemGroup>
     <None Include="vcpkg.json" />

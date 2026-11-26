@@ -18,7 +18,7 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="vecaddcs.ixx">
+    <ClCompile Include="VecAddCS.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

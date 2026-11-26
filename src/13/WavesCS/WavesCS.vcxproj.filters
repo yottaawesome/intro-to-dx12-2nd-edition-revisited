@@ -18,19 +18,19 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="wavescs.ixx">
+    <ClCompile Include="WavesCS.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="gpuwaves.ixx">
+    <ClCompile Include="GPUWaves.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="wavescsapp.ixx">
+    <ClCompile Include="WavesCSApp.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="computerootarg.ixx">
+    <ClCompile Include="ComputeRootArg.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="frameresource.ixx">
+    <ClCompile Include="FrameResource.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

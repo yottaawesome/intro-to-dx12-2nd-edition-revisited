@@ -155,7 +155,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="waves.ixx" />
+    <ClCompile Include="Waves.ixx" />
   </ItemGroup>
   <ItemGroup>
     <None Include="vcpkg.json" />

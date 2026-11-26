@@ -154,7 +154,7 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="basictesselation.ixx" />
+    <ClCompile Include="BasicTesselation.ixx" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>

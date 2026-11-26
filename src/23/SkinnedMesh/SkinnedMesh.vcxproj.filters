@@ -18,16 +18,16 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="frameresource.ixx">
+    <ClCompile Include="FrameResource.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="skinnedmesh.ixx">
+    <ClCompile Include="SkinnedMesh.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="skinnedmeshapp.ixx">
+    <ClCompile Include="SkinnedMeshApp.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ssao.ixx">
+    <ClCompile Include="Ssao.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

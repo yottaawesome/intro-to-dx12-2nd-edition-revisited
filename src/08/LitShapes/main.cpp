@@ -10,8 +10,8 @@ extern "C" { __declspec(dllexport) extern const unsigned int D3D12SDKVersion = 6
 extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = ".\\D3D12\\"; }
 
 import std;
-import shared;
-import litshapes;
+import Shared;
+import LitShapes;
 
 auto wWinMain(Win32::HINSTANCE hInstance, Win32::HINSTANCE, Win32::LPWSTR, int) -> int
 try

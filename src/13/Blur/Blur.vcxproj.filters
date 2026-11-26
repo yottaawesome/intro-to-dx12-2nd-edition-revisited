@@ -18,22 +18,22 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="blur.ixx">
+    <ClCompile Include="Blur.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="blurapp.ixx">
+    <ClCompile Include="BlurApp.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="frameresource.ixx">
+    <ClCompile Include="FrameResource.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="blurfilter.ixx">
+    <ClCompile Include="BlurFilter.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="computerootarg.ixx">
+    <ClCompile Include="ComputeRootArg.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="gpuwaves.ixx">
+    <ClCompile Include="GPUWaves.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

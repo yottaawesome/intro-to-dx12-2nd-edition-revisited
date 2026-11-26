@@ -15,22 +15,22 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="frameresource.ixx">
+    <ClCompile Include="FrameResource.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="particlesystem.ixx">
+    <ClCompile Include="ParticleSystem.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="terrainms.ixx">
+    <ClCompile Include="TerrainMS.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="terrainmsdemo.ixx">
+    <ClCompile Include="TerrainMSDemo.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="terrainmsapp.ixx">
+    <ClCompile Include="TerrainMSApp.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

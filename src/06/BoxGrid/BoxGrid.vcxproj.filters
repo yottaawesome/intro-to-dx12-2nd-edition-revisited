@@ -18,7 +18,7 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="boxgridapp.ixx">
+    <ClCompile Include="BoxGridApp.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

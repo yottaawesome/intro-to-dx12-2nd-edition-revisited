@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="bezierpatch.ixx">
+    <ClCompile Include="BezierPatch.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp">

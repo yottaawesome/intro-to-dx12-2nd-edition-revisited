@@ -154,12 +154,12 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="blur.ixx" />
-    <ClCompile Include="blurapp.ixx" />
-    <ClCompile Include="blurfilter.ixx" />
-    <ClCompile Include="computerootarg.ixx" />
-    <ClCompile Include="frameresource.ixx" />
-    <ClCompile Include="gpuwaves.ixx" />
+    <ClCompile Include="Blur.ixx" />
+    <ClCompile Include="BlurApp.ixx" />
+    <ClCompile Include="BlurFilter.ixx" />
+    <ClCompile Include="ComputeRootArg.ixx" />
+    <ClCompile Include="FrameResource.ixx" />
+    <ClCompile Include="GPUWaves.ixx" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>

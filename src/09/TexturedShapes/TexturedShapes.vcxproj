@@ -155,7 +155,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="texturedshapes.ixx" />
+    <ClCompile Include="TexturedShapes.ixx" />
   </ItemGroup>
   <ItemGroup>
     <None Include="vcpkg.json" />

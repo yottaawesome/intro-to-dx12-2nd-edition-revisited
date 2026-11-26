@@ -15,22 +15,22 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="frameresource.ixx">
+    <ClCompile Include="FrameResource.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="proceduralraytracer.ixx">
+    <ClCompile Include="ProceduralRayTracer.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="raytracingintroapp.ixx">
+    <ClCompile Include="RayTracingIntroApp.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="raytracingintro.ixx">
+    <ClCompile Include="RayTracingIntro.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="directxraytracinghelper.ixx">
+    <ClCompile Include="DirectXRayTracingHelper.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

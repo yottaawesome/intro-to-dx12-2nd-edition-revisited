@@ -154,12 +154,12 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="directxraytracinghelper.ixx" />
-    <ClCompile Include="frameresource.ixx" />
+    <ClCompile Include="DirectXRayTracingHelper.ixx" />
+    <ClCompile Include="FrameResource.ixx" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="proceduralraytracer.ixx" />
-    <ClCompile Include="raytracingintroapp.ixx" />
-    <ClCompile Include="raytracingintro.ixx" />
+    <ClCompile Include="ProceduralRayTracer.ixx" />
+    <ClCompile Include="RayTracingIntroApp.ixx" />
+    <ClCompile Include="RayTracingIntro.ixx" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Direct3D.D3D12" />

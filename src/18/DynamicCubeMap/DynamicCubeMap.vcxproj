@@ -154,10 +154,10 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="cuberendertarget.ixx" />
-    <ClCompile Include="dynamiccubemap.ixx" />
-    <ClCompile Include="dynamiccubemapapp.ixx" />
-    <ClCompile Include="frameresource.ixx" />
+    <ClCompile Include="CubeRenderTarget.ixx" />
+    <ClCompile Include="DynamicCubeMap.ixx" />
+    <ClCompile Include="DynamicCubeMapApp.ixx" />
+    <ClCompile Include="FrameResource.ixx" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>

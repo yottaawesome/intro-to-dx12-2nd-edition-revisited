@@ -154,11 +154,11 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="frameresource.ixx" />
+    <ClCompile Include="FrameResource.ixx" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="ssao.ixx" />
-    <ClCompile Include="ssaoapp.ixx" />
-    <ClCompile Include="ssaodemo.ixx" />
+    <ClCompile Include="Ssao.ixx" />
+    <ClCompile Include="SsaoApp.ixx" />
+    <ClCompile Include="SsaoDemo.ixx" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

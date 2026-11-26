@@ -154,11 +154,11 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="directxraytracinghelper.ixx" />
-    <ClCompile Include="frameresource.ixx" />
-    <ClCompile Include="hybridraytracer.ixx" />
-    <ClCompile Include="hybridraytracing.ixx" />
-    <ClCompile Include="hybridraytracingapp.ixx" />
+    <ClCompile Include="DirectXRayTracingHelper.ixx" />
+    <ClCompile Include="FrameResource.ixx" />
+    <ClCompile Include="HybridRayTracer.ixx" />
+    <ClCompile Include="HybridRayTracing.ixx" />
+    <ClCompile Include="HybridRayTracingApp.ixx" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>

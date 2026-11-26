@@ -15,19 +15,19 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="frameresource.ixx">
+    <ClCompile Include="FrameResource.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="particlemsapp.ixx">
+    <ClCompile Include="ParticleMSApp.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="particlesms.ixx">
+    <ClCompile Include="ParticlesMS.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ssao.ixx">
+    <ClCompile Include="Ssao.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

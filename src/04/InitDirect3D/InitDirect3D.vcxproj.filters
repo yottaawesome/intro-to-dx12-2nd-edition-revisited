@@ -18,7 +18,7 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="initd3d.ixx">
+    <ClCompile Include="InitD3D.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

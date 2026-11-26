@@ -154,11 +154,11 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="frameresource.ixx" />
+    <ClCompile Include="FrameResource.ixx" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="particlemsapp.ixx" />
-    <ClCompile Include="particlesms.ixx" />
-    <ClCompile Include="ssao.ixx" />
+    <ClCompile Include="ParticleMSApp.ixx" />
+    <ClCompile Include="ParticlesMS.ixx" />
+    <ClCompile Include="Ssao.ixx" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Direct3D.D3D12" />

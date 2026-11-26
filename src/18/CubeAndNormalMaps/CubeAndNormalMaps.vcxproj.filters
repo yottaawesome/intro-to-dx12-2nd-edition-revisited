@@ -18,7 +18,7 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="cubeandnormalmaps.ixx">
+    <ClCompile Include="CubeAndNormalMaps.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

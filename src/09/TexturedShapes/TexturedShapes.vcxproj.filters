@@ -18,7 +18,7 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="texturedshapes.ixx">
+    <ClCompile Include="TexturedShapes.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
