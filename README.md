@@ -4,9 +4,17 @@
 
 This is an effort at revisiting the source code for [Frank D. Luna's](https://www.d3dcoder.net/default.htm) second edition of [*Introduction to 3D Game Programming with DirectX 12*](https://www.d3dcoder.net/d3d12_v2.htm). Luna's books on DX12 (and its predecessors) are considered the de facto standard reference for learning DX12, and the primary intent here is not so much a revision per se, but to simplify and make the codebase easier to study by adapting the codebase to modern C++ standards and best practices. DirectX 12 is already a very difficult API to work with, and any way we can make it easier to understand is a good thing.
 
-It goes without saying that you _must_ own the book to understand the samples -- the samples are complex (because DX12 is complex) and this is not a "tutorialised" version of the book's source code. Having a baseline level of understanding of modern C++ is also helpful.
+It should be noted that you _must_ own the book to understand the samples -- the samples are complex (because DX12 itself is complex) and this is not a "tutorialised" version of the book's source code. Having a baseline level of understanding of modern C++ (C++20 and onwards) is also helpful, since C++20 modules are used extensively to eliminate the antiquated header/source file distinction. This implies that if you're looking for C or C-like code for working with DX12, then this repo and book are not for you.
 
 I originally began this effort with the first edition of the book, but have since moved on to the second edition after I discovered its existence.
+
+## Building and running
+
+Microsoft Visual Studio 2026 with the _Desktop development with C++_ and _Game development with C++_ workloads is required. You will also need the preview MSVC tools, which can be done via the Visual Studio Installer. I use the preview tools to catch compiler bugs early, but they're not strictly necessary and you can disable them if you don't want to install them. The projects depend on the DirectX 12 Agility nuget package. You can either restore the package manually in your environment or run `.\Restore-NuGetPackages.ps1` from the `src` directory. To test a clean restore, run `.\Restore-NuGetPackages.ps1 -Clean`; the script finds MSBuild through the current environment or Visual Studio's `vswhere.exe`. It goes without saying that you must have a GPU with DirectX 12 support to actually run the samples. Symlinks have been used to add resources to each project without duplicating them, this means git must be enabled with symlink mode: `git config --global core.symlinks true`. You may need to enable Windows Developer Mode to allow git to create symlinks without elevation. The very first build after cloning will likely fail to missing vcpkg dependencies -- simply run the build again and it should succeed.
+
+## Considerations
+
+DX12 is not an API for graphics programming novices or the faint-of-heart. It's low-level, complex, and introduces many pitfalls that would otherwise be abstracted away in its predecessor APIs. If you're a novice at graphics programming, you'll likely be better off learning DX11 first, as it's much nicer to work with and will still teach you the fundamentals of working with graphics APIs. Any concerns you might have that DX11 is out-of-date or "deprecated" should not give you pause: DX11 is still a core component of Windows and Microsoft is not removing it anytime soon, even if it's no longer getting new features. Many new games are still being developed with DX11 as their preferred graphics API.
 
 ## Status
 
@@ -48,10 +56,6 @@ All projects have been successfully updated and are functional. There are likely
 * [26 - Amplification and Mesh Shaders: TerrainMS](./src/26/TerrainMS)
 * [27 - Ray Tracing: HybridRayTracing](./src/27/HybridRayTracing)
 * [27 - Ray Tracing: RayTracingIntro](./src/27/RayTracingIntro)
-
-## Building and running
-
-Microsoft Visual Studio 2026 with the _Desktop development with C++_ and _Game development with C++_ workloads is required. You will also need the preview MSVC tools, which can be done via the Visual Studio Installer. I use the preview tools to catch compiler bugs early, but they're not strictly necessary and you can disable them if you don't want to install them. The projects depend on the DirectX 12 Agility nuget package. You can either restore the package manually in your environment or run `.\Restore-NuGetPackages.ps1` from the `src` directory. To test a clean restore, run `.\Restore-NuGetPackages.ps1 -Clean`; the script finds MSBuild through the current environment or Visual Studio's `vswhere.exe`. It goes without saying that you must have a GPU with DirectX 12 support to actually run the samples. Symlinks have been used to add resources to each project without duplicating them, this means git must be enabled with symlink mode: `git config --global core.symlinks true`. You may need to enable Windows Developer Mode to allow git to create symlinks without elevation.
 
 ## Running summary of changes
 
